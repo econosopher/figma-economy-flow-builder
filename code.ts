@@ -18,6 +18,11 @@ const COLOR = {
   STROKE_GREY: '#CCCCCC',
 };
 const TAG = 'EconomyFlowChart';
+const BOX_SIZE = { 
+    INPUT: { W: 144, H: 72 }, // Matched to NODE size
+    NODE: { W: 144, H: 72 }, 
+    ATTR: { W: 112, H: 20 } 
+};
 
 const hex = (h: string) => {
   if (typeof h !== 'string') {
@@ -46,8 +51,23 @@ function makeBox(txt: string, w: number, h: number, fill: string, align: 'CENTER
       s.strokeWeight = 2;
   }
   s.text.characters = txt;
-  s.text.fontSize = 12;
+
+  let fontSize = 12;
+  // Reduce font size for long labels to prevent overflow
+  if (w > 120 && txt.length > 40) { // Main node
+    fontSize = 10;
+  } else if (w < 120 && txt.length > 20) { // Attribute node
+      fontSize = 10;
+  }
+  s.text.fontSize = fontSize;
   s.text.fills = [{ type: 'SOLID', color: textColor }];
+
+  // @ts-ignore
+  s.text.textAlignHorizontal = align;
+  if (align === 'LEFT') {
+    // @ts-ignore
+    s.text.paragraphIndent = 5;
+  }
   return s;
 }
 
@@ -184,7 +204,23 @@ figma.ui.onmessage = async (m: PluginMessage) => {
   if (m.cmd !== 'draw') return;
 
   let data: Graph;
-  try { data = JSON.parse(m.json); } catch (e: any) { reply(e.message, false); return; }
+  try { 
+    data = JSON.parse(m.json); 
+  } catch (e: any) { 
+    const errorMsg = [
+      "JSON Parsing Error:",
+      e.message,
+      "This usually means there's a syntax error in your JSON.",
+      "Common mistakes include:",
+      "• A trailing comma (,) after the last item in an array or object.",
+      "• Missing commas (,) between items.",
+      "• Unmatched brackets [ ] or braces { }.",
+      "• Using single quotes instead of double quotes for keys and string values.",
+      "• Properties with no value (e.g. `\"sources\":,` should be `\"sources\": []`)."
+    ];
+    reply(errorMsg, false); 
+    return; 
+  }
 
   const errors = validateGraphData(data);
   if (errors.length > 0) {
@@ -196,11 +232,6 @@ figma.ui.onmessage = async (m: PluginMessage) => {
   const nodes = new Map<string, SceneNode>();
   const elementsToGroup: SceneNode[] = [];
   const PADDING = { X: 100, Y: 40 };
-  const BOX_SIZE = { 
-      INPUT: { W: 144, H: 72 }, // Matched to NODE size
-      NODE: { W: 144, H: 72 }, 
-      ATTR: { W: 112, H: 20 } 
-  };
   const customColors = m.colors || {
       sink: COLOR.SINK_RED,
       source: COLOR.SOURCE_GREEN,
@@ -223,7 +254,7 @@ figma.ui.onmessage = async (m: PluginMessage) => {
       } else {
           totalHeight = BOX_SIZE.NODE.H;
           const act = node as Act;
-          const attrCount = (act.sources?.length || 0) + (act.sinks?.length || 0);
+          const attrCount = (act.sources?.length || 0) + (act.sinks?.length || 0) + (act.values?.length || 0);
           if (attrCount > 0) {
               totalHeight += (attrCount * (BOX_SIZE.ATTR.H + 5)) + 5;
           }
@@ -287,120 +318,110 @@ figma.ui.onmessage = async (m: PluginMessage) => {
 
   const placedNodePositions = new Map<string, {x: number, y: number, height: number, width: number}>();
   
+  function findConflictFreeY(id: string, colIndex: number, y_initial: number): number {
+      const nodeData = nodeDataMap.get(id);
+      if (!nodeData) return y_initial;
+
+      const totalHeight = nodeTotalHeights.get(id) || 0;
+      const boxWidth = (nodeData.kind === 'SINK_RED') ? BOX_SIZE.INPUT.W : BOX_SIZE.NODE.W;
+      const x = colIndex * (BOX_SIZE.NODE.W + PADDING.X);
+      let y_candidate = y_initial;
+
+      let max_y = 0; // Find the highest "floor" to place the node on.
+
+      // Check for direct node-on-node collision with ANY previously placed node
+      for (const pos of placedNodePositions.values()) {
+          // AABB check
+          if (x < pos.x + pos.width + PADDING.X && x + boxWidth + PADDING.X > pos.x) {
+              max_y = Math.max(max_y, pos.y + pos.height + PADDING.Y);
+          }
+      }
+
+      // Check for connector-on-node collision
+      const parentIds = revAdj.get(id) || [];
+      for (const pId of parentIds) {
+          const parentPos = placedNodePositions.get(pId);
+          const parentCol = nodeColumns.get(pId);
+          if (!parentPos || parentCol === undefined) continue;
+
+          const lineY_start = parentPos.y + parentPos.height / 2;
+          const lineY_end = y_candidate + totalHeight / 2; // Use candidate for temp check
+          const lineY_min = Math.min(lineY_start, lineY_end);
+          const lineY_max = Math.max(lineY_start, lineY_end);
+
+          // Check against nodes in intermediate columns
+          for (let i = parentCol + 1; i < colIndex; i++) {
+              for (const [otherId, otherPos] of placedNodePositions.entries()) {
+                  if (nodeColumns.get(otherId) === i) {
+                      if (lineY_max > otherPos.y && lineY_min < otherPos.y + otherPos.height) {
+                          max_y = Math.max(max_y, otherPos.y + otherPos.height + PADDING.Y);
+                      }
+                  }
+              }
+          }
+      }
+
+      // The final y position is the greater of its ideal target or the highest floor pushed by obstacles
+      return Math.max(y_candidate, max_y);
+  }
+  
   columns.forEach((nodeIdsInCol, colIndex) => {
-    // Sort nodes by their parents' average y-position to maintain vertical coherence
-    const yTargets = new Map<string, number>();
-    nodeIdsInCol.forEach(id => {
-        const parentIds = revAdj.get(id)!;
-        const parentYs = parentIds.map(pId => placedNodePositions.get(pId)?.y).filter(y => y !== undefined) as number[];
-        yTargets.set(id, parentYs.length > 0 ? parentYs.reduce((s, y) => s + y, 0) / parentYs.length : 0);
-    });
-    const sortedByYTarget = nodeIdsInCol.sort((a,b) => (yTargets.get(a) || 0) - (yTargets.get(b) || 0));
+      const yTargets = new Map<string, number>();
+      nodeIdsInCol.forEach(id => {
+          const parentIds = revAdj.get(id)!;
+          const parentYs = parentIds.map(pId => placedNodePositions.get(pId)?.y).filter(y => y !== undefined) as number[];
+          const targetY = parentYs.length > 0 ? parentYs.reduce((s, y) => s + y, 0) / parentYs.length : 0;
+          yTargets.set(id, targetY);
+      });
+      const sortedByYTarget = nodeIdsInCol.sort((a, b) => (yTargets.get(a) || 0) - (yTargets.get(b) || 0));
 
-    // Place nodes in the column, avoiding all overlaps
-    sortedByYTarget.forEach(id => {
-        const nodeData = nodeDataMap.get(id);
-        if (!nodeData) return;
-        
-        const totalHeight = nodeTotalHeights.get(id) || 0;
-        const boxWidth = nodeData.kind === 'SINK_RED' ? BOX_SIZE.INPUT.W : BOX_SIZE.NODE.W;
-        let y_candidate = yTargets.get(id) || 0;
+      sortedByYTarget.forEach(id => {
+          const nodeData = nodeDataMap.get(id);
+          if (!nodeData) return;
 
-        // Iteratively find a conflict-free vertical position
-        while (true) {
-            let conflict = false;
-            const x = colIndex * (BOX_SIZE.NODE.W + PADDING.X);
+          const y_initial = yTargets.get(id) || 0;
+          const y_final = findConflictFreeY(id, colIndex, y_initial);
+          const x_pos = colIndex * (BOX_SIZE.NODE.W + PADDING.X);
+          
+          let mainBox: SceneNode;
+          if (nodeData.kind === 'SINK_RED') {
+              mainBox = makeBox(nodeData.label, BOX_SIZE.INPUT.W, BOX_SIZE.INPUT.H, customColors.sink);
+          } else if (nodeData.kind === 'finalGood') {
+              mainBox = makeFinalGoodBox(nodeData.label, BOX_SIZE.NODE.W, BOX_SIZE.NODE.H, customColors.final);
+          } else {
+              mainBox = makeBox(nodeData.label, BOX_SIZE.NODE.W, BOX_SIZE.NODE.H, COLOR.MAIN_WHITE);
+          }
+          mainBox.x = x_pos;
+          mainBox.y = y_final;
+          mainBox.setPluginData("id", id); // Store the stable ID
 
-            // 1. Check for conflicts with ALL previously placed nodes, regardless of column
-            for (const otherPos of placedNodePositions.values()) {
-                // AABB collision detection (Axis-Aligned Bounding Box)
-                if (x < otherPos.x + otherPos.width + PADDING.X &&
-                    x + boxWidth + PADDING.X > otherPos.x &&
-                    y_candidate < otherPos.y + otherPos.height + PADDING.Y &&
-                    y_candidate + totalHeight + PADDING.Y > otherPos.y)
-                {
-                    // Conflict! Adjust y_candidate to be below the conflicting node.
-                    y_candidate = otherPos.y + otherPos.height + PADDING.Y;
-                    conflict = true;
-                    // Restart checks with the new y_candidate against all other nodes
-                    break;
-                }
-            }
-            if (conflict) continue;
+          const totalHeight = nodeTotalHeights.get(id) || 0;
+          const boxWidth = (nodeData.kind === 'SINK_RED') ? BOX_SIZE.INPUT.W : BOX_SIZE.NODE.W;
+          placedNodePositions.set(id, { x: x_pos, y: y_final, height: totalHeight, width: boxWidth });
+          nodes.set(id, mainBox);
+          elementsToGroup.push(mainBox);
 
-
-            // 2. Check for conflicts with lines from parent nodes crossing intermediate nodes
-            const parentIds = revAdj.get(id)!;
-            for (const pId of parentIds) {
-                const parentPos = placedNodePositions.get(pId);
-                const parentCol = nodeColumns.get(pId);
-                if (!parentPos || parentCol === undefined) continue;
-
-                // Define the vertical "lane" of the connector
-                const lineY_start = parentPos.y + (parentPos.height / 2);
-                const lineY_end = y_candidate + (totalHeight / 2);
-                const lineY_min = Math.min(lineY_start, lineY_end);
-                const lineY_max = Math.max(lineY_start, lineY_end);
-
-                // Check all intermediate columns for crossing nodes
-                for (let i = parentCol + 1; i < colIndex; i++) {
-                    for(const [otherId, otherPos] of placedNodePositions.entries()){
-                        if(nodeColumns.get(otherId) === i){
-                             const obstacleY_min = otherPos.y;
-                             const obstacleY_max = otherPos.y + otherPos.height;
-                             
-                             if (lineY_max > obstacleY_min && lineY_min < obstacleY_max){
-                                y_candidate = obstacleY_max + PADDING.Y;
-                                conflict = true;
-                                break;
-                             }
-                        }
-                    }
-                    if (conflict) break;
-                }
-                if (conflict) break;
-            }
-
-            if (!conflict) break; // Found a valid spot
-        }
-        
-        // Place the node
-        let mainBox: SceneNode;
-        
-        if (nodeData.kind === 'SINK_RED') {
-            mainBox = makeBox(nodeData.label, BOX_SIZE.INPUT.W, BOX_SIZE.INPUT.H, customColors.sink);
-        } else if (nodeData.kind === 'finalGood') {
-            mainBox = makeFinalGoodBox(nodeData.label, BOX_SIZE.NODE.W, BOX_SIZE.NODE.H, customColors.final);
-        } else {
-            mainBox = makeBox(nodeData.label, BOX_SIZE.NODE.W, BOX_SIZE.NODE.H, COLOR.MAIN_WHITE);
-        }
-        
-        const x_pos = colIndex * (BOX_SIZE.NODE.W + PADDING.X);
-        mainBox.x = x_pos;
-        mainBox.y = y_candidate;
-
-        placedNodePositions.set(id, {x: x_pos, y: y_candidate, height: totalHeight, width: boxWidth});
-        nodes.set(id, mainBox);
-        elementsToGroup.push(mainBox);
-
-        // Attribute logic
-        if ('sources' in nodeData || 'sinks' in nodeData) {
-            let attrY = mainBox.height + 5;
-            const addAttribute = (text: string, color: string) => {
-              const attrBox = makeBox(text, BOX_SIZE.ATTR.W, BOX_SIZE.ATTR.H, color);
-              attrBox.x = mainBox.x;
-              attrBox.y = mainBox.y + attrY;
-              elementsToGroup.push(attrBox);
-              attrY += BOX_SIZE.ATTR.H + 5;
-            };
-            (nodeData as Act).sources?.forEach(s => {
-                let color = customColors.source;
-                if (s.toLowerCase().includes('xp')) color = customColors.xp;
-                addAttribute(s, color);
-            });
-            (nodeData as Act).sinks?.forEach(s => addAttribute(s, customColors.sink));
-        }
-    });
+          // Attribute logic
+          if (nodeData.kind !== 'finalGood' && ('sources' in nodeData || 'sinks' in nodeData || 'values' in nodeData)) {
+              let attrY = mainBox.height + 5;
+              const addAttribute = (text: string, color: string) => {
+                  const attrBox = makeBox(text, BOX_SIZE.ATTR.W, BOX_SIZE.ATTR.H, color, 'LEFT');
+                  attrBox.x = mainBox.x;
+                  attrBox.y = mainBox.y + attrY;
+                  elementsToGroup.push(attrBox);
+                  attrY += BOX_SIZE.ATTR.H + 5;
+              };
+              (nodeData as Act).sources?.forEach(s => {
+                  addAttribute('+ ' + s, customColors.source);
+              });
+              (nodeData as Act).sinks?.forEach(s => {
+                addAttribute('- ' + s, customColors.sink);
+              });
+              (nodeData as Act).values?.forEach(v => {
+                addAttribute(v, customColors.xp);
+              });
+          }
+      });
   });
 
   // --- Draw Edges ---
@@ -435,58 +456,93 @@ function syncFromCanvas() {
         return;
     }
 
-    const nodes = new Map<string, SceneNode>();
     const graph: Graph = { inputs: [], nodes: [], edges: [] };
+    const tempNodeData = new Map<string, {node: SceneNode, act: Act | Input}>();
 
-    // Pass 1: Reconstruct all nodes and map their IDs
-    for (const child of group.children) {
-        if (child.name.includes('Final Good')) {
+    const children = [...group.children];
+    const isShapeWithText = (node: SceneNode): node is ShapeWithTextNode => 'text' in node;
+
+    // Pass 1: Reconstruct all nodes (Inputs, Actions, Final Goods) using the stable ID from pluginData
+    for (const child of children) {
+        const id = child.getPluginData("id");
+        if (!id) continue; // Skip attributes and connectors
+
+        if (child.name.includes("Final Good")) {
             const finalGoodGroup = child as GroupNode;
-            const body = finalGoodGroup.children.find(c => 'text' in c) as ShapeWithTextNode;
+            const body = finalGoodGroup.children.find(isShapeWithText);
             if (body) {
-                const id = body.text.characters.toLowerCase().replace(/\s+/g, '_');
-                 graph.nodes.push({
-                    id,
-                    label: body.text.characters,
-                    kind: 'finalGood',
-                    sources: [], sinks: [], values: []
-                });
-                nodes.set(child.id, { ...child, name: id } as SceneNode);
+                const label = body.text.characters;
+                const act: Act = { id, label, kind: 'finalGood' };
+                graph.nodes.push(act);
+                tempNodeData.set(child.id, { node: child, act });
             }
-        } else if ('text' in child) {
-            const node = child as ShapeWithTextNode;
-            const id = node.text.characters.toLowerCase().replace(/\s+/g, '_');
-            const fill = (node.fills as readonly Paint[])[0];
-
-            if (fill && 'color' in fill) {
-                // Approximate color matching
-                const isInput = Math.round(fill.color.r * 255) === 218;
-                if (isInput) {
-                    graph.inputs.push({ id, label: node.text.characters, kind: 'SINK_RED' });
-                } else {
-                    graph.nodes.push({
-                        id,
-                        label: node.text.characters,
-                        sources: [], sinks: [], values: []
-                    });
-                }
+        } else if (isShapeWithText(child) && child.width > BOX_SIZE.ATTR.W) { // Main box
+            const node = child;
+            const fill = (node.fills as readonly Paint[])[0] as SolidPaint;
+            const label = node.text.characters;
+            
+            if (Math.round(fill.color.r * 255) === 218) { // SINK_RED
+                const input: Input = { id, label, kind: 'SINK_RED' };
+                graph.inputs.push(input);
+                tempNodeData.set(node.id, { node, act: input });
+            } else {
+                const act: Act = { id, label, sources: [], sinks: [], values: [] };
+                graph.nodes.push(act);
+                tempNodeData.set(node.id, { node, act });
             }
-            nodes.set(child.id, { ...child, name: id } as SceneNode);
         }
     }
 
-    // Pass 2: Reconstruct edges
-    for (const child of group.children) {
+    // Pass 2: Find attributes and associate them with their parent nodes
+    for (const child of children) {
+        if (isShapeWithText(child) && child.width <= BOX_SIZE.ATTR.W) { // Attribute box
+            const attrNode = child;
+            const fill = (attrNode.fills as readonly Paint[])[0] as SolidPaint;
+            
+            // Find parent by positional check (finds nearest node above it)
+            let parentData: {node: SceneNode, act: Act | Input} | undefined;
+            let minDistance = Infinity;
+
+            for (const data of tempNodeData.values()) {
+                const p = data.node;
+                // Check if attribute is generally below the parent and in the same column
+                if (p.x === attrNode.x && attrNode.y > p.y) {
+                    const distance = attrNode.y - (p.y + p.height);
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                        parentData = data;
+                    }
+                }
+            }
+
+            if (parentData && 'sources' in parentData.act) { // ensure it's an Act
+                const text = attrNode.text.characters;
+                const r = Math.round(fill.color.r * 255);
+                const g = Math.round(fill.color.g * 255);
+
+                if (r === 76 && g === 175) { // SOURCE_GREEN
+                    parentData.act.sources?.push(text.replace(/^[+\-]\s*/, '').trim());
+                } else if (r === 218) { // SINK_RED
+                    parentData.act.sinks?.push(text.replace(/^[+\-]\s*/, '').trim());
+                } else { // XP_ORANGE
+                    parentData.act.values?.push(text.trim());
+                }
+            }
+        }
+    }
+
+    // Pass 3: Reconstruct edges
+    for (const child of children) {
         if (child.type === 'CONNECTOR') {
             const connector = child as ConnectorNode;
-            const startNodeId = (connector.connectorStart as EconomyFlowConnectorEndpoint).endpointNodeId;
-            const endNodeId = (connector.connectorEnd as EconomyFlowConnectorEndpoint).endpointNodeId;
+            const startId = (connector.connectorStart as EconomyFlowConnectorEndpoint).endpointNodeId;
+            const endId = (connector.connectorEnd as EconomyFlowConnectorEndpoint).endpointNodeId;
+            
+            const fromData = tempNodeData.get(startId);
+            const toData = tempNodeData.get(endId);
 
-            const fromNode = nodes.get(startNodeId);
-            const toNode = nodes.get(endNodeId);
-
-            if (fromNode && toNode) {
-                graph.edges.push([fromNode.name, toNode.name]);
+            if (fromData && toData) {
+                graph.edges.push([fromData.act.id, toData.act.id]);
             }
         }
     }
