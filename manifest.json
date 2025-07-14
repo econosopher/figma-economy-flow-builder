@@ -1,6 +1,6 @@
 {
-  "name": "Supply Flow Builder",
-  "id": "supply-flow-builder",
+  "name": "Economy Flow Builder",
+  "id": "economy-flow-builder",
   "api": "1.0.0",
   "main": "dist/code.js"
 }

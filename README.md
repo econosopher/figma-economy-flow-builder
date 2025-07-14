@@ -1,6 +1,14 @@
-# Supply-Flow Builder (Figma & FigJam)
+# Economy-Flow Builder (Figma & FigJam)
 
-Generate supply-chain flow-charts from a simple JSON spec. This plugin intelligently lays out nodes and their connections, creating clear and readable diagrams in both Figma and FigJam.
+Generate economy flow-charts from a simple JSON spec. This plugin intelligently lays out nodes and their connections, creating clear and readable diagrams in both Figma and FigJam. It offers features like customizable colors, pre-built templates, and detailed validation to streamline your workflow.
+
+## Features
+*   **JSON-Powered:** Define your entire flowchart structure using a simple and editable JSON format.
+*   **Customizable Colors:** Use the UI color pickers to customize the colors for inputs, sinks, sources, and other node types to match your theme.
+*   **Pre-built Templates:** Get started instantly with "basic" and "complex" example templates.
+*   **In-depth Validation:** Receive clear, specific error messages for invalid JSON structure, ensuring your data is correct before generation.
+*   **Auto-Layout:** Automatically arranges nodes and connections for a clean and readable layout.
+*   **Figma & FigJam Ready:** Works seamlessly in both Figma Design and FigJam environments.
 
 ## Example
 
@@ -62,7 +70,7 @@ The plug‑in draws red **inputs**, black **activities**, and coloured **source 
 ## 2  Build
 
 ```bash
-cd supply-flow-plugin
+cd economy-flow-plugin
 npx tsc
 ```
 
@@ -70,13 +78,14 @@ npx tsc
 
 ---
 
-## 3  Load in Figma (local)
+## 3  Usage
 
-1. **Figma desktop → Plugins → Development → Import plugin from manifest…**  
-2. In any **FigJam** (or Design) file run **Plugins → Development → Supply‑Flow Builder**.  
-3. Paste JSON → **Generate** → chart appears; **Clear Canvas** wipes it.
-
-_No Community publishing needed._
+1.  **Open the plugin:** In any FigJam or Design file, run **Plugins → Development → Economy‑Flow Builder**.
+2.  **Choose a Template (Optional):** Select a "Basic" or "Complex" example from the "Start with a template" dropdown to pre-fill the JSON. A confirmation will appear if you have existing JSON.
+3.  **Customize Colors (Optional):** Use the color pickers to change the default colors for different node types.
+4.  **Provide JSON:** Write or paste your flowchart definition into the main text area.
+5.  **Generate:** Click the "Generate" button. The plugin will validate your JSON and render the diagram on the canvas. Any errors will be displayed at the bottom.
+6.  **Clear:** Click "Clear Canvas" to remove all elements created by the plugin.
 
 ---
 
@@ -95,7 +104,7 @@ _No Community publishing needed._
 
 ```bash
 # clone repo (or move unzipped folder)
-cd ~/supply-flow-plugin
+cd ~/economy-flow-plugin
 npm install           # installs dev deps if you added package.json
 npx tsc               # compile
 open -a Figma .       # open Figma and import the manifest
