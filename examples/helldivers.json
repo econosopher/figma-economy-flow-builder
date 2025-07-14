@@ -1,0 +1,36 @@
+{
+  "inputs": [
+    { "id": "time", "label": "Time", "kind": "SINK_RED" },
+    { "id": "money", "label": "Money", "kind": "SINK_RED" }
+  ],
+  "nodes": [
+    { "id": "start_missions", "label": "To Start Missions" },
+    { "id": "mission_objectives", "label": "To Complete Mission Objectives", "sources": ["+ Player XP", "+ Stratagem Slips", "+ Warbond Credits"] },
+    { "id": "increase_level", "label": "To Increase Player Level", "sources": ["+ Weapons", "+ Armor"] },
+    { "id": "higher_difficulty", "label": "To Defeat Higher Difficulty Missions", "sources": ["+ Stratagems"] },
+    { "id": "major_orders", "label": "To Complete Major Orders", "sources": ["+ Metals"] },
+    { "id": "liberate_planets", "label": "To Liberate Planets" },
+    { "id": "galactic_power", "label": "To Increase Galactic Power" },
+    { "id": "super_win", "label": "To Achieve a Super Win", "sources": ["+ Metals"] },
+    { "id": "warbond_tiers", "label": "To Unlock Warbond Tiers", "sources": ["+ Metals", "+ Stratagems", "+ Weapons", "+ Armor"] },
+    { "id": "premium_lane", "label": "To Unlock Warbond Premium Lane", "sources": ["+ Super Credits"], "sinks": ["- Super Credits"] },
+    { "id": "final_good_1", "label": "Experience More Role Playing Moment", "kind": "finalGood" },
+    { "id": "final_good_2", "label": "To earn Unlock New Narrative", "kind": "finalGood" }
+  ],
+  "edges": [
+    ["time", "start_missions"],
+    ["start_missions", "mission_objectives"],
+    ["start_missions", "major_orders"],
+    ["mission_objectives", "increase_level"],
+    ["increase_level", "higher_difficulty"],
+    ["higher_difficulty", "final_good_1"],
+    ["higher_difficulty"],
+    ["major_orders", "liberate_planets"],
+    ["major_orders", "warbond_tiers"],
+    ["liberate_planets", "galactic_power"],
+    ["galactic_power", "super_win"],
+    ["super_win", "final_good_2"],
+    ["money", "premium_lane"],
+    ["premium_lane", "warbond_tiers"]
+  ]
+} 

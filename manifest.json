@@ -2,5 +2,6 @@
   "name": "Economy Flow Builder",
   "id": "economy-flow-builder",
   "api": "1.0.0",
-  "main": "dist/code.js"
+  "main": "code.js",
+  "editorType": ["figjam"]
 }

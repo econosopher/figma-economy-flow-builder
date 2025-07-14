@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Economy Flow Builder</title>
+    <style>
+      body{margin:0;font-family:Inter,monospace;display:flex;flex-direction:column;height:100vh;padding:16px;box-sizing:border-box}
+      .container{display:flex;flex-direction:column;height:100%}
+      header { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+      header img { width: 32px; height: 32px; }
+      header h1 { font-size: 16px; margin: 0; }
+      section { border: 1px solid #e0e0e0; border-radius: 4px; padding: 12px; margin-bottom: 12px; }
+      h2 { font-size: 14px; margin-top: 0; margin-bottom: 8px; font-weight: bold; }
+      #templates{margin-bottom:8px}
+      #colors { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 8px; font-size: 12px; }
+      #colors > div { display: flex; align-items: center; justify-content: space-between; }
+      #colors input { height: 24px; width: 40px; border: 1px solid #ccc; padding: 1px; }
+      textarea{flex:1;border:1px solid #999;border-radius:4px;padding:6px;font-family:monospace;min-height:150px}
+      .buttons { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 12px; }
+      button{height:32px;border:none;border-radius:4px;font-weight:bold;color:#fff;cursor:pointer}
+      #go{background:#18a058} #sync{background:#1E88E5} #clear{background:#b71c1c}
+      #status{font-size:11px;margin-top:8px}
+      ul { padding-left: 20px; margin: 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <img src="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3ccircle cx='12' cy='12' r='3'%3e%3c/circle%3e%3cpath d='M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z'%3e%3c/path%3e%3c/svg%3e" alt="Logo">
+            <h1>Economy-Flow Builder</h1>
+        </header>
+
+        <section>
+            <h2>Templates & Colors</h2>
+            <div id="templates">
+              <label for="template-select">Start with a template: </label>
+              <select id="template-select">
+                <option value="">--Select--</option>
+              </select>
+            </div>
+            <div id="colors">
+              <div><label for="color-sink">Input/Sink</label><input id="color-sink" type="color"></div>
+              <div><label for="color-source">Source</label><input id="color-source" type="color"></div>
+              <div><label for="color-xp">XP/Value</label><input id="color-xp" type="color"></div>
+              <div><label for="color-final">Final Good</label><input id="color-final" type="color"></div>
+            </div>
+        </section>
+
+        <section style="flex: 1; display: flex; flex-direction: column;">
+            <h2>JSON Spec</h2>
+            <textarea id="json"></textarea>
+        </section>
+        
+        <div id="status"></div>
+
+        <div class="buttons">
+            <button id="go">Generate from JSON ⌘/Ctrl+Enter</button>
+            <button id="sync">Sync from Canvas</button>
+            <button id="clear">Clear Canvas</button>
+        </div>
+    </div>
+
+    <script>
+     const t=document.getElementById('json'),s=document.getElementById('status'),tmpl=document.getElementById('template-select');
+     const post=(cmd,obj={})=>parent.postMessage({pluginMessage:{cmd,...obj}},'*');
+     
+     document.getElementById('go').onclick=()=>{
+       const colors = {
+         sink: document.getElementById('color-sink').value,
+         source: document.getElementById('color-source').value,
+         xp: document.getElementById('color-xp').value,
+         final: document.getElementById('color-final').value
+       };
+       post('draw',{json:t.value, colors});
+     };
+     document.getElementById('clear').onclick=()=>post('clear');
+     document.getElementById('sync').onclick=()=>post('sync-from-canvas');
+
+     t.onkeydown=e=>{if((e.metaKey||e.ctrlKey)&&e.key==='Enter')document.getElementById('go').click();}
+     
+     onmessage=e=>{
+      const m = e.data.pluginMessage;
+      if (m.type === 'templates') {
+        // Set initial color values
+        document.getElementById('color-sink').value = m.colors.SINK_RED;
+        document.getElementById('color-source').value = m.colors.SOURCE_GREEN;
+        document.getElementById('color-xp').value = m.colors.XP_ORANGE;
+        document.getElementById('color-final').value = m.colors.FINAL_GOOD_YELLOW;
+
+        // Populate templates
+        for (const key in m.templates) {
+          const option = document.createElement('option');
+          option.value = key;
+          option.textContent = key.charAt(0).toUpperCase() + key.slice(1);
+          tmpl.appendChild(option);
+        }
+        tmpl.onchange = () => {
+          if (t.value.trim() !== '' && !confirm('This will replace your current JSON. Are you sure?')) {
+            tmpl.value = '';
+            return;
+          }
+          const selected = tmpl.value;
+          if (selected && m.templates[selected]) {
+            t.value = JSON.stringify(m.templates[selected], null, 2);
+          } else {
+            t.value = '';
+          }
+        };
+        return;
+      }
+      
+      if (m.type === 'reply') {
+        s.style.color=m.ok?'#2e7d32':'#c62828';
+        if (Array.isArray(m.msg)) {
+          s.innerHTML = '<ul>' + m.msg.map(item => '<li>' + item + '</li>').join('') + '</ul>';
+        } else {
+          s.textContent = m.msg;
+        }
+      }
+
+      if (m.type === 'sync-json') {
+          t.value = m.json;
+          s.style.color = '#2e7d32';
+          s.textContent = 'JSON synced from canvas.';
+      }
+     };
+    </script>
+</body>
+</html> 
