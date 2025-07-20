@@ -13,8 +13,8 @@ function incrementVersion() {
   const currentVersion = pkg.version;
   const [major, minor, patch] = currentVersion.split('.').map(Number);
   
-  // Increment minor version
-  const newVersion = `${major}.${minor + 1}.0`;
+  // Increment patch version
+  const newVersion = `${major}.${minor}.${patch + 1}`;
   
   console.log(`📝 Incrementing version from ${currentVersion} to ${newVersion}`);
   
