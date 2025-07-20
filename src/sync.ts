@@ -87,7 +87,13 @@ export function syncFromCanvas() {
     for (const child of children) {
       if (isShapeWithText(child) && child.width <= BOX_SIZE.ATTR.W) {
         const attrNode = child;
-        const fill = (attrNode.fills as readonly Paint[])[0] as SolidPaint;
+        const fills = attrNode.fills;
+        if (!fills || typeof fills === 'symbol' || fills.length === 0) continue;
+        
+        const firstFill = fills[0];
+        if (firstFill.type !== 'SOLID') continue;
+        
+        const fill = firstFill as SolidPaint;
         
         // Find parent by positional check
         let parentData: {node: SceneNode, act: Act | Input} | undefined;
@@ -108,6 +114,7 @@ export function syncFromCanvas() {
           const text = attrNode.text.characters;
           const r = Math.round(fill.color.r * 255);
           const g = Math.round(fill.color.g * 255);
+          const b = Math.round(fill.color.b * 255);
 
           // More flexible color matching with tolerance
           const isGreen = r >= 70 && r <= 80 && g >= 170 && g <= 180;
@@ -121,7 +128,7 @@ export function syncFromCanvas() {
           } else if (isOrange) {
             parentData.act.values?.push(text.trim());
           } else {
-            console.warn(`Unknown attribute color: rgb(${r}, ${g}, _) for text: ${text}`);
+            console.warn(`Unknown attribute color: rgb(${r}, ${g}, ${b}) for text: ${text}`);
           }
         }
       }

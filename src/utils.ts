@@ -59,7 +59,9 @@ export function clear() {
 
 export function reply(msg: string | string[], ok: boolean) {
   try {
-    figma.ui.postMessage({ type: 'reply', msg, ok });
+    if (typeof figma !== 'undefined' && figma.ui) {
+      figma.ui.postMessage({ type: 'reply', msg, ok });
+    }
   } catch (error) {
     console.error('Failed to send message to UI:', error);
   }
