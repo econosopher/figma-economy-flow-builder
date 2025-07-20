@@ -242,7 +242,7 @@ async function generateDiagram(data: Graph, customColorInput?: { [key: string]: 
             
             subsection.setPluginData("subsectionId", subsectionData.id);
             subsections.push(subsection);
-            elementsToGroup.push(subsection);
+            // Don't add subsections to elementsToGroup - they should be siblings of the group
           }
         }
       }
@@ -274,6 +274,12 @@ async function generateDiagram(data: Graph, customColorInput?: { [key: string]: 
       
       // Move the group into the section
       section.appendChild(group);
+      
+      // Add subsections to the main section (as siblings of the group)
+      subsections.forEach(subsection => {
+        section.appendChild(subsection);
+      });
+      
       figma.currentPage.appendChild(section);
       
       // Store section ID for sync purposes

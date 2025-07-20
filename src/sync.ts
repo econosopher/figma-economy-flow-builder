@@ -12,10 +12,12 @@ export function syncFromCanvas() {
     ) as SectionNode;
     
     let group: SceneNode | null = null;
+    let searchContainer: BaseNode = figma.currentPage;
     
     if (section) {
       // Look for the group inside the section
       group = section.findOne(n => n.name === TAG);
+      searchContainer = section; // Search for subsections within the main section
     } else {
       // Fallback: look for the group in the page (legacy support)
       group = figma.currentPage.findOne(n => n.name === TAG);
@@ -37,10 +39,12 @@ export function syncFromCanvas() {
     for (const child of children) {
       const id = child.getPluginData("id");
       if (!id) {
-        // Track non-conforming objects
-        if (child.type !== 'CONNECTOR' && !isShapeWithText(child)) {
-          ignoredNodes.push(`${child.type}: ${child.name || 'Unnamed'}`);
-        }
+        // Skip attributes (they're handled in pass 2) and connectors
+        if (child.type === 'CONNECTOR') continue;
+        if (isShapeWithText(child) && child.width <= BOX_SIZE.ATTR.W) continue;
+        
+        // Track other non-conforming objects
+        ignoredNodes.push(`${child.type}: ${child.name || 'Unnamed'}`);
         continue;
       }
 
@@ -141,8 +145,11 @@ export function syncFromCanvas() {
 
     // Pass 4: Reconstruct subsections
     const subsections: Subsection[] = [];
-    for (const child of children) {
-      if (child.type === 'SECTION' && child.getPluginData("subsectionId")) {
+    // Look for subsections in the parent container (section or page), not in the group
+    const subsectionParent = searchContainer as PageNode | SectionNode;
+    if ('children' in subsectionParent) {
+      for (const child of subsectionParent.children) {
+        if (child.type === 'SECTION' && child.getPluginData("subsectionId")) {
         const subsectionId = child.getPluginData("subsectionId");
         const section = child as SectionNode;
         
@@ -194,6 +201,7 @@ export function syncFromCanvas() {
         }
       }
     }
+    }
     
     if (subsections.length > 0) {
       graph.subsections = subsections;
@@ -201,7 +209,10 @@ export function syncFromCanvas() {
 
     // Validate the reconstructed graph
     if (graph.inputs.length === 0 && graph.nodes.length === 0) {
-      reply('No valid nodes found in the diagram.', false);
+      console.error('Sync failed - no nodes found');
+      console.error('Group children:', children.length);
+      console.error('TempNodeData entries:', tempNodeData.size);
+      reply('No valid nodes found in the diagram. Please check the console for debugging info.', false);
       return;
     }
 
@@ -211,10 +222,6 @@ export function syncFromCanvas() {
     const messages = ['Successfully synced diagram to JSON'];
     if (subsections.length > 0) {
       messages.push(`Found ${subsections.length} subsection(s)`);
-    }
-    if (ignoredNodes.length > 0) {
-      messages.push(`Ignored ${ignoredNodes.length} non-conforming object(s)`);
-      console.log('Ignored objects:', ignoredNodes);
     }
     reply(messages, true);
   } catch (error) {
