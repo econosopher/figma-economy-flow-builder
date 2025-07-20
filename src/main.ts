@@ -67,7 +67,9 @@ figma.ui.onmessage = async (m: PluginMessage) => {
 
 async function generateDiagram(data: Graph, customColorInput?: { [key: string]: string }) {
   const nodes = new Map<string, SceneNode>();
-  const elementsToGroup: SceneNode[] = [];
+  const mainBoxes = new Map<string, SceneNode>(); // Store main boxes for connector endpoints
+  const connectors: SceneNode[] = [];
+  const nodesAndAttributes: SceneNode[] = [];
   const customColors = validateCustomColors(customColorInput);
   
   // Layout calculation
@@ -116,13 +118,25 @@ async function generateDiagram(data: Graph, customColorInput?: { [key: string]: 
       const x_pos = colIndex * (BOX_SIZE.NODE.W + PADDING.X);
       
       let mainBox: SceneNode;
+      let actualConnectorTarget: SceneNode; // The actual box to connect to
       try {
         if ('kind' in nodeData && nodeData.kind === 'SINK_RED') {
           mainBox = makeBox(nodeData.label, BOX_SIZE.INPUT.W, BOX_SIZE.INPUT.H, customColors.sink);
+          actualConnectorTarget = mainBox;
         } else if ('kind' in nodeData && nodeData.kind === 'finalGood') {
-          mainBox = makeFinalGoodBox(nodeData.label, BOX_SIZE.NODE.W, BOX_SIZE.NODE.H, customColors.final);
+          mainBox = makeFinalGoodBox(nodeData.label, BOX_SIZE.FINAL_GOOD.W, BOX_SIZE.FINAL_GOOD.H, customColors.final);
+          // For final good, the main box is a group - find the body box inside it
+          if (mainBox.type === 'GROUP' && 'children' in mainBox && mainBox.children.length > 1) {
+            // The body is the second child (index 1) in the final good group
+            actualConnectorTarget = mainBox.children[1];
+            console.log(`Final good "${nodeData.label}" - using body box for connector`);
+          } else {
+            console.warn(`Final good "${nodeData.label}" - couldn't find body box, using group`);
+            actualConnectorTarget = mainBox;
+          }
         } else {
           mainBox = makeBox(nodeData.label, BOX_SIZE.NODE.W, BOX_SIZE.NODE.H, COLOR.MAIN_WHITE);
+          actualConnectorTarget = mainBox;
         }
       } catch (error) {
         console.error('Failed to create node:', error);
@@ -137,8 +151,8 @@ async function generateDiagram(data: Graph, customColorInput?: { [key: string]: 
       const boxWidth = ('kind' in nodeData && nodeData.kind === 'SINK_RED') ? BOX_SIZE.INPUT.W : BOX_SIZE.NODE.W;
       layoutEngine.recordNodePosition(id, x_pos, y_final, boxWidth, totalHeight);
       
-      nodes.set(id, mainBox);
-      elementsToGroup.push(mainBox);
+      // Collect main box and its attributes for grouping
+      const nodeElements: SceneNode[] = [mainBox];
 
       // Add attributes
       if (!('kind' in nodeData && nodeData.kind === 'finalGood') && 
@@ -149,7 +163,7 @@ async function generateDiagram(data: Graph, customColorInput?: { [key: string]: 
             const attrBox = makeBox(text, BOX_SIZE.ATTR.W, BOX_SIZE.ATTR.H, color, 'LEFT');
             attrBox.x = mainBox.x;
             attrBox.y = mainBox.y + attrY;
-            elementsToGroup.push(attrBox);
+            nodeElements.push(attrBox);
             attrY += BOX_SIZE.ATTR.H + 5;
           } catch (error) {
             console.error(`Failed to create attribute box for "${text}":`, error);
@@ -161,6 +175,24 @@ async function generateDiagram(data: Graph, customColorInput?: { [key: string]: 
         act.sinks?.forEach(s => addAttribute('- ' + s, customColors.sink));
         act.values?.forEach(v => addAttribute(v, customColors.xp));
       }
+      
+      // Group the node with its attributes if there are attributes
+      let nodeGroup: SceneNode;
+      if (nodeElements.length > 1) {
+        nodeGroup = figma.group(nodeElements, figma.currentPage);
+        nodeGroup.name = `Node: ${nodeData.label}`;
+        nodeGroup.setPluginData("id", id);
+        // For regular nodes with attributes, ensure we're targeting the main box (first child)
+        if (!('kind' in nodeData && nodeData.kind === 'finalGood')) {
+          actualConnectorTarget = nodeElements[0]; // The main box is always first
+        }
+      } else {
+        nodeGroup = mainBox;
+      }
+      
+      nodes.set(id, nodeGroup);
+      mainBoxes.set(id, actualConnectorTarget); // Store the actual connector target
+      nodesAndAttributes.push(nodeGroup);
     });
   });
 
@@ -172,14 +204,14 @@ async function generateDiagram(data: Graph, customColorInput?: { [key: string]: 
         failedEdges.push(`Edge ${index}: Missing from/to ID`);
         return;
       }
-      const fromNode = nodes.get(fromId);
-      const toNode = nodes.get(toId);
+      const fromNode = mainBoxes.get(fromId) || nodes.get(fromId);
+      const toNode = mainBoxes.get(toId) || nodes.get(toId);
       if (!fromNode || !toNode) {
         failedEdges.push(`Edge ${index}: Node not found (${!fromNode ? fromId : toId})`);
         return;
       }
       const connector = createConnector(fromNode, toNode);
-      elementsToGroup.unshift(connector);
+      connectors.push(connector);
     } catch (error) {
       failedEdges.push(`Edge ${index}: ${(error as Error).message}`);
     }
@@ -189,6 +221,9 @@ async function generateDiagram(data: Graph, customColorInput?: { [key: string]: 
     console.warn('Some edges failed to render:', failedEdges);
   }
 
+  // Combine elements with connectors first (so they render behind nodes)
+  const elementsToGroup = [...connectors, ...nodesAndAttributes];
+  
   // Create section and group
   if (elementsToGroup.length > 0) {
     try {
@@ -203,14 +238,7 @@ async function generateDiagram(data: Graph, customColorInput?: { [key: string]: 
             const node = nodes.get(nodeId);
             if (node) {
               subsectionNodes.push(node);
-              // Also collect their attributes
-              elementsToGroup.forEach(elem => {
-                if (elem !== node && 'x' in elem && 'y' in elem && 
-                    Math.abs(elem.x - node.x) < 5 && 
-                    elem.y > node.y && elem.y < node.y + 200) {
-                  subsectionNodes.push(elem);
-                }
-              });
+              // No need to collect attributes separately as they're now grouped with the node
             }
           });
           
@@ -274,6 +302,16 @@ async function generateDiagram(data: Graph, customColorInput?: { [key: string]: 
       
       // Move the group into the section
       section.appendChild(group);
+      
+      // Ensure connectors are behind nodes by reordering within the group
+      // In Figma, children are rendered in order (first child = back, last child = front)
+      const groupChildren = [...group.children];
+      const connectorsInGroup = groupChildren.filter(child => child.type === 'CONNECTOR');
+      const nonConnectors = groupChildren.filter(child => child.type !== 'CONNECTOR');
+      
+      // Remove all children and re-add them in the correct order
+      connectorsInGroup.forEach(connector => group.appendChild(connector));
+      nonConnectors.forEach(node => group.appendChild(node));
       
       // Add subsections to the main section (as siblings of the group)
       subsections.forEach(subsection => {

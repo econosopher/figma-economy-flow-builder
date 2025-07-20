@@ -62,7 +62,7 @@ export function makeFinalGoodBox(txt: string, w: number, h: number, bodyFill: st
       throw new Error('Final good box height too small for header + body');
     }
 
-    const headerHeight = 24;
+    const headerHeight = BOX_SIZE.FINAL_GOOD_HEADER.H;
     const bodyHeight = h - headerHeight;
 
     const body = makeBox(txt, w, bodyHeight, bodyFill);

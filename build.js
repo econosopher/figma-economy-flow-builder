@@ -3,6 +3,64 @@ const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
 
+// Check if source files have changed since last build
+function hasSourceChanges() {
+  const lastBuildFile = path.join(__dirname, '.last-build-hash');
+  const sourceFiles = [
+    'src/**/*.ts',
+    'ui.html',
+    'examples/**/*.json',
+    'manifest.json'
+  ];
+  
+  // Get current hash of source files
+  const crypto = require('crypto');
+  const hash = crypto.createHash('md5');
+  
+  // Add file contents to hash
+  const glob = require('glob');
+  sourceFiles.forEach(pattern => {
+    const files = glob.sync(pattern, { cwd: __dirname });
+    files.sort().forEach(file => {
+      try {
+        let content = fs.readFileSync(path.join(__dirname, file), 'utf8');
+        
+        // For package.json and ui.html, exclude version numbers from hash
+        if (file === 'package.json') {
+          // Remove version field from content for hashing
+          const pkg = JSON.parse(content);
+          delete pkg.version;
+          content = JSON.stringify(pkg);
+        } else if (file === 'ui.html') {
+          // Remove version strings from content for hashing
+          content = content.replace(/v\d+\.\d+\.\d+/g, 'vX.X.X');
+        }
+        
+        hash.update(file + content);
+      } catch (e) {
+        // File might not exist
+      }
+    });
+  });
+  
+  const currentHash = hash.digest('hex');
+  
+  // Compare with last build hash
+  let lastHash = '';
+  try {
+    lastHash = fs.readFileSync(lastBuildFile, 'utf8');
+  } catch (e) {
+    // First build
+  }
+  
+  const hasChanges = currentHash !== lastHash;
+  
+  // Save current hash for next comparison
+  fs.writeFileSync(lastBuildFile, currentHash);
+  
+  return hasChanges;
+}
+
 // Auto-increment version
 function incrementVersion() {
   const packagePath = path.join(__dirname, 'package.json');
@@ -31,16 +89,26 @@ function incrementVersion() {
 }
 
 // Check if --no-increment flag is passed
-const shouldIncrement = !process.argv.includes('--no-increment');
+const forceNoIncrement = process.argv.includes('--no-increment');
+const forceIncrement = process.argv.includes('--force-increment');
 
-// Increment version before build if flag not present
+// Determine if we should increment
+let shouldIncrement = false;
+if (forceIncrement) {
+  shouldIncrement = true;
+} else if (!forceNoIncrement) {
+  // Check if source files have changed
+  shouldIncrement = hasSourceChanges();
+}
+
+// Get or increment version
 let newVersion;
+const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json'), 'utf8'));
 if (shouldIncrement) {
   newVersion = incrementVersion();
 } else {
-  const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json'), 'utf8'));
   newVersion = pkg.version;
-  console.log(`📦 Building without version increment (v${newVersion})`);
+  console.log(`📦 No source changes detected. Building with current version (v${newVersion})`);
 }
 
 // Check if TypeScript is compiled

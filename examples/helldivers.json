@@ -24,7 +24,6 @@
     ["mission_objectives", "increase_level"],
     ["increase_level", "higher_difficulty"],
     ["higher_difficulty", "final_good_1"],
-    ["higher_difficulty"],
     ["major_orders", "liberate_planets"],
     ["major_orders", "warbond_tiers"],
     ["liberate_planets", "galactic_power"],

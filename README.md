@@ -77,9 +77,9 @@ An array of objects representing the actions, activities, or states in your flow
 *   `id` (string, required): A unique identifier for this node.
 *   `label` (string, required): The text for the node's main box.
 *   `kind` (string, optional): Set to `"finalGood"` to render a special "Final Good" box. Otherwise, it's a standard white action box.
-*   `sources` (array of strings, optional): Resources *gained* from this node. Rendered as green attribute boxes.
-*   `sinks` (array of strings, optional): Resources *spent* at this node. Rendered as red attribute boxes.
-*   `values` (array of strings, optional): Key metrics or value stores that are tracked, like Experience Points. Rendered as orange attribute boxes.
+*   `sources` (array of strings, optional): Resources *gained* that can be spent elsewhere (e.g., Gold, Gems). Rendered as green attribute boxes.
+*   `sinks` (array of strings, optional): Resources *consumed* from elsewhere (e.g., Energy, Gold). Rendered as red attribute boxes.
+*   `values` (array of strings, optional): Stores of value that accumulate but CANNOT be spent (e.g., XP, Level, Achievement Points). Rendered as orange attribute boxes.
 
 **Example:**
 ```json
@@ -141,36 +141,65 @@ To quickly generate a new flowchart, you can use the following prompt with a cap
 ```text
 You are an expert video game economist and analyst. Your task is to research the economy and player progression systems of the game "[Specify Game Title Here]". Based on your research, generate a JSON object that models the core gameplay loops, resource flows, and progression paths.
 
-The output MUST be a single, complete JSON object with three top-level keys: `inputs`, `nodes`, and `edges`.
+The output MUST be a single, complete JSON object with EXACTLY these three top-level keys: `inputs`, `nodes`, and `edges`. Optional fourth key: `subsections`.
+
+### Critical JSON Structure Rules:
+
+1. **NO MARKDOWN FORMATTING**: Output ONLY the raw JSON object. No \`\`\`json tags, no explanations before or after.
+2. **NO TRAILING COMMAS**: Never put a comma after the last item in any array or object.
+3. **ALL ARRAYS MUST HAVE VALUES**: If a property expects an array (like `sources`, `sinks`, `values`), it must be present with at least an empty array `[]`. Never leave a property without a value.
+4. **CONSISTENT ID FORMAT**: All `id` values must be lowercase with underscores (snake_case). Example: `daily_quest`, not `dailyQuest` or `DailyQuest`.
+5. **VALID EDGES**: Every edge must connect existing nodes. Each edge is a two-element array: `["from_id", "to_id"]`.
 
 ### JSON Structure Specification:
 
-**Crucial Formatting Rule:** Your output must be a single, raw JSON object without any surrounding text, explanations, or markdown formatting like \`\`\`json. Pay strict attention to syntax. There must be **no trailing commas**. Every property that expects an array (like `inputs`, `nodes`, `edges`, `sources`, and `sinks`) **must have a value**, even if it's just an empty array `[]`. A property with a missing value (e.g., `"sources":,`) is invalid.
+1. **`inputs`** (required array): Primary resources players invest (time, money). These are economy sources.
+   - `id` (string): Unique snake_case identifier
+   - `label` (string): Display name (e.g., "Time", "Money")
+   - `kind` (string): MUST be exactly `"SINK_RED"` (all caps with underscore)
 
-1.  **`inputs`**: An array of objects representing the primary resources a player invests, such as time or real money. These are the ultimate sources of the economy.
-    *   `id` (string): A unique, lowercase, snake_case identifier.
-    *   `label` (string): A short, descriptive name for the input (e.g., "Player's Time").
-    *   `kind` (string): Must be set to the value `"SINK_RED"`.
+2. **`nodes`** (required array): Game activities, systems, or milestones.
+   - `id` (string): Unique snake_case identifier
+   - `label` (string): Descriptive name (e.g., "Complete Daily Quest")
+   - `sources` (array of strings): Resources GAINED that can be spent elsewhere (e.g., ["Gold", "Crafting Materials"])
+   - `sinks` (array of strings): Resources CONSUMED from elsewhere (e.g., ["Energy", "Gold"])
+   - `values` (array of strings): Stores of value that accumulate but CANNOT be spent (e.g., ["Player XP", "Achievement Points", "Account Level"])
+   - `kind` (string, optional): Set to `"finalGood"` for ultimate goals/win conditions
 
-2.  **`nodes`**: An array of objects representing the core activities or state changes in the game.
-    *   `id` (string): A unique, lowercase, snake_case identifier.
-    *   `label` (string): A descriptive label for the activity (e.g., "Complete a Daily Quest").
-    *   `sources` (array of strings): Resources *gained* from this activity (e.g., "Player XP", "Gold Coins"). The plugin will render these as green boxes.
-    *   `sinks` (array of strings): Resources *spent* or required for this activity (e.g., "Iron Ore", "Crafting Fee"). The plugin will render these as red boxes.
-    *   `kind` (string, optional): If this node represents an ultimate goal, set this to `"finalGood"`. Otherwise, omit this key.
+3. **`edges`** (required array): Connections showing flow between nodes.
+   - Each edge is an array: `["from_id", "to_id"]`
+   - `from_id` and `to_id` must match existing node/input ids
 
-3.  **`edges`**: An array of tuples, where each tuple is `[from_id, to_id]`, representing a directional link. This shows how one activity or input enables another.
-    *   The `from_id` must be an `id` from `inputs` or `nodes`.
-    *   The `to_id` must be an `id` from `nodes`.
+4. **`subsections`** (optional array): Visual groupings of related nodes.
+   - `id` (string): Unique identifier for the subsection
+   - `label` (string): Display name for the group
+   - `nodeIds` (array): List of node ids to include in this subsection
+   - `color` (string, optional): Hex color like "#FF5733"
+
+### Key Distinctions:
+
+**Sources vs Sinks vs Values:**
+- **Sources**: Resources gained that CAN be spent elsewhere (currencies, materials)
+- **Sinks**: Resources consumed that come from elsewhere  
+- **Values**: Metrics that accumulate but CANNOT be spent (XP, levels, achievement scores, collection progress)
+
+**Examples:**
+- Completing a quest might have:
+  - sources: ["100 Gold", "5 Gems"] (can spend these elsewhere)
+  - sinks: ["10 Energy"] (consumed from your energy pool)
+  - values: ["500 XP", "1 Achievement Point"] (accumulate but can't spend)
 
 ### Research Focus:
-- Identify the main player inputs (e.g., time, money).
-- Map out the core gameplay activities (e.g., questing, crafting, PvP).
-- For each activity, identify the resources it costs (`sinks`) and the rewards it provides (`sources`).
-- Trace the progression flow. How does completing one activity unlock or lead to another? This will define the `edges`.
-- Identify the ultimate goals or "final goods" in the game's economy (e.g., "Achieve Max Level", "Collect All Mounts").
+1. Identify primary player inputs (time, money)
+2. Map core gameplay loops and progression systems
+3. For each activity, determine:
+   - What it consumes (sinks)
+   - What spendable resources it produces (sources)
+   - What permanent progress it grants (values)
+4. Trace flow connections between activities
+5. Identify ultimate goals as finalGood nodes
 
-Please generate the complete JSON for the game "[Specify Game Title Here]".
+Generate the complete JSON for "[Specify Game Title Here]" following these exact specifications.
 ```
 
 ## 4  Files

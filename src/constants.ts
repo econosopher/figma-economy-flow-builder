@@ -18,9 +18,11 @@ export const TAG = 'EconomyFlowChart';
 
 export const BOX_SIZE = { 
   INPUT: { W: 144, H: 72 },
-  NODE: { W: 144, H: 72 }, 
-  ATTR: { W: 112, H: 20 } 
+  NODE: { W: 144, H: 90 }, // Increased by 25% from 72
+  ATTR: { W: 112, H: 20 },
+  FINAL_GOOD: { W: 144, H: 90 }, // Same as NODE height
+  FINAL_GOOD_HEADER: { H: 24 } // Black tether height
 };
 
 export const PADDING = { X: 100, Y: 40 };
-export const SECTION_PADDING = 50;
+export const SECTION_PADDING = 100; // Increased from 50 for more margin
