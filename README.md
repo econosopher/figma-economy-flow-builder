@@ -5,6 +5,7 @@ Generate economy flow-charts in FigJam from a simple JSON spec. This plugin inte
 ## Features
 *   **JSON-Powered:** Define your entire flowchart structure using a simple and editable JSON format.
 *   **Two-Way Sync:** Modify the diagram on the canvas and sync it back to JSON, or generate the diagram from your JSON spec.
+*   **Subsections:** Organize complex flows by grouping related nodes into visual sections with custom colors.
 *   **Customizable Colors:** Use the UI color pickers to customize the colors for inputs, sinks, sources, and other node types to match your theme.
 *   **Pre-built Templates:** Get started instantly with "basic" and "complex" example templates.
 *   **In-depth Validation:** Receive clear, specific error messages for invalid JSON structure, ensuring your data is correct before generation.
@@ -103,6 +104,31 @@ An array that defines the connections between your `inputs` and `nodes`. Each ed
 "edges": [
   ["time", "start_missions"],
   ["start_missions", "complete_mission"]
+]
+```
+
+### `subsections` (optional)
+An array of objects that group related nodes into visual sections within the diagram. This helps organize complex flows into logical areas.
+
+*   `id` (string, required): A unique identifier for this subsection.
+*   `label` (string, required): The name displayed for the subsection.
+*   `nodeIds` (array of strings, required): IDs of nodes that belong in this subsection.
+*   `color` (string, optional): Hex color for the subsection background (e.g., "#E3F2FD").
+
+**Example:**
+```json
+"subsections": [
+  {
+    "id": "onboarding",
+    "label": "New Player Experience",
+    "nodeIds": ["tutorial", "first_match"],
+    "color": "#E3F2FD"
+  },
+  {
+    "id": "core_loop",
+    "label": "Core Gameplay",
+    "nodeIds": ["daily_quest", "pvp_match"]
+  }
 ]
 ```
 

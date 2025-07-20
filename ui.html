@@ -55,9 +55,9 @@
         <div id="status"></div>
 
         <div class="buttons">
-            <button id="go">Generate from JSON ⌘/Ctrl+Enter</button>
-            <button id="sync">Sync from Canvas</button>
-            <button id="clear">Clear Canvas</button>
+            <button id="go" title="Creates diagram inside a section">Generate from JSON ⌘/Ctrl+Enter</button>
+            <button id="sync" title="Syncs only plugin-created nodes from section">Sync from Canvas</button>
+            <button id="clear" title="Removes all plugin-created sections">Clear Canvas</button>
         </div>
     </div>
 
@@ -122,7 +122,7 @@
       if (m.type === 'sync-json') {
           t.value = m.json;
           s.style.color = '#2e7d32';
-          s.textContent = 'JSON synced from canvas.';
+          s.textContent = 'JSON synced from canvas (free-form objects ignored).';
       }
      };
     </script>

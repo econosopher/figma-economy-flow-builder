@@ -25,32 +25,52 @@ const BOX_SIZE = {
 };
 
 const hex = (h: string) => {
-  if (typeof h !== 'string') {
-    // Return a default color if the input is invalid
+  if (typeof h !== 'string' || !h.match(/^#[0-9A-Fa-f]{6}$/)) {
+    console.warn(`Invalid color format: ${h}. Using default gray.`);
     return { r: 0.8, g: 0.8, b: 0.8 };
   }
-  const n = parseInt(h.slice(1), 16);
-  return { r: ((n >> 16) & 255) / 255, g: ((n >> 8) & 255) / 255, b: (n & 255) / 255 };
+  try {
+    const n = parseInt(h.slice(1), 16);
+    return { r: ((n >> 16) & 255) / 255, g: ((n >> 8) & 255) / 255, b: (n & 255) / 255 };
+  } catch (error) {
+    console.error('Error parsing color:', error);
+    return { r: 0.8, g: 0.8, b: 0.8 };
+  }
 };
 async function fonts() {
-  await figma.loadFontAsync({ family: 'Inter', style: 'Regular' });
-  await figma.loadFontAsync({ family: 'Inter', style: 'Medium' });
+  try {
+    await figma.loadFontAsync({ family: 'Inter', style: 'Regular' });
+    await figma.loadFontAsync({ family: 'Inter', style: 'Medium' });
+  } catch (error) {
+    console.error('Failed to load fonts:', error);
+    throw new Error('Required fonts (Inter Regular/Medium) are not available. Please install them in Figma.');
+  }
 }
 
 function makeBox(txt: string, w: number, h: number, fill: string, align: 'CENTER' | 'LEFT' = 'CENTER'): SceneNode {
-  // White text on dark backgrounds (red, black), black text on light backgrounds
-  const isDarkBG = fill === COLOR.SINK_RED || fill === COLOR.HEADER_BLACK;
-  const textColor = isDarkBG ? hex(COLOR.MAIN_WHITE) : hex(COLOR.HEADER_BLACK);
+  try {
+    // Validate inputs
+    if (!txt || typeof txt !== 'string') {
+      console.warn('Invalid text for box, using empty string');
+      txt = '';
+    }
+    if (w <= 0 || h <= 0) {
+      throw new Error(`Invalid dimensions: width=${w}, height=${h}`);
+    }
 
-  const s = figma.createShapeWithText();
-  s.shapeType = 'SQUARE';
-  s.resize(w, h);
-  s.fills = [{ type: 'SOLID', color: hex(fill) }];
-  if (fill === COLOR.MAIN_WHITE) {
-      s.strokes = [{type: 'SOLID', color: hex(COLOR.STROKE_GREY)}];
-      s.strokeWeight = 2;
-  }
-  s.text.characters = txt;
+    // White text on dark backgrounds (red, black), black text on light backgrounds
+    const isDarkBG = fill === COLOR.SINK_RED || fill === COLOR.HEADER_BLACK;
+    const textColor = isDarkBG ? hex(COLOR.MAIN_WHITE) : hex(COLOR.HEADER_BLACK);
+
+    const s = figma.createShapeWithText();
+    s.shapeType = 'SQUARE';
+    s.resize(w, h);
+    s.fills = [{ type: 'SOLID', color: hex(fill) }];
+    if (fill === COLOR.MAIN_WHITE) {
+        s.strokes = [{type: 'SOLID', color: hex(COLOR.STROKE_GREY)}];
+        s.strokeWeight = 2;
+    }
+    s.text.characters = txt;
 
   let fontSize = 12;
   // Reduce font size for long labels to prevent overflow
@@ -68,22 +88,41 @@ function makeBox(txt: string, w: number, h: number, fill: string, align: 'CENTER
     // @ts-ignore
     s.text.paragraphIndent = 5;
   }
-  return s;
+    return s;
+  } catch (error) {
+    console.error('Error creating box:', error);
+    throw error;
+  }
 }
 
 function makeFinalGoodBox(txt: string, w: number, h: number, bodyFill: string): SceneNode {
-  const headerHeight = 24;
-  const bodyHeight = h - headerHeight;
+  try {
+    // Validate inputs
+    if (!txt || typeof txt !== 'string') {
+      console.warn('Invalid text for final good box');
+      txt = 'Final Good';
+    }
+    if (h < 30) {
+      throw new Error('Final good box height too small for header + body');
+    }
 
-  const body = makeBox(txt, w, bodyHeight, bodyFill);
-  body.y = headerHeight;
-  
-  const header = makeBox("Final Good", w, headerHeight, COLOR.HEADER_BLACK);
-  header.y = 0;
+    const headerHeight = 24;
+    const bodyHeight = h - headerHeight;
 
-  const finalGroup = figma.group([header, body], figma.currentPage);
-  finalGroup.name = "Final Good: " + txt;
-  return finalGroup;
+    const body = makeBox(txt, w, bodyHeight, bodyFill);
+    body.y = headerHeight;
+    
+    const header = makeBox("Final Good", w, headerHeight, COLOR.HEADER_BLACK);
+    header.y = 0;
+
+    const finalGroup = figma.group([header, body], figma.currentPage);
+    finalGroup.name = "Final Good: " + txt;
+    return finalGroup;
+  } catch (error) {
+    console.error('Error creating final good box:', error);
+    // Fallback to regular box
+    return makeBox(txt, w, h, bodyFill);
+  }
 }
 
 
@@ -94,20 +133,29 @@ interface EconomyFlowConnectorEndpoint {
 }
 
 function connect(A: SceneNode, B: SceneNode) {
-  const c = figma.createConnector();
-  c.connectorLineType = 'ELBOWED';
-  c.strokeWeight = 2;
-  // Use default grey for connectors
-  c.strokes = [{ type: 'SOLID', color: hex(COLOR.CONNECTOR_GREY) }];
-  
-  if (B.name.startsWith("Final Good")) {
-    c.dashPattern = [10, 10];
-  }
+  try {
+    if (!A || !B || !A.id || !B.id) {
+      throw new Error('Invalid nodes for connection');
+    }
 
-  // Force left-to-right connection points
-  c.connectorStart = { endpointNodeId: A.id, magnet: 'RIGHT' } as EconomyFlowConnectorEndpoint;
-  c.connectorEnd = { endpointNodeId: B.id, magnet: 'LEFT' } as EconomyFlowConnectorEndpoint;
-  return c;
+    const c = figma.createConnector();
+    c.connectorLineType = 'ELBOWED';
+    c.strokeWeight = 2;
+    // Use default grey for connectors
+    c.strokes = [{ type: 'SOLID', color: hex(COLOR.CONNECTOR_GREY) }];
+    
+    if (B.name.startsWith("Final Good")) {
+      c.dashPattern = [10, 10];
+    }
+
+    // Force left-to-right connection points
+    c.connectorStart = { endpointNodeId: A.id, magnet: 'RIGHT' } as EconomyFlowConnectorEndpoint;
+    c.connectorEnd = { endpointNodeId: B.id, magnet: 'LEFT' } as EconomyFlowConnectorEndpoint;
+    return c;
+  } catch (error) {
+    console.error('Error creating connector:', error);
+    throw error;
+  }
 }
 
 /* ── UI ── */
@@ -228,15 +276,24 @@ figma.ui.onmessage = async (m: PluginMessage) => {
     return;
   }
 
-  await fonts(); clear();
+  try {
+    await fonts();
+  } catch (error) {
+    reply(['Font loading error:', (error as Error).message], false);
+    return;
+  }
+  
+  clear();
   const nodes = new Map<string, SceneNode>();
   const elementsToGroup: SceneNode[] = [];
   const PADDING = { X: 100, Y: 40 };
-  const customColors = m.colors || {
-      sink: COLOR.SINK_RED,
-      source: COLOR.SOURCE_GREEN,
-      xp: COLOR.XP_ORANGE,
-      final: COLOR.FINAL_GOOD_YELLOW,
+  
+  // Validate custom colors
+  const customColors = {
+    sink: m.colors?.sink || COLOR.SINK_RED,
+    source: m.colors?.source || COLOR.SOURCE_GREEN,
+    xp: m.colors?.xp || COLOR.XP_ORANGE,
+    final: m.colors?.final || COLOR.FINAL_GOOD_YELLOW,
   };
 
   // --- Layout Algorithm ---
@@ -387,7 +444,12 @@ figma.ui.onmessage = async (m: PluginMessage) => {
           if (nodeData.kind === 'SINK_RED') {
               mainBox = makeBox(nodeData.label, BOX_SIZE.INPUT.W, BOX_SIZE.INPUT.H, customColors.sink);
           } else if (nodeData.kind === 'finalGood') {
-              mainBox = makeFinalGoodBox(nodeData.label, BOX_SIZE.NODE.W, BOX_SIZE.NODE.H, customColors.final);
+              try {
+                  mainBox = makeFinalGoodBox(nodeData.label, BOX_SIZE.NODE.W, BOX_SIZE.NODE.H, customColors.final);
+              } catch (error) {
+                  console.error('Failed to create final good box:', error);
+                  mainBox = makeBox(nodeData.label, BOX_SIZE.NODE.W, BOX_SIZE.NODE.H, COLOR.MAIN_WHITE);
+              }
           } else {
               mainBox = makeBox(nodeData.label, BOX_SIZE.NODE.W, BOX_SIZE.NODE.H, COLOR.MAIN_WHITE);
           }
@@ -405,11 +467,15 @@ figma.ui.onmessage = async (m: PluginMessage) => {
           if (nodeData.kind !== 'finalGood' && ('sources' in nodeData || 'sinks' in nodeData || 'values' in nodeData)) {
               let attrY = mainBox.height + 5;
               const addAttribute = (text: string, color: string) => {
-                  const attrBox = makeBox(text, BOX_SIZE.ATTR.W, BOX_SIZE.ATTR.H, color, 'LEFT');
-                  attrBox.x = mainBox.x;
-                  attrBox.y = mainBox.y + attrY;
-                  elementsToGroup.push(attrBox);
-                  attrY += BOX_SIZE.ATTR.H + 5;
+                  try {
+                      const attrBox = makeBox(text, BOX_SIZE.ATTR.W, BOX_SIZE.ATTR.H, color, 'LEFT');
+                      attrBox.x = mainBox.x;
+                      attrBox.y = mainBox.y + attrY;
+                      elementsToGroup.push(attrBox);
+                      attrY += BOX_SIZE.ATTR.H + 5;
+                  } catch (error) {
+                      console.error(`Failed to create attribute box for "${text}":`, error);
+                  }
               };
               (nodeData as Act).sources?.forEach(s => {
                   addAttribute('+ ' + s, customColors.source);
@@ -425,47 +491,161 @@ figma.ui.onmessage = async (m: PluginMessage) => {
   });
 
   // --- Draw Edges ---
-  data.edges.forEach(([fromId, toId]) => {
-    if (fromId && toId) {
-        const fromNode = nodes.get(fromId);
-        const toNode = nodes.get(toId);
-        if (fromNode && toNode) {
-          const connector = connect(fromNode, toNode);
-          elementsToGroup.unshift(connector);
-        }
+  const failedEdges: string[] = [];
+  data.edges.forEach(([fromId, toId], index) => {
+    try {
+      if (!fromId || !toId) {
+        failedEdges.push(`Edge ${index}: Missing from/to ID`);
+        return;
+      }
+      const fromNode = nodes.get(fromId);
+      const toNode = nodes.get(toId);
+      if (!fromNode || !toNode) {
+        failedEdges.push(`Edge ${index}: Node not found (${!fromNode ? fromId : toId})`);
+        return;
+      }
+      const connector = connect(fromNode, toNode);
+      elementsToGroup.unshift(connector);
+    } catch (error) {
+      failedEdges.push(`Edge ${index}: ${(error as Error).message}`);
     }
   });
 
+  if (failedEdges.length > 0) {
+    console.warn('Some edges failed to render:', failedEdges);
+  }
+
   if (elementsToGroup.length > 0) {
-    const group = figma.group(elementsToGroup, figma.currentPage);
-    group.name = TAG;
-    figma.currentPage.appendChild(group); // Bring the newly created group to the front
-    figma.viewport.scrollAndZoomIntoView(group.children);
-    reply('Diagram created successfully', true);
+    try {
+      // Create a section to contain the economy flow
+      const section = figma.createSection();
+      section.name = `${TAG} Section`;
+      
+      // Calculate bounds for the section
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      elementsToGroup.forEach(node => {
+        minX = Math.min(minX, node.x);
+        minY = Math.min(minY, node.y);
+        maxX = Math.max(maxX, node.x + node.width);
+        maxY = Math.max(maxY, node.y + node.height);
+      });
+      
+      // Add padding to section bounds
+      const sectionPadding = 50;
+      section.x = minX - sectionPadding;
+      section.y = minY - sectionPadding;
+      section.resizeWithoutConstraints(
+        maxX - minX + (sectionPadding * 2),
+        maxY - minY + (sectionPadding * 2)
+      );
+      
+      // Create the group inside the section
+      const group = figma.group(elementsToGroup, figma.currentPage);
+      group.name = TAG;
+      
+      // Move the group into the section
+      section.appendChild(group);
+      figma.currentPage.appendChild(section);
+      
+      // Store section ID for sync purposes
+      section.setPluginData("economyFlowSection", "true");
+      
+      figma.viewport.scrollAndZoomIntoView([section]);
+      
+      const messages = ['Diagram created successfully in section'];
+      if (failedEdges.length > 0) {
+        messages.push(`Warning: ${failedEdges.length} edge(s) failed to render`);
+      }
+      reply(messages, failedEdges.length === 0);
+    } catch (error) {
+      console.error('Failed to create section/group:', error);
+      reply(['Failed to create diagram:', (error as Error).message], false);
+    }
+  } else {
+    reply('No elements to display. Check your JSON structure.', false);
   }
 };
 
 /* ── utils ── */
-function clear() { figma.currentPage.findAll(n => n.name.includes(TAG)).forEach(n => n.remove()); }
-function reply(msg: string | string[], ok: boolean) { figma.ui.postMessage({ type: 'reply', msg, ok }); }
+function clear() {
+  try {
+    // First try to find and remove sections
+    const sectionsToRemove = figma.currentPage.findAll(n => 
+      n.type === 'SECTION' && n.getPluginData("economyFlowSection") === "true"
+    );
+    
+    sectionsToRemove.forEach(section => {
+      try {
+        section.remove();
+      } catch (error) {
+        console.error('Failed to remove section:', error);
+      }
+    });
+    
+    // Then remove any remaining nodes (legacy support)
+    const nodesToRemove = figma.currentPage.findAll(n => n.name.includes(TAG));
+    console.log(`Clearing ${sectionsToRemove.length} sections and ${nodesToRemove.length} nodes`);
+    
+    nodesToRemove.forEach(n => {
+      try {
+        n.remove();
+      } catch (error) {
+        console.error('Failed to remove node:', error);
+      }
+    });
+  } catch (error) {
+    console.error('Clear operation failed:', error);
+  }
+}
+
+function reply(msg: string | string[], ok: boolean) {
+  try {
+    figma.ui.postMessage({ type: 'reply', msg, ok });
+  } catch (error) {
+    console.error('Failed to send message to UI:', error);
+  }
+}
 
 function syncFromCanvas() {
-    const group = figma.currentPage.findOne(n => n.name === TAG);
-    if (!group || !('children' in group)) {
-        reply('No diagram found to sync.', false);
-        return;
-    }
+    try {
+        // First try to find a section containing our economy flow
+        const section = figma.currentPage.findOne(n => 
+            n.type === 'SECTION' && n.getPluginData("economyFlowSection") === "true"
+        ) as SectionNode;
+        
+        let group: SceneNode | null = null;
+        
+        if (section) {
+            // Look for the group inside the section
+            group = section.findOne(n => n.name === TAG);
+        } else {
+            // Fallback: look for the group in the page (legacy support)
+            group = figma.currentPage.findOne(n => n.name === TAG);
+        }
+        
+        if (!group || !('children' in group)) {
+            reply('No diagram found to sync. Please generate a diagram first.', false);
+            return;
+        }
 
     const graph: Graph = { inputs: [], nodes: [], edges: [] };
     const tempNodeData = new Map<string, {node: SceneNode, act: Act | Input}>();
+    const figmaIdToStableId = new Map<string, string>(); // Map Figma node IDs to stable plugin data IDs
 
-    const children = [...group.children];
+    const children = [...(group as GroupNode).children];
     const isShapeWithText = (node: SceneNode): node is ShapeWithTextNode => 'text' in node;
+    const ignoredNodes: string[] = [];
 
     // Pass 1: Reconstruct all nodes (Inputs, Actions, Final Goods) using the stable ID from pluginData
     for (const child of children) {
         const id = child.getPluginData("id");
-        if (!id) continue; // Skip attributes and connectors
+        if (!id) {
+            // Track non-conforming objects
+            if (child.type !== 'CONNECTOR' && !isShapeWithText(child)) {
+                ignoredNodes.push(`${child.type}: ${child.name || 'Unnamed'}`);
+            }
+            continue; // Skip attributes and connectors
+        }
 
         if (child.name.includes("Final Good")) {
             const finalGoodGroup = child as GroupNode;
@@ -475,20 +655,29 @@ function syncFromCanvas() {
                 const act: Act = { id, label, kind: 'finalGood' };
                 graph.nodes.push(act);
                 tempNodeData.set(child.id, { node: child, act });
+                figmaIdToStableId.set(child.id, id);
             }
         } else if (isShapeWithText(child) && child.width > BOX_SIZE.ATTR.W) { // Main box
             const node = child;
-            const fill = (node.fills as readonly Paint[])[0] as SolidPaint;
+            const fills = node.fills as readonly Paint[];
+            if (!fills || fills.length === 0 || fills[0].type !== 'SOLID') {
+                console.warn('Skipping node with invalid fill');
+                continue;
+            }
+            const fill = fills[0] as SolidPaint;
             const label = node.text.characters;
             
-            if (Math.round(fill.color.r * 255) === 218) { // SINK_RED
+            const r = Math.round(fill.color.r * 255);
+            if (r >= 213 && r <= 223) { // SINK_RED with tolerance
                 const input: Input = { id, label, kind: 'SINK_RED' };
                 graph.inputs.push(input);
                 tempNodeData.set(node.id, { node, act: input });
+                figmaIdToStableId.set(node.id, id);
             } else {
                 const act: Act = { id, label, sources: [], sinks: [], values: [] };
                 graph.nodes.push(act);
                 tempNodeData.set(node.id, { node, act });
+                figmaIdToStableId.set(node.id, id);
             }
         }
     }
@@ -506,9 +695,9 @@ function syncFromCanvas() {
             for (const data of tempNodeData.values()) {
                 const p = data.node;
                 // Check if attribute is generally below the parent and in the same column
-                if (p.x === attrNode.x && attrNode.y > p.y) {
+                if (Math.abs(p.x - attrNode.x) < 5 && attrNode.y > p.y) { // Allow small tolerance for x position
                     const distance = attrNode.y - (p.y + p.height);
-                    if (distance < minDistance) {
+                    if (distance >= 0 && distance < minDistance) {
                         minDistance = distance;
                         parentData = data;
                     }
@@ -520,12 +709,19 @@ function syncFromCanvas() {
                 const r = Math.round(fill.color.r * 255);
                 const g = Math.round(fill.color.g * 255);
 
-                if (r === 76 && g === 175) { // SOURCE_GREEN
-                    parentData.act.sources?.push(text.replace(/^[+\-]\s*/, '').trim());
-                } else if (r === 218) { // SINK_RED
-                    parentData.act.sinks?.push(text.replace(/^[+\-]\s*/, '').trim());
-                } else { // XP_ORANGE
+                // More flexible color matching with tolerance
+                const isGreen = r >= 70 && r <= 80 && g >= 170 && g <= 180;
+                const isRed = r >= 213 && r <= 223 && g >= 79 && g <= 89;
+                const isOrange = r >= 231 && r <= 241 && g >= 154 && g <= 164;
+                
+                if (isGreen) { // SOURCE_GREEN
+                    parentData.act.sources?.push(text.replace(/^\+\s*/, '').trim());
+                } else if (isRed) { // SINK_RED
+                    parentData.act.sinks?.push(text.replace(/^-\s*/, '').trim());
+                } else if (isOrange) { // XP_ORANGE
                     parentData.act.values?.push(text.trim());
+                } else {
+                    console.warn(`Unknown attribute color: rgb(${r}, ${g}, _) for text: ${text}`);
                 }
             }
         }
@@ -538,15 +734,33 @@ function syncFromCanvas() {
             const startId = (connector.connectorStart as EconomyFlowConnectorEndpoint).endpointNodeId;
             const endId = (connector.connectorEnd as EconomyFlowConnectorEndpoint).endpointNodeId;
             
-            const fromData = tempNodeData.get(startId);
-            const toData = tempNodeData.get(endId);
+            // Convert Figma node IDs to stable plugin data IDs
+            const fromStableId = figmaIdToStableId.get(startId);
+            const toStableId = figmaIdToStableId.get(endId);
 
-            if (fromData && toData) {
-                graph.edges.push([fromData.act.id, toData.act.id]);
+            if (fromStableId && toStableId) {
+                graph.edges.push([fromStableId, toStableId]);
             }
         }
     }
 
-    const json = JSON.stringify(graph, null, 2);
-    figma.ui.postMessage({ type: 'sync-json', json });
+        // Validate the reconstructed graph
+        if (graph.inputs.length === 0 && graph.nodes.length === 0) {
+            reply('No valid nodes found in the diagram.', false);
+            return;
+        }
+
+        const json = JSON.stringify(graph, null, 2);
+        figma.ui.postMessage({ type: 'sync-json', json });
+        
+        const messages = ['Successfully synced diagram to JSON'];
+        if (ignoredNodes.length > 0) {
+            messages.push(`Ignored ${ignoredNodes.length} non-conforming object(s)`);
+            console.log('Ignored objects:', ignoredNodes);
+        }
+        reply(messages, true);
+    } catch (error) {
+        console.error('Sync error:', error);
+        reply(['Sync failed:', (error as Error).message], false);
+    }
 }

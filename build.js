@@ -1,6 +1,14 @@
 const esbuild = require('esbuild');
 const fs = require('fs');
 const path = require('path');
+const { execSync } = require('child_process');
+
+// Check if TypeScript is compiled
+const distDir = path.join(__dirname, 'dist');
+if (!fs.existsSync(distDir)) {
+  console.log('📦 Compiling TypeScript...');
+  execSync('npx tsc', { stdio: 'inherit' });
+}
 
 // Read ui.html content
 const uiHtml = fs.readFileSync(path.join(__dirname, 'ui.html'), 'utf-8');
@@ -16,8 +24,10 @@ fs.readdirSync(examplesDir).forEach(file => {
   }
 });
 
+console.log('📦 Bundling plugin...');
+
 esbuild.build({
-  entryPoints: ['code.ts'],
+  entryPoints: ['dist/main.js'],
   bundle: true,
   outfile: 'code.js',
   platform: 'browser',
@@ -27,4 +37,9 @@ esbuild.build({
     '__html__': JSON.stringify(uiHtml),
     'TEMPLATES': JSON.stringify(templates),
   },
-}).catch(() => process.exit(1)); 
+}).then(() => {
+  console.log('✅ Build complete!');
+}).catch((error) => {
+  console.error('❌ Build failed:', error);
+  process.exit(1);
+}); 

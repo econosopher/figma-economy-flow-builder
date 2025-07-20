@@ -1,3 +1,10 @@
 node_modules
 code.js
-package-lock.json 
+package-lock.json
+dist/
+*.log
+.DS_Store
+coverage/
+.env
+.vscode/
+*.tar.gz 
