@@ -30,7 +30,7 @@
             <img src="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3ccircle cx='12' cy='12' r='3'%3e%3c/circle%3e%3cpath d='M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z'%3e%3c/path%3e%3c/svg%3e" alt="Logo">
             <div style="flex: 1;">
                 <h1 style="margin: 0;">Economy-Flow Builder</h1>
-                <div id="version-info" style="font-size: 10px; color: #666; margin-top: 2px;">v1.2.13 • Loading...</div>
+                <div id="version-info" style="font-size: 10px; color: #666; margin-top: 2px;">v1.2.30 • Loading...</div>
             </div>
         </header>
 
@@ -45,7 +45,7 @@
             <div id="colors">
               <div><label for="color-sink">Input/Sink</label><input id="color-sink" type="color"></div>
               <div><label for="color-source">Source</label><input id="color-source" type="color"></div>
-              <div><label for="color-xp">XP/Value</label><input id="color-xp" type="color"></div>
+              <div><label for="color-xp">Store of Value</label><input id="color-xp" type="color"></div>
               <div><label for="color-final">Final Good</label><input id="color-final" type="color"></div>
             </div>
         </section>
@@ -73,7 +73,7 @@
        const now = new Date();
        const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
        const dateStr = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-       document.getElementById('version-info').textContent = `v1.2.13 • ${dateStr} ${timeStr}`;
+       document.getElementById('version-info').textContent = `v1.2.30 • ${dateStr} ${timeStr}`;
      };
      updateTimestamp();
      
@@ -84,7 +84,19 @@
          xp: document.getElementById('color-xp').value,
          final: document.getElementById('color-final').value
        };
-       post('draw',{json:t.value, colors});
+       
+       // Try to add name from template selection or JSON
+       try {
+         const jsonData = JSON.parse(t.value);
+         if (!jsonData.name && tmpl.value) {
+           // Use template name as the economy name
+           jsonData.name = tmpl.value.charAt(0).toUpperCase() + tmpl.value.slice(1).replace(/_/g, ' ');
+         }
+         post('draw',{json:JSON.stringify(jsonData), colors});
+       } catch (e) {
+         // If JSON is invalid, send as-is and let the plugin handle the error
+         post('draw',{json:t.value, colors});
+       }
        updateTimestamp();
      };
      document.getElementById('clear').onclick=()=>{post('clear'); updateTimestamp();};
@@ -96,7 +108,7 @@
       const m = e.data.pluginMessage;
       if (m.type === 'templates') {
         // Set initial color values
-        document.getElementById('color-sink').value = m.colors.SINK_RED;
+        document.getElementById('color-sink').value = m.colors.INITIAL_SINK_NODE;
         document.getElementById('color-source').value = m.colors.SOURCE_GREEN;
         document.getElementById('color-xp').value = m.colors.XP_ORANGE;
         document.getElementById('color-final').value = m.colors.FINAL_GOOD_YELLOW;

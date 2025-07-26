@@ -95,15 +95,35 @@ export function createConnector(A: SceneNode, B: SceneNode) {
     
     let targetNode = B;
     
-    // Special handling for final goods - connect to the body, not the header
+    // Special handling for final goods - check if B is part of a Final Good group
+    // B might be the body box directly, or the Final Good group
+    let isFinalGood = false;
+    
     if (B.name.startsWith("Final Good")) {
-      c.dashPattern = [10, 10];
+      // B is the Final Good group
+      isFinalGood = true;
       
-      // If B is a group (final good), find the body node (second child)
+      // If B is a group (final good), find the body node
       if (B.type === 'GROUP' && 'children' in B && B.children.length > 1) {
-        // The body is the second child (index 1)
-        targetNode = B.children[1];
+        // Find the body box (the one with y > 0, as header is at y=0)
+        const bodyBox = B.children.find(child => 
+          child.type === 'SHAPE_WITH_TEXT' && child.y > 0
+        );
+        if (bodyBox) {
+          targetNode = bodyBox;
+        } else {
+          // Fallback to second child
+          targetNode = B.children[1];
+        }
       }
+    } else if (B.parent && B.parent.name.startsWith("Final Good")) {
+      // B is already the body box of a Final Good
+      isFinalGood = true;
+    }
+    
+    // Apply dashed pattern for Final Good connections
+    if (isFinalGood) {
+      c.dashPattern = [10, 10];
     }
 
     // Force left-to-right connection points

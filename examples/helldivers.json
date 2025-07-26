@@ -1,4 +1,5 @@
 {
+  "name": "Helldivers",
   "inputs": [
     { "id": "time", "label": "Time", "kind": "initial_sink_node" },
     { "id": "money", "label": "Money", "kind": "initial_sink_node" }

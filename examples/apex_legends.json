@@ -1,4 +1,5 @@
 {
+  "name": "Apex Legends",
   "inputs": [
     { "id": "player_time", "label": "Spend Time", "kind": "initial_sink_node" },
     { "id": "real_world_money", "label": "Spend Money", "kind": "initial_sink_node" }

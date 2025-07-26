@@ -39,17 +39,28 @@ export class CollisionEngine {
     context: CollisionContext,
     parentIds: string[] = []
   ): number {
-    const nodeRect: Rectangle = { x, y: initialY, width: nodeWidth, height: nodeHeight };
+    let nodeRect: Rectangle = { x, y: initialY, width: nodeWidth, height: nodeHeight };
     let maxY = initialY;
+    let positionChanged = true;
 
-    // Check node-to-node collisions
-    if (this.config.nodeToNode) {
-      for (const [id, pos] of context.nodePositions) {
-        if (id !== nodeId) {
-          const collision = this.detector.rectanglesOverlap(nodeRect, pos, context.padding.x);
-          if (collision.collides) {
-            // Push down below the colliding node with extra margin
-            maxY = Math.max(maxY, pos.y + pos.height + context.padding.y + this.config.margin);
+    // Keep checking collisions until no more position changes are needed
+    while (positionChanged) {
+      positionChanged = false;
+      
+      // Check node-to-node collisions
+      if (this.config.nodeToNode) {
+        for (const [id, pos] of context.nodePositions) {
+          if (id !== nodeId) {
+            const collision = this.detector.rectanglesOverlap(nodeRect, pos, this.config.margin);
+            if (collision.collides) {
+              // Push down below the colliding node with extra margin
+              const newY = pos.y + pos.height + context.padding.y + this.config.margin;
+              if (newY > maxY) {
+                maxY = newY;
+                nodeRect.y = maxY; // Update the node rectangle position
+                positionChanged = true;
+              }
+            }
           }
         }
       }

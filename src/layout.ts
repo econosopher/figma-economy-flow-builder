@@ -1,7 +1,7 @@
 /// <reference types="@figma/plugin-typings" />
 
 import { Graph, Act, Input } from './types';
-import { BOX_SIZE } from './constants';
+import { BOX_SIZE, INITIAL_X_OFFSET } from './constants';
 import { CollisionEngine, Rectangle, CollisionContext } from './collision';
 
 interface NodePosition {
@@ -24,7 +24,7 @@ export class LayoutEngine {
       nodeToNode: true,
       edgeToNode: true,
       edgeToEdge: false,
-      margin: 25 // Extra margin to prevent flush positioning
+      margin: 35 // Increased margin for better edge routing
     });
   }
 
@@ -113,7 +113,7 @@ export class LayoutEngine {
   ): number {
     const totalHeight = this.nodeTotalHeights.get(id) || 0;
     const boxWidth = ('kind' in nodeData && nodeData.kind === 'initial_sink_node') ? BOX_SIZE.INPUT.W : BOX_SIZE.NODE.W;
-    const x = colIndex * (BOX_SIZE.NODE.W + paddingX);
+    const x = INITIAL_X_OFFSET + (colIndex * (BOX_SIZE.NODE.W + paddingX));
     
     // Create collision context
     const context: CollisionContext = {
@@ -162,7 +162,7 @@ export class LayoutEngine {
   /**
    * Calculate subsection bounds with proper margins
    */
-  calculateSubsectionBounds(nodeIds: string[]): Rectangle {
+  calculateSubsectionBounds(nodeIds: string[], nodeDataMap: Map<string, Input | Act>): Rectangle {
     const nodes: Rectangle[] = [];
     
     for (const id of nodeIds) {
@@ -174,12 +174,12 @@ export class LayoutEngine {
 
     // Use larger padding for initial boxes
     const isInitialSection = nodeIds.some(id => {
-      const pos = this.placedNodePositions.get(id);
-      return pos && pos.width === BOX_SIZE.INPUT.W;
+      const nodeData = nodeDataMap.get(id);
+      return nodeData && 'kind' in nodeData && nodeData.kind === 'initial_sink_node';
     });
 
     const sectionPadding = isInitialSection
-      ? { top: 60, right: 40, bottom: 40, left: 50 } // Extra margin for initial boxes
+      ? { top: 80, right: 60, bottom: 60, left: 70 } // Extra margin for initial boxes
       : { top: 40, right: 40, bottom: 40, left: 40 };
 
     return this.collisionEngine.calculateSubsectionBounds(nodes, sectionPadding);

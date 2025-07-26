@@ -1,4 +1,5 @@
 {
+  "name": "Subsections Example",
   "inputs": [
     { "id": "time", "label": "Player Time", "kind": "initial_sink_node" },
     { "id": "money", "label": "Real Money", "kind": "initial_sink_node" }

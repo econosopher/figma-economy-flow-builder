@@ -11,7 +11,7 @@ export interface Act {
   label: string; 
   sources?: string[]; 
   sinks?: string[]; 
-  values?: string[]; 
+  values?: string[]; // Stores of Value 
   kind?: string;
 }
 

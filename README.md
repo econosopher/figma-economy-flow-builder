@@ -52,9 +52,49 @@ This will install the necessary dependencies and run the build script, which com
 
 ---
 
+## Economic Concepts in Game Design
+
+When modeling game economies, it's important to distinguish between different types of resources:
+
+### Sources (Green)
+Resources that players **gain** and can **spend** elsewhere in the game economy. These are tradeable/spendable currencies.
+- Examples: Gold, Gems, Coins, Premium Currency
+
+### Sinks (Red)  
+Resources that are **consumed** or **required** by an action. These create demand in the economy.
+- Examples: Energy, Stamina, Currency costs, Time
+
+### Stores of Value (Orange)
+Resources that players **accumulate** but **cannot spend directly**. These represent progress, achievement, or unlock thresholds. They often gate content or provide passive benefits when reaching milestones.
+
+**Key characteristics:**
+- Cannot be traded or spent
+- Typically only increase (rarely decrease)
+- Often unlock content, abilities, or rewards at certain thresholds
+- Represent player investment and progression
+
+**Examples:**
+- **Player XP**: Accumulates to increase player level, unlocking new content
+- **Achievement Points**: Track overall game completion
+- **Mastery Points**: Show expertise with specific characters/weapons
+- **Battle Pass XP**: Progress through seasonal reward tracks
+- **Reputation**: Standing with factions that unlocks rewards
+
+**Economic Purpose:** Stores of Value create long-term engagement goals and provide a sense of progression without inflating the spendable currency economy. They reward time investment and skill development.
+
+---
+
 ## JSON Data Structure
 
-The plugin uses a JSON object to define the flowchart. This object has three main properties: `inputs`, `nodes`, and `edges`.
+The plugin uses a JSON object to define the flowchart. This object has the following properties:
+
+### `name` (optional)
+A string that names the economy or game. This will be used as the section title in FigJam. If not provided, defaults to "EconomyFlowChart Section".
+
+**Example:**
+```json
+"name": "Apex Legends"
+```
 
 ### `inputs`
 An array of objects representing the starting points of your economy, like "Time" or "Money". These are typically rendered as red boxes on the far left.
@@ -79,7 +119,7 @@ An array of objects representing the actions, activities, or states in your flow
 *   `kind` (string, optional): Set to `"finalGood"` to render a special "Final Good" box. Otherwise, it's a standard white action box.
 *   `sources` (array of strings, optional): Resources *gained* that can be spent elsewhere (e.g., Gold, Gems). Rendered as green attribute boxes.
 *   `sinks` (array of strings, optional): Resources *consumed* from elsewhere (e.g., Energy, Gold). Rendered as red attribute boxes.
-*   `values` (array of strings, optional): Stores of value that accumulate but CANNOT be spent (e.g., XP, Level, Achievement Points). Rendered as orange attribute boxes.
+*   `values` (array of strings, optional): **Stores of Value** - Resources that accumulate but CANNOT be spent directly (e.g., XP, Level, Achievement Points). Rendered as orange attribute boxes.
 
 **Example:**
 ```json

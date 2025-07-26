@@ -1,7 +1,7 @@
 /// <reference types="@figma/plugin-typings" />
 
 import { Graph, PluginMessage, Act, Input, Subsection } from './types';
-import { COLOR, TAG, BOX_SIZE, PADDING, SECTION_PADDING } from './constants';
+import { COLOR, TAG, BOX_SIZE, PADDING, SECTION_PADDING, INITIAL_X_OFFSET, INITIAL_Y_OFFSET } from './constants';
 import { loadFonts, clear, reply, hex } from './utils';
 import { makeBox, makeFinalGoodBox, createConnector } from './node-creation';
 import { validateGraphData, validateCustomColors, isValidColor } from './validation';
@@ -111,11 +111,18 @@ async function generateDiagram(data: Graph, customColorInput?: { [key: string]: 
 
     sortedByYTarget.forEach(id => {
       const nodeData = nodeDataMap.get(id);
-      if (!nodeData) return;
+      if (!nodeData) {
+        return;
+      }
 
       const y_initial = yTargets.get(id) || 0;
       const y_final = layoutEngine.findConflictFreeY(id, colIndex, y_initial, PADDING.X, PADDING.Y, nodeData, revAdj);
-      const x_pos = colIndex * (BOX_SIZE.NODE.W + PADDING.X);
+      const x_pos = INITIAL_X_OFFSET + (colIndex * (BOX_SIZE.NODE.W + PADDING.X));
+      
+      // Record position BEFORE creating the node so collision detection works for subsequent nodes
+      const totalHeight = layoutEngine.getNodeHeight(id);
+      const boxWidth = ('kind' in nodeData && nodeData.kind === 'initial_sink_node') ? BOX_SIZE.INPUT.W : BOX_SIZE.NODE.W;
+      layoutEngine.recordNodePosition(id, x_pos, INITIAL_Y_OFFSET + y_final, boxWidth, totalHeight);
       
       let mainBox: SceneNode;
       let actualConnectorTarget: SceneNode; // The actual box to connect to
@@ -127,9 +134,18 @@ async function generateDiagram(data: Graph, customColorInput?: { [key: string]: 
           mainBox = makeFinalGoodBox(nodeData.label, BOX_SIZE.FINAL_GOOD.W, BOX_SIZE.FINAL_GOOD.H, customColors.final);
           // For final good, the main box is a group - find the body box inside it
           if (mainBox.type === 'GROUP' && 'children' in mainBox && mainBox.children.length > 1) {
-            // The body is the second child (index 1) in the final good group
-            actualConnectorTarget = mainBox.children[1];
-            console.log(`Final good "${nodeData.label}" - using body box for connector`);
+            // Find the body box (the one with y > 0, as header is at y=0)
+            const bodyBox = mainBox.children.find(child => 
+              child.type === 'SHAPE_WITH_TEXT' && child.y > 0
+            );
+            if (bodyBox) {
+              actualConnectorTarget = bodyBox;
+              console.log(`Final good "${nodeData.label}" - using body box for connector`);
+            } else {
+              // Fallback to second child
+              actualConnectorTarget = mainBox.children[1];
+              console.warn(`Final good "${nodeData.label}" - couldn't find body by position, using second child`);
+            }
           } else {
             console.warn(`Final good "${nodeData.label}" - couldn't find body box, using group`);
             actualConnectorTarget = mainBox;
@@ -144,12 +160,8 @@ async function generateDiagram(data: Graph, customColorInput?: { [key: string]: 
       }
       
       mainBox.x = x_pos;
-      mainBox.y = y_final;
+      mainBox.y = INITIAL_Y_OFFSET + y_final;
       mainBox.setPluginData("id", id);
-
-      const totalHeight = layoutEngine.getNodeHeight(id);
-      const boxWidth = ('kind' in nodeData && nodeData.kind === 'initial_sink_node') ? BOX_SIZE.INPUT.W : BOX_SIZE.NODE.W;
-      layoutEngine.recordNodePosition(id, x_pos, y_final, boxWidth, totalHeight);
       
       // Collect main box and its attributes for grouping
       const nodeElements: SceneNode[] = [mainBox];
@@ -244,7 +256,7 @@ async function generateDiagram(data: Graph, customColorInput?: { [key: string]: 
           
           if (subsectionNodes.length > 0) {
             // Use layout engine to calculate subsection bounds with proper margins
-            const bounds = layoutEngine.calculateSubsectionBounds(subsectionData.nodeIds);
+            const bounds = layoutEngine.calculateSubsectionBounds(subsectionData.nodeIds, nodeDataMap);
             
             // Create subsection
             const subsection = figma.createSection();
