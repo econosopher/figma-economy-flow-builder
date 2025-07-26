@@ -1,10 +1,11 @@
 import { validateGraphData, isValidColor, validateCustomColors } from '../validation';
 import { Graph } from '../types';
+import { COLOR } from '../constants';
 
 describe('validateGraphData', () => {
   it('should validate a correct graph structure', () => {
     const validGraph: Graph = {
-      inputs: [{ id: 'time', label: 'Time', kind: 'SINK_RED' }],
+      inputs: [{ id: 'time', label: 'Time', kind: 'initial_sink_node' }],
       nodes: [{ id: 'play', label: 'Play Game', sources: ['XP'], sinks: [] }],
       edges: [['time', 'play']]
     };
@@ -25,7 +26,7 @@ describe('validateGraphData', () => {
 
   it('should catch invalid edge references', () => {
     const invalidGraph: Graph = {
-      inputs: [{ id: 'time', label: 'Time', kind: 'SINK_RED' }],
+      inputs: [{ id: 'time', label: 'Time', kind: 'initial_sink_node' }],
       nodes: [{ id: 'play', label: 'Play Game' }],
       edges: [['time', 'nonexistent']]
     };
@@ -36,7 +37,7 @@ describe('validateGraphData', () => {
 
   it('should validate node properties', () => {
     const invalidGraph: any = {
-      inputs: [{ id: 'time', label: 'Time', kind: 'SINK_RED' }],
+      inputs: [{ id: 'time', label: 'Time', kind: 'initial_sink_node' }],
       nodes: [{ label: 'Missing ID' }], // Missing id
       edges: []
     };
@@ -66,8 +67,8 @@ describe('isValidColor', () => {
 describe('validateCustomColors', () => {
   it('should return default colors when input is invalid', () => {
     const result = validateCustomColors(null);
-    expect(result.sink).toBe('#DA5433');
-    expect(result.source).toBe('#4CAF50');
+    expect(result.sink).toBe(COLOR.INITIAL_SINK_NODE);
+    expect(result.source).toBe(COLOR.SOURCE_GREEN);
   });
 
   it('should use custom colors when valid', () => {
@@ -91,9 +92,9 @@ describe('validateCustomColors', () => {
     };
 
     const result = validateCustomColors(customColors);
-    expect(result.sink).toBe('#DA5433'); // Default
+    expect(result.sink).toBe(COLOR.INITIAL_SINK_NODE); // Default
     expect(result.source).toBe('#00FF00'); // Custom
-    expect(result.xp).toBe('#EC9F53'); // Default
+    expect(result.xp).toBe(COLOR.XP_ORANGE); // Default
     expect(result.final).toBe('#FFFF00'); // Custom
   });
 });
@@ -101,7 +102,7 @@ describe('validateCustomColors', () => {
 describe('subsections validation', () => {
   it('should validate correct subsections', () => {
     const graph: Graph = {
-      inputs: [{ id: 'time', label: 'Time', kind: 'SINK_RED' }],
+      inputs: [{ id: 'time', label: 'Time', kind: 'initial_sink_node' }],
       nodes: [
         { id: 'play', label: 'Play Game' },
         { id: 'win', label: 'Win' }
@@ -118,7 +119,7 @@ describe('subsections validation', () => {
 
   it('should catch invalid subsection node references', () => {
     const graph: Graph = {
-      inputs: [{ id: 'time', label: 'Time', kind: 'SINK_RED' }],
+      inputs: [{ id: 'time', label: 'Time', kind: 'initial_sink_node' }],
       nodes: [{ id: 'play', label: 'Play Game' }],
       edges: [],
       subsections: [

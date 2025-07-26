@@ -2,7 +2,7 @@
 
 export const COLOR = {
   // Specific color palette as requested
-  SINK_RED: '#DA5433',
+  INITIAL_SINK_NODE: '#DA5433',
   XP_ORANGE: '#EC9F53',
   FINAL_GOOD_YELLOW: '#F5C95C',
   SOURCE_GREEN: '#4CAF50',

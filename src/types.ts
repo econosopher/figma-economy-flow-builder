@@ -3,7 +3,7 @@
 export interface Input { 
   id: string; 
   label: string; 
-  kind: 'SINK_RED';
+  kind: 'initial_sink_node';
 }
 
 export interface Act { 
@@ -23,6 +23,7 @@ export interface Subsection {
 }
 
 export interface Graph { 
+  name?: string; // Optional name for the game/economy
   inputs: Input[]; 
   nodes: Act[]; 
   edges: ([string, string] | [string])[];

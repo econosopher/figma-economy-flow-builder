@@ -6,7 +6,7 @@ declare const TEMPLATES: { [key: string]: any };
 
 const COLOR = {
   // Specific color palette as requested
-  SINK_RED: '#DA5433',
+  INITIAL_SINK_NODE: '#DA5433',
   XP_ORANGE: '#EC9F53',
   FINAL_GOOD_YELLOW: '#F5C95C',
   SOURCE_GREEN: '#4CAF50',
@@ -59,7 +59,7 @@ function makeBox(txt: string, w: number, h: number, fill: string, align: 'CENTER
     }
 
     // White text on dark backgrounds (red, black), black text on light backgrounds
-    const isDarkBG = fill === COLOR.SINK_RED || fill === COLOR.HEADER_BLACK;
+    const isDarkBG = fill === COLOR.INITIAL_SINK_NODE || fill === COLOR.HEADER_BLACK;
     const textColor = isDarkBG ? hex(COLOR.MAIN_WHITE) : hex(COLOR.HEADER_BLACK);
 
     const s = figma.createShapeWithText();
@@ -164,7 +164,7 @@ figma.showUI(__html__, { width: 400, height: 720 });
 figma.ui.postMessage({ type: 'templates', templates: TEMPLATES, colors: COLOR });
 
 /* ── types ── */
-interface Input { id: string; label: string; kind: 'SINK_RED' }
+interface Input { id: string; label: string; kind: 'initial_sink_node' }
 interface Act { id: string; label: string; sources?: string[]; sinks?: string[]; values?: string[]; kind?: string }
 interface Graph { inputs: Input[]; nodes: Act[]; edges: ([string, string] | [string])[] }
 
@@ -290,7 +290,7 @@ figma.ui.onmessage = async (m: PluginMessage) => {
   
   // Validate custom colors
   const customColors = {
-    sink: m.colors?.sink || COLOR.SINK_RED,
+    sink: m.colors?.sink || COLOR.INITIAL_SINK_NODE,
     source: m.colors?.source || COLOR.SOURCE_GREEN,
     xp: m.colors?.xp || COLOR.XP_ORANGE,
     final: m.colors?.final || COLOR.FINAL_GOOD_YELLOW,
@@ -304,7 +304,7 @@ figma.ui.onmessage = async (m: PluginMessage) => {
   const nodeTotalHeights = new Map<string, number>();
   allNodesData.forEach(node => {
       let totalHeight = 0;
-      if (node.kind === 'SINK_RED') {
+      if (node.kind === 'initial_sink_node') {
           totalHeight = BOX_SIZE.INPUT.H;
       } else if (node.kind === 'finalGood') {
           totalHeight = BOX_SIZE.NODE.H;
@@ -380,7 +380,7 @@ figma.ui.onmessage = async (m: PluginMessage) => {
       if (!nodeData) return y_initial;
 
       const totalHeight = nodeTotalHeights.get(id) || 0;
-      const boxWidth = (nodeData.kind === 'SINK_RED') ? BOX_SIZE.INPUT.W : BOX_SIZE.NODE.W;
+      const boxWidth = (nodeData.kind === 'initial_sink_node') ? BOX_SIZE.INPUT.W : BOX_SIZE.NODE.W;
       const x = colIndex * (BOX_SIZE.NODE.W + PADDING.X);
       let y_candidate = y_initial;
 
@@ -441,7 +441,7 @@ figma.ui.onmessage = async (m: PluginMessage) => {
           const x_pos = colIndex * (BOX_SIZE.NODE.W + PADDING.X);
           
           let mainBox: SceneNode;
-          if (nodeData.kind === 'SINK_RED') {
+          if (nodeData.kind === 'initial_sink_node') {
               mainBox = makeBox(nodeData.label, BOX_SIZE.INPUT.W, BOX_SIZE.INPUT.H, customColors.sink);
           } else if (nodeData.kind === 'finalGood') {
               try {
@@ -458,7 +458,7 @@ figma.ui.onmessage = async (m: PluginMessage) => {
           mainBox.setPluginData("id", id); // Store the stable ID
 
           const totalHeight = nodeTotalHeights.get(id) || 0;
-          const boxWidth = (nodeData.kind === 'SINK_RED') ? BOX_SIZE.INPUT.W : BOX_SIZE.NODE.W;
+          const boxWidth = (nodeData.kind === 'initial_sink_node') ? BOX_SIZE.INPUT.W : BOX_SIZE.NODE.W;
           placedNodePositions.set(id, { x: x_pos, y: y_final, height: totalHeight, width: boxWidth });
           nodes.set(id, mainBox);
           elementsToGroup.push(mainBox);
@@ -668,8 +668,8 @@ function syncFromCanvas() {
             const label = node.text.characters;
             
             const r = Math.round(fill.color.r * 255);
-            if (r >= 213 && r <= 223) { // SINK_RED with tolerance
-                const input: Input = { id, label, kind: 'SINK_RED' };
+            if (r >= 213 && r <= 223) { // initial_sink_node with tolerance
+                const input: Input = { id, label, kind: 'initial_sink_node' };
                 graph.inputs.push(input);
                 tempNodeData.set(node.id, { node, act: input });
                 figmaIdToStableId.set(node.id, id);
@@ -716,7 +716,7 @@ function syncFromCanvas() {
                 
                 if (isGreen) { // SOURCE_GREEN
                     parentData.act.sources?.push(text.replace(/^\+\s*/, '').trim());
-                } else if (isRed) { // SINK_RED
+                } else if (isRed) { // initial_sink_node
                     parentData.act.sinks?.push(text.replace(/^-\s*/, '').trim());
                 } else if (isOrange) { // XP_ORANGE
                     parentData.act.values?.push(text.trim());

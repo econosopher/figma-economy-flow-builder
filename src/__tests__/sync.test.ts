@@ -77,7 +77,7 @@ describe('syncFromCanvas', () => {
     expect(result.inputs[0]).toEqual({
       id: 'time',
       label: 'Time',
-      kind: 'SINK_RED'
+      kind: 'initial_sink_node'
     });
     
     expect(result.nodes).toHaveLength(1);

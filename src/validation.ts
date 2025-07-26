@@ -1,6 +1,7 @@
 /// <reference types="@figma/plugin-typings" />
 
 import { Graph, Input, Act } from './types';
+import { COLOR } from './constants';
 
 export function validateGraphData(data: Partial<Graph>): string[] {
   const errors: string[] = [];
@@ -93,10 +94,10 @@ export function isValidColor(color: string): boolean {
 
 export function validateCustomColors(colors: any): { [key: string]: string } {
   const defaultColors = {
-    sink: '#DA5433',
-    source: '#4CAF50',
-    xp: '#EC9F53',
-    final: '#F5C95C',
+    sink: COLOR.INITIAL_SINK_NODE,
+    source: COLOR.SOURCE_GREEN,
+    xp: COLOR.XP_ORANGE,
+    final: COLOR.FINAL_GOOD_YELLOW,
   };
 
   if (!colors || typeof colors !== 'object') {

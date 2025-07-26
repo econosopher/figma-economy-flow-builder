@@ -15,7 +15,7 @@ export function makeBox(txt: string, w: number, h: number, fill: string, align: 
     }
 
     // White text on dark backgrounds (red, black), black text on light backgrounds
-    const isDarkBG = fill === COLOR.SINK_RED || fill === COLOR.HEADER_BLACK;
+    const isDarkBG = fill === COLOR.INITIAL_SINK_NODE || fill === COLOR.HEADER_BLACK;
     const textColor = isDarkBG ? hex(COLOR.MAIN_WHITE) : hex(COLOR.HEADER_BLACK);
 
     const s = figma.createShapeWithText();
@@ -93,13 +93,22 @@ export function createConnector(A: SceneNode, B: SceneNode) {
     // Use default grey for connectors
     c.strokes = [{ type: 'SOLID', color: hex(COLOR.CONNECTOR_GREY) }];
     
+    let targetNode = B;
+    
+    // Special handling for final goods - connect to the body, not the header
     if (B.name.startsWith("Final Good")) {
       c.dashPattern = [10, 10];
+      
+      // If B is a group (final good), find the body node (second child)
+      if (B.type === 'GROUP' && 'children' in B && B.children.length > 1) {
+        // The body is the second child (index 1)
+        targetNode = B.children[1];
+      }
     }
 
     // Force left-to-right connection points
     c.connectorStart = { endpointNodeId: A.id, magnet: 'RIGHT' } as any;
-    c.connectorEnd = { endpointNodeId: B.id, magnet: 'LEFT' } as any;
+    c.connectorEnd = { endpointNodeId: targetNode.id, magnet: 'LEFT' } as any;
     return c;
   } catch (error) {
     console.error('Error creating connector:', error);

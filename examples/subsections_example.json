@@ -1,7 +1,7 @@
 {
   "inputs": [
-    { "id": "time", "label": "Player Time", "kind": "SINK_RED" },
-    { "id": "money", "label": "Real Money", "kind": "SINK_RED" }
+    { "id": "time", "label": "Player Time", "kind": "initial_sink_node" },
+    { "id": "money", "label": "Real Money", "kind": "initial_sink_node" }
   ],
   "nodes": [
     { "id": "tutorial", "label": "Complete Tutorial", "sources": ["Basic Knowledge", "10 Gems"] },

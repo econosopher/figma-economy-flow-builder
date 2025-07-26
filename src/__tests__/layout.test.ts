@@ -11,7 +11,7 @@ describe('LayoutEngine', () => {
   describe('calculateNodeHeights', () => {
     it('should calculate correct height for input nodes', () => {
       const nodes = [
-        { id: 'time', label: 'Time', kind: 'SINK_RED' as const }
+        { id: 'time', label: 'Time', kind: 'initial_sink_node' as const }
       ];
 
       engine.calculateNodeHeights(nodes);
@@ -30,8 +30,8 @@ describe('LayoutEngine', () => {
       ];
 
       engine.calculateNodeHeights(nodes);
-      // Base height (72) + 4 attributes * (20 + 5) + 5 = 177
-      expect(engine.getNodeHeight('play')).toBe(177);
+      // Base height (90) + 4 attributes * (20 + 5) + 5 = 195
+      expect(engine.getNodeHeight('play')).toBe(195);
     });
 
     it('should calculate correct height for final good nodes', () => {
@@ -40,14 +40,14 @@ describe('LayoutEngine', () => {
       ];
 
       engine.calculateNodeHeights(nodes);
-      expect(engine.getNodeHeight('win')).toBe(72); // BOX_SIZE.NODE.H
+      expect(engine.getNodeHeight('win')).toBe(90); // BOX_SIZE.NODE.H
     });
   });
 
   describe('calculateColumns', () => {
     it('should place nodes with no dependencies in column 0', () => {
       const graph: Graph = {
-        inputs: [{ id: 'time', label: 'Time', kind: 'SINK_RED' }],
+        inputs: [{ id: 'time', label: 'Time', kind: 'initial_sink_node' }],
         nodes: [{ id: 'play', label: 'Play' }],
         edges: []
       };
@@ -59,7 +59,7 @@ describe('LayoutEngine', () => {
 
     it('should place dependent nodes in subsequent columns', () => {
       const graph: Graph = {
-        inputs: [{ id: 'time', label: 'Time', kind: 'SINK_RED' }],
+        inputs: [{ id: 'time', label: 'Time', kind: 'initial_sink_node' }],
         nodes: [
           { id: 'play', label: 'Play' },
           { id: 'win', label: 'Win' }
@@ -79,8 +79,8 @@ describe('LayoutEngine', () => {
     it('should handle multiple dependencies correctly', () => {
       const graph: Graph = {
         inputs: [
-          { id: 'time', label: 'Time', kind: 'SINK_RED' },
-          { id: 'money', label: 'Money', kind: 'SINK_RED' }
+          { id: 'time', label: 'Time', kind: 'initial_sink_node' },
+          { id: 'money', label: 'Money', kind: 'initial_sink_node' }
         ],
         nodes: [
           { id: 'buy', label: 'Buy Item' },
@@ -130,8 +130,8 @@ describe('LayoutEngine', () => {
         new Map()
       );
 
-      // Should be pushed down: 50 + 72 + 40 = 162
-      expect(result).toBe(162);
+      // Should be pushed down: 50 + 90 + 40 + 7 = 187
+      expect(result).toBe(187);
     });
   });
 });

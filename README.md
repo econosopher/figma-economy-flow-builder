@@ -61,13 +61,13 @@ An array of objects representing the starting points of your economy, like "Time
 
 *   `id` (string, required): A unique identifier for this input.
 *   `label` (string, required): The text displayed inside the box.
-*   `kind` (string, required): Must be set to `"SINK_RED"`.
+*   `kind` (string, required): Must be set to `"initial_sink_node"`.
 
 **Example:**
 ```json
 "inputs": [
-  { "id": "time", "label": "Time", "kind": "SINK_RED" },
-  { "id": "money", "label": "Money", "kind": "SINK_RED" }
+  { "id": "time", "label": "Time", "kind": "initial_sink_node" },
+  { "id": "money", "label": "Money", "kind": "initial_sink_node" }
 ]
 ```
 
@@ -147,16 +147,23 @@ The output MUST be a single, complete JSON object with EXACTLY these three top-l
 
 1. **NO MARKDOWN FORMATTING**: Output ONLY the raw JSON object. No \`\`\`json tags, no explanations before or after.
 2. **NO TRAILING COMMAS**: Never put a comma after the last item in any array or object.
-3. **ALL ARRAYS MUST HAVE VALUES**: If a property expects an array (like `sources`, `sinks`, `values`), it must be present with at least an empty array `[]`. Never leave a property without a value.
-4. **CONSISTENT ID FORMAT**: All `id` values must be lowercase with underscores (snake_case). Example: `daily_quest`, not `dailyQuest` or `DailyQuest`.
-5. **VALID EDGES**: Every edge must connect existing nodes. Each edge is a two-element array: `["from_id", "to_id"]`.
+3. **NEVER LEAVE EMPTY VALUES**: Every property MUST have a value. Common mistakes to avoid:
+   - WRONG: `"sources":,` or `"sinks":,` or `"values":,`
+   - CORRECT: `"sources": [],` or `"sinks": [],` or `"values": []`
+   - If a node has no sources/sinks/values, use an empty array `[]`, never leave it blank
+4. **ALL ARRAYS MUST BE PROPERLY INITIALIZED**: Properties like `sources`, `sinks`, and `values` must ALWAYS be followed by either:
+   - An array with items: `"sources": ["Gold", "XP"]`
+   - An empty array: `"sources": []`
+   - NEVER just a comma or nothing: `"sources":,` ← THIS WILL CAUSE ERRORS
+5. **CONSISTENT ID FORMAT**: All `id` values must be lowercase with underscores (snake_case). Example: `daily_quest`, not `dailyQuest` or `DailyQuest`.
+6. **VALID EDGES**: Every edge must connect existing nodes. Each edge is a two-element array: `["from_id", "to_id"]`.
 
 ### JSON Structure Specification:
 
 1. **`inputs`** (required array): Primary resources players invest (time, money). These are economy sources.
    - `id` (string): Unique snake_case identifier
    - `label` (string): Display name (e.g., "Time", "Money")
-   - `kind` (string): MUST be exactly `"SINK_RED"` (all caps with underscore)
+   - `kind` (string): MUST be exactly `"initial_sink_node"`
 
 2. **`nodes`** (required array): Game activities, systems, or milestones.
    - `id` (string): Unique snake_case identifier

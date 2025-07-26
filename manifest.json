@@ -1,7 +1,11 @@
 {
   "name": "Economy Flow Builder",
-  "id": "economy-flow-builder",
+  "id": "1529045431118674621",
   "api": "1.0.0",
   "main": "code.js",
-  "editorType": ["figjam"]
+  "editorType": ["figjam"],
+  "networkAccess": {
+    "allowedDomains": ["none"]
+  },
+  "documentAccess": "dynamic-page"
 }

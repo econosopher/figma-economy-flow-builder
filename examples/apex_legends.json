@@ -1,7 +1,7 @@
 {
   "inputs": [
-    { "id": "player_time", "label": "Spend Time", "kind": "SINK_RED" },
-    { "id": "real_world_money", "label": "Spend Money", "kind": "SINK_RED" }
+    { "id": "player_time", "label": "Spend Time", "kind": "initial_sink_node" },
+    { "id": "real_world_money", "label": "Spend Money", "kind": "initial_sink_node" }
   ],
   "nodes": [
     { "id": "play_match", "label": "To Play Match", "values": ["Player XP"] },

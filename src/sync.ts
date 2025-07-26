@@ -69,8 +69,8 @@ export function syncFromCanvas() {
         const label = node.text.characters;
         
         const r = Math.round(fill.color.r * 255);
-        if (r >= 213 && r <= 223) { // SINK_RED with tolerance
-          const input: Input = { id, label, kind: 'SINK_RED' };
+        if (r >= 213 && r <= 223) { // initial_sink_node with tolerance
+          const input: Input = { id, label, kind: 'initial_sink_node' };
           graph.inputs.push(input);
           tempNodeData.set(node.id, { node, act: input });
           figmaIdToStableId.set(node.id, id);

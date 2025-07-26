@@ -120,7 +120,7 @@ async function generateDiagram(data: Graph, customColorInput?: { [key: string]: 
       let mainBox: SceneNode;
       let actualConnectorTarget: SceneNode; // The actual box to connect to
       try {
-        if ('kind' in nodeData && nodeData.kind === 'SINK_RED') {
+        if ('kind' in nodeData && nodeData.kind === 'initial_sink_node') {
           mainBox = makeBox(nodeData.label, BOX_SIZE.INPUT.W, BOX_SIZE.INPUT.H, customColors.sink);
           actualConnectorTarget = mainBox;
         } else if ('kind' in nodeData && nodeData.kind === 'finalGood') {
@@ -148,7 +148,7 @@ async function generateDiagram(data: Graph, customColorInput?: { [key: string]: 
       mainBox.setPluginData("id", id);
 
       const totalHeight = layoutEngine.getNodeHeight(id);
-      const boxWidth = ('kind' in nodeData && nodeData.kind === 'SINK_RED') ? BOX_SIZE.INPUT.W : BOX_SIZE.NODE.W;
+      const boxWidth = ('kind' in nodeData && nodeData.kind === 'initial_sink_node') ? BOX_SIZE.INPUT.W : BOX_SIZE.NODE.W;
       layoutEngine.recordNodePosition(id, x_pos, y_final, boxWidth, totalHeight);
       
       // Collect main box and its attributes for grouping
@@ -243,23 +243,17 @@ async function generateDiagram(data: Graph, customColorInput?: { [key: string]: 
           });
           
           if (subsectionNodes.length > 0) {
-            // Calculate subsection bounds
-            let subMinX = Infinity, subMinY = Infinity, subMaxX = -Infinity, subMaxY = -Infinity;
-            subsectionNodes.forEach(node => {
-              subMinX = Math.min(subMinX, node.x);
-              subMinY = Math.min(subMinY, node.y);
-              subMaxX = Math.max(subMaxX, node.x + node.width);
-              subMaxY = Math.max(subMaxY, node.y + node.height);
-            });
+            // Use layout engine to calculate subsection bounds with proper margins
+            const bounds = layoutEngine.calculateSubsectionBounds(subsectionData.nodeIds);
             
             // Create subsection
             const subsection = figma.createSection();
             subsection.name = subsectionData.label;
-            subsection.x = subMinX - 30;
-            subsection.y = subMinY - 30;
+            subsection.x = bounds.x;
+            subsection.y = bounds.y;
             subsection.resizeWithoutConstraints(
-              subMaxX - subMinX + 60,
-              subMaxY - subMinY + 60
+              bounds.width,
+              bounds.height
             );
             
             // Apply custom color if specified
@@ -277,7 +271,8 @@ async function generateDiagram(data: Graph, customColorInput?: { [key: string]: 
       
       // Create main section to contain everything
       const section = figma.createSection();
-      section.name = `${TAG} Section`;
+      // Use the graph name if provided, otherwise use default
+      section.name = data.name ? `${data.name} Economy` : `${TAG} Section`;
       
       // Calculate bounds for the main section
       let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;

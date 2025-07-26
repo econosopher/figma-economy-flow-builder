@@ -2,6 +2,7 @@
 
 import { Graph, Act, Input } from './types';
 import { BOX_SIZE } from './constants';
+import { CollisionEngine, Rectangle, CollisionContext } from './collision';
 
 interface NodePosition {
   x: number;
@@ -14,11 +15,23 @@ export class LayoutEngine {
   private nodeTotalHeights = new Map<string, number>();
   private nodeColumns = new Map<string, number>();
   private placedNodePositions = new Map<string, NodePosition>();
+  private collisionEngine: CollisionEngine;
+
+  constructor() {
+    // Initialize collision engine with custom config
+    this.collisionEngine = new CollisionEngine({
+      strategy: 'avoid',
+      nodeToNode: true,
+      edgeToNode: true,
+      edgeToEdge: false,
+      margin: 25 // Extra margin to prevent flush positioning
+    });
+  }
 
   calculateNodeHeights(nodes: (Input | Act)[]) {
     nodes.forEach(node => {
       let totalHeight = 0;
-      if ('kind' in node && node.kind === 'SINK_RED') {
+      if ('kind' in node && node.kind === 'initial_sink_node') {
         totalHeight = BOX_SIZE.INPUT.H;
       } else if ('kind' in node && node.kind === 'finalGood') {
         totalHeight = BOX_SIZE.NODE.H;
@@ -99,42 +112,29 @@ export class LayoutEngine {
     revAdj: Map<string, string[]>
   ): number {
     const totalHeight = this.nodeTotalHeights.get(id) || 0;
-    const boxWidth = ('kind' in nodeData && nodeData.kind === 'SINK_RED') ? BOX_SIZE.INPUT.W : BOX_SIZE.NODE.W;
+    const boxWidth = ('kind' in nodeData && nodeData.kind === 'initial_sink_node') ? BOX_SIZE.INPUT.W : BOX_SIZE.NODE.W;
     const x = colIndex * (BOX_SIZE.NODE.W + paddingX);
-    let max_y = 0;
+    
+    // Create collision context
+    const context: CollisionContext = {
+      nodePositions: new Map(this.placedNodePositions.entries()),
+      edges: [],
+      padding: { x: paddingX, y: paddingY }
+    };
 
-    // Check for direct node-on-node collision
-    for (const pos of this.placedNodePositions.values()) {
-      if (x < pos.x + pos.width + paddingX && x + boxWidth + paddingX > pos.x) {
-        max_y = Math.max(max_y, pos.y + pos.height + paddingY);
-      }
-    }
-
-    // Check for connector-on-node collision
+    // Get parent IDs for edge collision detection
     const parentIds = revAdj.get(id) || [];
-    for (const pId of parentIds) {
-      const parentPos = this.placedNodePositions.get(pId);
-      const parentCol = this.nodeColumns.get(pId);
-      if (!parentPos || parentCol === undefined) continue;
 
-      const lineY_start = parentPos.y + parentPos.height / 2;
-      const lineY_end = y_initial + totalHeight / 2;
-      const lineY_min = Math.min(lineY_start, lineY_end);
-      const lineY_max = Math.max(lineY_start, lineY_end);
-
-      // Check against nodes in intermediate columns
-      for (let i = parentCol + 1; i < colIndex; i++) {
-        for (const [otherId, otherPos] of this.placedNodePositions.entries()) {
-          if (this.nodeColumns.get(otherId) === i) {
-            if (lineY_max > otherPos.y && lineY_min < otherPos.y + otherPos.height) {
-              max_y = Math.max(max_y, otherPos.y + otherPos.height + paddingY);
-            }
-          }
-        }
-      }
-    }
-
-    return Math.max(y_initial, max_y);
+    // Use collision engine to find conflict-free Y position
+    return this.collisionEngine.findConflictFreeY(
+      id,
+      x,
+      y_initial,
+      boxWidth,
+      totalHeight,
+      context,
+      parentIds
+    );
   }
 
   recordNodePosition(id: string, x: number, y: number, width: number, height: number) {
@@ -147,5 +147,41 @@ export class LayoutEngine {
 
   getNodeHeight(id: string): number {
     return this.nodeTotalHeights.get(id) || 0;
+  }
+
+  /**
+   * Get the connection point for a node (handles special cases like final goods)
+   */
+  getNodeConnectionPoint(nodeId: string, nodeData: Input | Act | null, type: 'input' | 'output'): { x: number; y: number } | null {
+    const pos = this.placedNodePositions.get(nodeId);
+    if (!pos) return null;
+
+    return this.collisionEngine.getNodeConnectionPoint(nodeId, pos, type);
+  }
+
+  /**
+   * Calculate subsection bounds with proper margins
+   */
+  calculateSubsectionBounds(nodeIds: string[]): Rectangle {
+    const nodes: Rectangle[] = [];
+    
+    for (const id of nodeIds) {
+      const pos = this.placedNodePositions.get(id);
+      if (pos) {
+        nodes.push(pos);
+      }
+    }
+
+    // Use larger padding for initial boxes
+    const isInitialSection = nodeIds.some(id => {
+      const pos = this.placedNodePositions.get(id);
+      return pos && pos.width === BOX_SIZE.INPUT.W;
+    });
+
+    const sectionPadding = isInitialSection
+      ? { top: 60, right: 40, bottom: 40, left: 50 } // Extra margin for initial boxes
+      : { top: 40, right: 40, bottom: 40, left: 40 };
+
+    return this.collisionEngine.calculateSubsectionBounds(nodes, sectionPadding);
   }
 }
