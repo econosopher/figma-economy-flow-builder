@@ -24,7 +24,7 @@ export class LayoutEngine {
       nodeToNode: true,
       edgeToNode: true,
       edgeToEdge: false,
-      margin: 35 // Increased margin for better edge routing
+      margin: 20 // Reduced margin for tighter vertical spacing
     });
   }
 
@@ -147,6 +147,10 @@ export class LayoutEngine {
 
   getNodeHeight(id: string): number {
     return this.nodeTotalHeights.get(id) || 0;
+  }
+
+  getNodePosition(id: string): NodePosition | undefined {
+    return this.placedNodePositions.get(id);
   }
 
   /**

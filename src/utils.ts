@@ -33,6 +33,11 @@ export function clear() {
       n.type === 'SECTION' && n.getPluginData("economyFlowSection") === "true"
     );
     
+    // Also find and remove legend sections
+    const legendSections = figma.currentPage.findAll(n => 
+      n.type === 'SECTION' && n.name === 'Legend'
+    );
+    
     sectionsToRemove.forEach(section => {
       try {
         section.remove();
@@ -41,9 +46,17 @@ export function clear() {
       }
     });
     
+    legendSections.forEach(section => {
+      try {
+        section.remove();
+      } catch (error) {
+        console.error('Failed to remove legend section:', error);
+      }
+    });
+    
     // Then remove any remaining nodes (legacy support)
     const nodesToRemove = figma.currentPage.findAll(n => n.name.includes(TAG));
-    console.log(`Clearing ${sectionsToRemove.length} sections and ${nodesToRemove.length} nodes`);
+    console.log(`Clearing ${sectionsToRemove.length} sections, ${legendSections.length} legend sections, and ${nodesToRemove.length} nodes`);
     
     nodesToRemove.forEach(n => {
       try {

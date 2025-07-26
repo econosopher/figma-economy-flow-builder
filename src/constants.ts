@@ -28,7 +28,7 @@ export const BOX_SIZE = {
   FINAL_GOOD_HEADER: { H: 24 } // Black tether height
 };
 
-export const PADDING = { X: 100, Y: 60 }; // Increased Y padding to improve edge routing
+export const PADDING = { X: 100, Y: 30 }; // Reduced Y padding for tighter layout
 export const SECTION_PADDING = 100; // Increased from 50 for more margin
 export const INITIAL_X_OFFSET = 40; // Offset from left edge to prevent nodes being flush with subsection
 export const INITIAL_Y_OFFSET = 40; // Offset from top edge to prevent nodes being flush with subsection

@@ -8,6 +8,97 @@ import { validateGraphData, validateCustomColors, isValidColor } from './validat
 import { LayoutEngine } from './layout';
 import { syncFromCanvas } from './sync';
 
+// Extract unique currencies by type from the graph
+function extractCurrenciesByType(graph: Graph): { sinks: string[], sources: string[], values: string[] } {
+  const sinks = new Set<string>();
+  const sources = new Set<string>();
+  const values = new Set<string>();
+  
+  // Process all nodes
+  graph.nodes.forEach(node => {
+    if (node.sinks) {
+      node.sinks.forEach(sink => sinks.add(sink));
+    }
+    if (node.sources) {
+      node.sources.forEach(source => sources.add(source));
+    }
+    if (node.values) {
+      node.values.forEach(value => values.add(value));
+    }
+  });
+  
+  return {
+    sinks: Array.from(sinks).sort(),
+    sources: Array.from(sources).sort(),
+    values: Array.from(values).sort()
+  };
+}
+
+// Create a legend section showing all currency types
+function createLegendSection(currencies: { sinks: string[], sources: string[], values: string[] }, initialSectionX: number): SectionNode | null {
+  const legendNodes: SceneNode[] = [];
+  const HEADER_HEIGHT = BOX_SIZE.NODE.H; // Same as action boxes
+  const ITEM_SPACING = 5;
+  const HEADER_MARGIN_BOTTOM = 10;
+  const COLUMN_SPACING = BOX_SIZE.NODE.W + PADDING.X; // Same spacing as main diagram
+  
+  let currentX = INITIAL_X_OFFSET; // Start with same offset as main diagram
+  let maxHeight = 0;
+  
+  // Create sections for each type
+  const sections = [
+    { type: 'Sinks', items: currencies.sinks, color: COLOR.INITIAL_SINK_NODE },
+    { type: 'Sources', items: currencies.sources, color: COLOR.SOURCE_GREEN },
+    { type: 'Stores of Value', items: currencies.values, color: COLOR.XP_ORANGE }
+  ];
+  
+  sections.forEach((section, sectionIndex) => {
+    if (section.items.length === 0) return;
+    
+    // Create header box (same size as action boxes)
+    const headerBox = makeBox(section.type, BOX_SIZE.NODE.W, HEADER_HEIGHT, section.color);
+    headerBox.x = currentX;
+    headerBox.y = 0;
+    legendNodes.push(headerBox);
+    
+    // Create item boxes (same style as attribute boxes)
+    let currentY = HEADER_HEIGHT + HEADER_MARGIN_BOTTOM;
+    section.items.forEach((item, itemIndex) => {
+      const itemBox = makeBox(item, BOX_SIZE.ATTR.W, BOX_SIZE.ATTR.H, section.color);
+      itemBox.x = currentX; // Left-align with header box
+      itemBox.y = currentY;
+      legendNodes.push(itemBox);
+      
+      currentY += BOX_SIZE.ATTR.H + ITEM_SPACING;
+    });
+    
+    maxHeight = Math.max(maxHeight, currentY);
+    currentX += COLUMN_SPACING;
+  });
+  
+  if (legendNodes.length === 0) return null;
+  
+  // Calculate bounds with proper padding (same as initial section)
+  const sectionPadding = { top: 80, right: 60, bottom: 60, left: 70 };
+  const sectionWidth = currentX - INITIAL_X_OFFSET + sectionPadding.right;
+  const sectionHeight = maxHeight + sectionPadding.top + sectionPadding.bottom; // Include top padding in height
+  
+  // Create subsection for the legend
+  const legendSection = figma.createSection();
+  legendSection.name = "Legend";
+  legendSection.x = initialSectionX; // Align with initial section
+  legendSection.y = 0; // Will be positioned later
+  legendSection.resizeWithoutConstraints(sectionWidth, sectionHeight);
+  
+  // Add all nodes to the section with padding
+  legendNodes.forEach(node => {
+    node.y += sectionPadding.top;
+    legendSection.appendChild(node);
+  });
+  
+  return legendSection;
+}
+
 declare const TEMPLATES: { [key: string]: any };
 
 /* ── UI ── */
@@ -97,10 +188,10 @@ async function generateDiagram(data: Graph, customColorInput?: { [key: string]: 
       const parentYs = parentIds
         .map(pId => {
           const col = layoutEngine.getNodeColumn(pId);
-          if (col === undefined) return undefined;
-          // This is a simplification - in the full implementation, 
-          // we'd get the actual Y position from placedNodePositions
-          return 0;
+          if (col === undefined || col >= colIndex) return undefined;
+          // Get actual Y position of parent node
+          const parentPos = layoutEngine.getNodePosition(pId);
+          return parentPos ? parentPos.y - INITIAL_Y_OFFSET : undefined;
         })
         .filter(y => y !== undefined) as number[];
       const targetY = parentYs.length > 0 ? parentYs.reduce((s, y) => s + y, 0) / parentYs.length : 0;
@@ -241,6 +332,8 @@ async function generateDiagram(data: Graph, customColorInput?: { [key: string]: 
     try {
       // Create subsections if defined
       const subsections: SectionNode[] = [];
+      let initialSectionX = 0; // Track X position of initial section for legend alignment
+      let legendSection: SectionNode | null = null;
       if (data.subsections && data.subsections.length > 0) {
         for (const subsectionData of data.subsections) {
           const subsectionNodes: SceneNode[] = [];
@@ -267,6 +360,15 @@ async function generateDiagram(data: Graph, customColorInput?: { [key: string]: 
               bounds.width,
               bounds.height
             );
+            
+            // Check if this is the initial section (contains initial_sink_nodes)
+            const hasInitialNodes = subsectionData.nodeIds.some(id => {
+              const nodeData = nodeDataMap.get(id);
+              return nodeData && 'kind' in nodeData && nodeData.kind === 'initial_sink_node';
+            });
+            if (hasInitialNodes) {
+              initialSectionX = bounds.x;
+            }
             
             // Apply custom color if specified
             if (subsectionData.color && isValidColor(subsectionData.color)) {
@@ -327,10 +429,26 @@ async function generateDiagram(data: Graph, customColorInput?: { [key: string]: 
       
       figma.currentPage.appendChild(section);
       
+      // Create and add legend section OUTSIDE the main section
+      const currencies = extractCurrenciesByType(data);
+      legendSection = createLegendSection(currencies, initialSectionX);
+      if (legendSection) {
+        // Position legend below the main section with spacing
+        const sectionBounds = section.absoluteBoundingBox;
+        if (sectionBounds) {
+          legendSection.y = section.y + sectionBounds.height + 50; // 50px spacing
+        }
+        figma.currentPage.appendChild(legendSection);
+      }
+      
       // Store section ID for sync purposes
       section.setPluginData("economyFlowSection", "true");
       
-      figma.viewport.scrollAndZoomIntoView([section]);
+      const nodesToView = [section];
+      if (legendSection) {
+        nodesToView.push(legendSection);
+      }
+      figma.viewport.scrollAndZoomIntoView(nodesToView);
       
       const messages = ['Diagram created successfully in section'];
       if (data.subsections && data.subsections.length > 0) {
