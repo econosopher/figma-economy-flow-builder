@@ -16,36 +16,36 @@ An example `helldivers.json` can be found in the `/examples` directory.
 
 ---
 
-## 📋 Update Log
+## Update Log
 
 ### Version 1.2.39 - Post-Publication Updates
 
 Since the initial publication to the Figma Community, we've made several significant improvements:
 
-#### 🎨 Visual Improvements
+#### Visual Improvements
 - **Automatic Legend Generation**: A new legend section is automatically created showing all currencies organized by type (Sinks, Sources, Stores of Value)
 - **Improved Node Spacing**: Reduced vertical padding between nodes by 50% (from 60px to 30px to 21px) for more compact layouts
 - **Better Alignment**: Fixed parent-child node alignment to ensure connected nodes are visually aligned
 - **Subsection Margins**: Added proper margins around initial sink nodes (Time/Money) so they're not flush against section edges
 - **Consistent Node Sizes**: Initial sink nodes now use the same dimensions as action boxes (144x90) for visual consistency
 
-#### 🔧 Technical Improvements
+#### Technical Improvements
 - **Advanced Collision Detection**: New collision detection system prevents nodes from overlapping, especially in complex diagrams
 - **Smarter Layout Engine**: Improved topological sorting and column-based placement for better automatic layouts
 - **Edge Routing**: Enhanced connector routing to prevent edge crossings and overlaps
 - **Performance**: More efficient node positioning algorithm that handles large diagrams better
 
-#### 📝 JSON Structure Changes
+#### JSON Structure Changes
 - **IMPORTANT**: Changed `"kind": "finalGood"` to `"kind": "final_good"` for consistency with snake_case naming convention
 - All other JSON structure remains backward compatible
 
-#### 🛠️ Bug Fixes
+#### Bug Fixes
 - Fixed issue where some nodes (like "Spend Money") could be hidden behind others
 - Resolved sync issues when importing diagrams created outside the plugin
 - Fixed legend section height calculation to contain all items
 - Corrected spacing values to use whole integers for better alignment
 
-#### 📚 Documentation
+#### Documentation
 - Added comprehensive LLM prompt instructions for generating economy JSONs
 - Created separate `LLM_INSTRUCTIONS.md` file for easy reference
 - Updated all examples to use the new `final_good` naming convention
