@@ -40,7 +40,8 @@ function createLegendSection(currencies: { sinks: string[], sources: string[], v
   const HEADER_HEIGHT = BOX_SIZE.NODE.H; // Same as action boxes
   const ITEM_SPACING = 5;
   const HEADER_MARGIN_BOTTOM = 10;
-  const COLUMN_SPACING = BOX_SIZE.NODE.W + PADDING.X; // Same spacing as main diagram
+  const LEGEND_SECTION_SPACING = 50; // Spacing between legend and main section
+  const COLUMN_SPACING = BOX_SIZE.NODE.W + LEGEND_SECTION_SPACING; // Same spacing as between sections
   
   let currentX = INITIAL_X_OFFSET; // Start with same offset as main diagram
   let maxHeight = 0;
@@ -436,7 +437,7 @@ async function generateDiagram(data: Graph, customColorInput?: { [key: string]: 
         // Position legend below the main section with spacing
         const sectionBounds = section.absoluteBoundingBox;
         if (sectionBounds) {
-          legendSection.y = section.y + sectionBounds.height + 50; // 50px spacing
+          legendSection.y = section.y + sectionBounds.height + 50; // 50px spacing between sections
         }
         figma.currentPage.appendChild(legendSection);
       }
