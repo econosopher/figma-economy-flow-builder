@@ -1,6 +1,6 @@
 {
   "name": "economy-flow-plugin",
-  "version": "1.2.37",
+  "version": "1.2.39",
   "description": "Generate economy flow-charts in FigJam from a simple JSON spec. This plugin intelligently lays out nodes and their connections, creating clear and readable diagrams. It offers features like two-way JSON syncing, customizable colors, pre-built templates, and detailed validation to streamline your workflow.",
   "main": "code.js",
   "directories": {

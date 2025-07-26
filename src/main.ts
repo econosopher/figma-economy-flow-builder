@@ -221,7 +221,7 @@ async function generateDiagram(data: Graph, customColorInput?: { [key: string]: 
         if ('kind' in nodeData && nodeData.kind === 'initial_sink_node') {
           mainBox = makeBox(nodeData.label, BOX_SIZE.INPUT.W, BOX_SIZE.INPUT.H, customColors.sink);
           actualConnectorTarget = mainBox;
-        } else if ('kind' in nodeData && nodeData.kind === 'finalGood') {
+        } else if ('kind' in nodeData && nodeData.kind === 'final_good') {
           mainBox = makeFinalGoodBox(nodeData.label, BOX_SIZE.FINAL_GOOD.W, BOX_SIZE.FINAL_GOOD.H, customColors.final);
           // For final good, the main box is a group - find the body box inside it
           if (mainBox.type === 'GROUP' && 'children' in mainBox && mainBox.children.length > 1) {
@@ -258,7 +258,7 @@ async function generateDiagram(data: Graph, customColorInput?: { [key: string]: 
       const nodeElements: SceneNode[] = [mainBox];
 
       // Add attributes
-      if (!('kind' in nodeData && nodeData.kind === 'finalGood') && 
+      if (!('kind' in nodeData && nodeData.kind === 'final_good') && 
           ('sources' in nodeData || 'sinks' in nodeData || 'values' in nodeData)) {
         let attrY = mainBox.height + 5;
         const addAttribute = (text: string, color: string) => {
@@ -286,7 +286,7 @@ async function generateDiagram(data: Graph, customColorInput?: { [key: string]: 
         nodeGroup.name = `Node: ${nodeData.label}`;
         nodeGroup.setPluginData("id", id);
         // For regular nodes with attributes, ensure we're targeting the main box (first child)
-        if (!('kind' in nodeData && nodeData.kind === 'finalGood')) {
+        if (!('kind' in nodeData && nodeData.kind === 'final_good')) {
           actualConnectorTarget = nodeElements[0]; // The main box is always first
         }
       } else {
@@ -431,7 +431,7 @@ async function generateDiagram(data: Graph, customColorInput?: { [key: string]: 
       
       // Create and add legend section OUTSIDE the main section
       const currencies = extractCurrenciesByType(data);
-      legendSection = createLegendSection(currencies, initialSectionX);
+      legendSection = createLegendSection(currencies, section.x); // Use main section's X position
       if (legendSection) {
         // Position legend below the main section with spacing
         const sectionBounds = section.absoluteBoundingBox;

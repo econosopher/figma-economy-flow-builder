@@ -11,7 +11,7 @@
     { "id": "daily_quest", "label": "Complete Daily Quest", "sources": ["100 XP", "20 Coins"], "sinks": ["Time"] },
     { "id": "pvp_match", "label": "PvP Match", "sources": ["200 XP", "50 Coins", "Rank Points"], "sinks": ["Energy", "Time"] },
     { "id": "buy_premium", "label": "Buy Premium Pass", "sources": ["VIP Status", "1000 Gems"], "sinks": [] },
-    { "id": "endgame", "label": "Reach Max Level", "kind": "finalGood" }
+    { "id": "endgame", "label": "Reach Max Level", "kind": "final_good" }
   ],
   "edges": [
     ["time", "tutorial"],

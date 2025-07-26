@@ -36,7 +36,7 @@ describe('LayoutEngine', () => {
 
     it('should calculate correct height for final good nodes', () => {
       const nodes = [
-        { id: 'win', label: 'Victory', kind: 'finalGood' }
+        { id: 'win', label: 'Victory', kind: 'final_good' }
       ];
 
       engine.calculateNodeHeights(nodes);

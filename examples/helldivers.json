@@ -15,8 +15,8 @@
     { "id": "super_win", "label": "To Achieve a Super Win", "sources": ["Metals"] },
     { "id": "warbond_tiers", "label": "To Unlock Warbond Tiers", "sources": ["Metals", "Stratagems", "Weapons", "Armor"] },
     { "id": "premium_lane", "label": "To Unlock Warbond Premium Lane", "sources": ["Super Credits"], "sinks": ["Super Credits"] },
-    { "id": "final_good_1", "label": "Experience More Role Playing Moment", "kind": "finalGood" },
-    { "id": "final_good_2", "label": "To earn Unlock New Narrative", "kind": "finalGood" }
+    { "id": "final_good_1", "label": "Experience More Role Playing Moment", "kind": "final_good" },
+    { "id": "final_good_2", "label": "To earn Unlock New Narrative", "kind": "final_good" }
   ],
   "edges": [
     ["time", "start_missions"],

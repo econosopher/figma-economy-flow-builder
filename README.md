@@ -16,6 +16,42 @@ An example `helldivers.json` can be found in the `/examples` directory.
 
 ---
 
+## 📋 Update Log
+
+### Version 1.2.39 - Post-Publication Updates
+
+Since the initial publication to the Figma Community, we've made several significant improvements:
+
+#### 🎨 Visual Improvements
+- **Automatic Legend Generation**: A new legend section is automatically created showing all currencies organized by type (Sinks, Sources, Stores of Value)
+- **Improved Node Spacing**: Reduced vertical padding between nodes by 50% (from 60px to 30px to 21px) for more compact layouts
+- **Better Alignment**: Fixed parent-child node alignment to ensure connected nodes are visually aligned
+- **Subsection Margins**: Added proper margins around initial sink nodes (Time/Money) so they're not flush against section edges
+- **Consistent Node Sizes**: Initial sink nodes now use the same dimensions as action boxes (144x90) for visual consistency
+
+#### 🔧 Technical Improvements
+- **Advanced Collision Detection**: New collision detection system prevents nodes from overlapping, especially in complex diagrams
+- **Smarter Layout Engine**: Improved topological sorting and column-based placement for better automatic layouts
+- **Edge Routing**: Enhanced connector routing to prevent edge crossings and overlaps
+- **Performance**: More efficient node positioning algorithm that handles large diagrams better
+
+#### 📝 JSON Structure Changes
+- **IMPORTANT**: Changed `"kind": "finalGood"` to `"kind": "final_good"` for consistency with snake_case naming convention
+- All other JSON structure remains backward compatible
+
+#### 🛠️ Bug Fixes
+- Fixed issue where some nodes (like "Spend Money") could be hidden behind others
+- Resolved sync issues when importing diagrams created outside the plugin
+- Fixed legend section height calculation to contain all items
+- Corrected spacing values to use whole integers for better alignment
+
+#### 📚 Documentation
+- Added comprehensive LLM prompt instructions for generating economy JSONs
+- Created separate `LLM_INSTRUCTIONS.md` file for easy reference
+- Updated all examples to use the new `final_good` naming convention
+
+---
+
 ## 1  Prerequisites
 
 | Tool | Install |
@@ -116,7 +152,7 @@ An array of objects representing the actions, activities, or states in your flow
 
 *   `id` (string, required): A unique identifier for this node.
 *   `label` (string, required): The text for the node's main box.
-*   `kind` (string, optional): Set to `"finalGood"` to render a special "Final Good" box. Otherwise, it's a standard white action box.
+*   `kind` (string, optional): Set to `"final_good"` to render a special "Final Good" box. Otherwise, it's a standard white action box.
 *   `sources` (array of strings, optional): Resources *gained* that can be spent elsewhere (e.g., Gold, Gems). Rendered as green attribute boxes.
 *   `sinks` (array of strings, optional): Resources *consumed* from elsewhere (e.g., Energy, Gold). Rendered as red attribute boxes.
 *   `values` (array of strings, optional): **Stores of Value** - Resources that accumulate but CANNOT be spent directly (e.g., XP, Level, Achievement Points). Rendered as orange attribute boxes.
@@ -211,7 +247,7 @@ The output MUST be a single, complete JSON object with EXACTLY these three top-l
    - `sources` (array of strings): Resources GAINED that can be spent elsewhere (e.g., ["Gold", "Crafting Materials"])
    - `sinks` (array of strings): Resources CONSUMED from elsewhere (e.g., ["Energy", "Gold"])
    - `values` (array of strings): Stores of value that accumulate but CANNOT be spent (e.g., ["Player XP", "Achievement Points", "Account Level"])
-   - `kind` (string, optional): Set to `"finalGood"` for ultimate goals/win conditions
+   - `kind` (string, optional): Set to `"final_good"` for ultimate goals/win conditions
 
 3. **`edges`** (required array): Connections showing flow between nodes.
    - Each edge is an array: `["from_id", "to_id"]`
@@ -244,7 +280,7 @@ The output MUST be a single, complete JSON object with EXACTLY these three top-l
    - What spendable resources it produces (sources)
    - What permanent progress it grants (values)
 4. Trace flow connections between activities
-5. Identify ultimate goals as finalGood nodes
+5. Identify ultimate goals as final_good nodes
 
 Generate the complete JSON for "[Specify Game Title Here]" following these exact specifications.
 ```

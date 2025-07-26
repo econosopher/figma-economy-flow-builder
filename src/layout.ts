@@ -24,7 +24,7 @@ export class LayoutEngine {
       nodeToNode: true,
       edgeToNode: true,
       edgeToEdge: false,
-      margin: 20 // Reduced margin for tighter vertical spacing
+      margin: 14 // Further reduced margin by 30% for tighter vertical spacing
     });
   }
 
@@ -33,7 +33,7 @@ export class LayoutEngine {
       let totalHeight = 0;
       if ('kind' in node && node.kind === 'initial_sink_node') {
         totalHeight = BOX_SIZE.INPUT.H;
-      } else if ('kind' in node && node.kind === 'finalGood') {
+      } else if ('kind' in node && node.kind === 'final_good') {
         totalHeight = BOX_SIZE.NODE.H;
       } else {
         totalHeight = BOX_SIZE.NODE.H;

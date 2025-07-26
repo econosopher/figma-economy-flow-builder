@@ -104,7 +104,7 @@
       {
         "id": "complete_collection",
         "label": "To Complete Entire Collection",
-        "kind": "finalGood",
+        "kind": "final_good",
         "sources": [ "Collection Completion" ],
         "sinks": []
       },

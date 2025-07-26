@@ -103,7 +103,7 @@ export class CollisionEngine {
    */
   getNodeConnectionPoint(nodeId: string, rect: Rectangle, type: 'input' | 'output'): Point {
     // Special handling for final goods nodes
-    if (nodeId.includes('finalGood') || nodeId.includes('final_good')) {
+    if (nodeId.includes('final_good')) {
       if (type === 'input') {
         // For final goods, connect to the middle of the orange box, not the header
         // Assuming header is ~30px, connect to middle of remaining height

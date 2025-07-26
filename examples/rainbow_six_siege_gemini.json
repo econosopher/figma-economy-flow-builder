@@ -135,7 +135,7 @@
       "sources": [],
       "sinks": [],
       "values": [],
-      "kind": "finalGood"
+      "kind": "final_good"
     },
     {
       "id": "max_operator_mastery",
@@ -143,7 +143,7 @@
       "sources": [],
       "sinks": [],
       "values": [],
-      "kind": "finalGood"
+      "kind": "final_good"
     },
     {
       "id": "complete_cosmetic_collection",
@@ -151,7 +151,7 @@
       "sources": [],
       "sinks": [],
       "values": [],
-      "kind": "finalGood"
+      "kind": "final_good"
     },
     {
       "id": "high_ranked_rating",
@@ -159,7 +159,7 @@
       "sources": [],
       "sinks": [],
       "values": [],
-      "kind": "finalGood"
+      "kind": "final_good"
     }
   ],
   "edges": [

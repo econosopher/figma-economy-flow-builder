@@ -29,10 +29,10 @@
     { "id": "achieve_weapon_mastery", "label": "To Achieve Weapon Mastery (Lvl 100)", "sources": ["Weapon-Specific Cosmetic"] },
     { "id": "participate_in_collection_event", "label": "To Participate in Collection Event", "sinks": ["Apex Coins"], "sources": ["Event Cosmetic Item"] },
     { "id": "upgrade_mythic_artifact", "label": "To Upgrade Mythic Artifact", "sinks": ["Exotic Shards"], "sources": ["Mythic Artifact Customization"] },
-    { "id": "achieve_apex_predator_rank", "label": "To Achieve Apex Predator Rank", "kind": "finalGood" },
-    { "id": "collect_all_heirlooms_and_prestige_skins", "label": "To Collect All Heirlooms & Prestige Skins", "kind": "finalGood" },
-    { "id": "complete_weapon_mastery_for_all_weapons", "label": "To Complete Weapon Mastery for All Weapons", "kind": "finalGood" },
-    { "id": "complete_cosmetic_collection", "label": "To Complete Cosmetic Collection", "kind": "finalGood" }
+    { "id": "achieve_apex_predator_rank", "label": "To Achieve Apex Predator Rank", "kind": "final_good" },
+    { "id": "collect_all_heirlooms_and_prestige_skins", "label": "To Collect All Heirlooms & Prestige Skins", "kind": "final_good" },
+    { "id": "complete_weapon_mastery_for_all_weapons", "label": "To Complete Weapon Mastery for All Weapons", "kind": "final_good" },
+    { "id": "complete_cosmetic_collection", "label": "To Complete Cosmetic Collection", "kind": "final_good" }
   ],
   "edges": [
     ["player_time", "play_match"],

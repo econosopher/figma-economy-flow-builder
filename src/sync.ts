@@ -53,7 +53,7 @@ export function syncFromCanvas() {
         const body = finalGoodGroup.children.find(isShapeWithText);
         if (body) {
           const label = body.text.characters;
-          const act: Act = { id, label, kind: 'finalGood' };
+          const act: Act = { id, label, kind: 'final_good' };
           graph.nodes.push(act);
           tempNodeData.set(child.id, { node: child, act });
           figmaIdToStableId.set(child.id, id);
