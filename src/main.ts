@@ -65,7 +65,7 @@ function createLegendSection(currencies: { sinks: string[], sources: string[], v
     // Create item boxes (same style as attribute boxes)
     let currentY = HEADER_HEIGHT + HEADER_MARGIN_BOTTOM;
     section.items.forEach((item, itemIndex) => {
-      const itemBox = makeBox(item, BOX_SIZE.ATTR.W, BOX_SIZE.ATTR.H, section.color);
+      const itemBox = makeBox(item, BOX_SIZE.ATTR.W, BOX_SIZE.ATTR.H, section.color, 'LEFT');
       itemBox.x = currentX; // Left-align with header box
       itemBox.y = currentY;
       legendNodes.push(itemBox);

@@ -191,6 +191,8 @@ An array of objects that group related nodes into visual sections within the dia
 *   `nodeIds` (array of strings, required): IDs of nodes that belong in this subsection.
 *   `color` (string, optional): Hex color for the subsection background (e.g., "#E3F2FD").
 
+**Important**: Do NOT create a subsection for "Final Goods". Nodes with `kind: "final_good"` should remain at their natural positions as terminal nodes in their respective flows.
+
 **Example:**
 ```json
 "subsections": [
@@ -227,16 +229,26 @@ The output MUST be a single, complete JSON object with EXACTLY these three top-l
 
 1. **NO MARKDOWN FORMATTING**: Output ONLY the raw JSON object. No \`\`\`json tags, no explanations before or after.
 2. **NO TRAILING COMMAS**: Never put a comma after the last item in any array or object.
-3. **NEVER LEAVE EMPTY VALUES**: Every property MUST have a value. Common mistakes to avoid:
+3. **EVERY NODE MUST HAVE ALL THREE ARRAY PROPERTIES**: Even if empty, EVERY node MUST include `sources`, `sinks`, and `values` properties:
+   ```json
+   {
+     "id": "example_node",
+     "label": "Example Node",
+     "sources": [],  // REQUIRED - use empty array if no sources
+     "sinks": [],    // REQUIRED - use empty array if no sinks
+     "values": []    // REQUIRED - use empty array if no values
+   }
+   ```
+4. **NEVER LEAVE EMPTY VALUES**: Every property MUST have a value. Common mistakes to avoid:
    - WRONG: `"sources":,` or `"sinks":,` or `"values":,`
    - CORRECT: `"sources": [],` or `"sinks": [],` or `"values": []`
    - If a node has no sources/sinks/values, use an empty array `[]`, never leave it blank
-4. **ALL ARRAYS MUST BE PROPERLY INITIALIZED**: Properties like `sources`, `sinks`, and `values` must ALWAYS be followed by either:
+5. **ALL ARRAYS MUST BE PROPERLY INITIALIZED**: Properties like `sources`, `sinks`, and `values` must ALWAYS be followed by either:
    - An array with items: `"sources": ["Gold", "XP"]`
    - An empty array: `"sources": []`
-   - NEVER just a comma or nothing: `"sources":,` ← THIS WILL CAUSE ERRORS
-5. **CONSISTENT ID FORMAT**: All `id` values must be lowercase with underscores (snake_case). Example: `daily_quest`, not `dailyQuest` or `DailyQuest`.
-6. **VALID EDGES**: Every edge must connect existing nodes. Each edge is a two-element array: `["from_id", "to_id"]`.
+   - NEVER just a comma or nothing: `"sources":,` ← THIS WILL CAUSE JSON PARSING ERRORS
+6. **CONSISTENT ID FORMAT**: All `id` values must be lowercase with underscores (snake_case). Example: `daily_quest`, not `dailyQuest` or `DailyQuest`.
+7. **VALID EDGES**: Every edge must connect existing nodes. Each edge is a two-element array: `["from_id", "to_id"]`.
 
 ### JSON Structure Specification:
 
@@ -248,9 +260,9 @@ The output MUST be a single, complete JSON object with EXACTLY these three top-l
 2. **`nodes`** (required array): These are the actions that derive from the last box. For example, a series of connected strings might have this sequence (Spend Time -> To Play Matches (Player XP) -> To Level Up (+Currency) -> To Spend on Cosmetics (-Currency) -> Final Good: "To Peacock in Front of Other Players")
    - `id` (string): Unique snake_case identifier
    - `label` (string): Descriptive name that starts with "To" (e.g., "To Complete Daily Quests")
-   - `sources` (array of strings): Resources GAINED that can be spent elsewhere (e.g., ["Gold", "Crafting Materials"])
-   - `sinks` (array of strings): Resources CONSUMED from elsewhere (e.g., ["Energy", "Gold"])
-   - `values` (array of strings): Stores of value that accumulate but CANNOT be spent (e.g., ["Player XP", "Achievement Points"])
+   - `sources` (array of strings, REQUIRED): Resources GAINED that can be spent elsewhere (e.g., ["Gold", "Crafting Materials"]) - USE EMPTY ARRAY `[]` IF NONE
+   - `sinks` (array of strings, REQUIRED): Resources CONSUMED from elsewhere (e.g., ["Energy", "Gold"]) - USE EMPTY ARRAY `[]` IF NONE
+   - `values` (array of strings, REQUIRED): Stores of value that accumulate but CANNOT be spent (e.g., ["Player XP", "Achievement Points"]) - USE EMPTY ARRAY `[]` IF NONE
    - `kind` (string, optional): Set to `"final_good"` for ultimate goals/win conditions
 
 3. **`edges`** (required array): Connections showing flow between nodes.
@@ -262,31 +274,76 @@ The output MUST be a single, complete JSON object with EXACTLY these three top-l
    - `label` (string): Display name for the group
    - `nodeIds` (array): List of node ids to include in this subsection
    - `color` (string, optional): Hex color like "#FF5733"
+   - **IMPORTANT**: Do NOT create a subsection for final goods. Final goods (`kind: "final_good"`) are terminal nodes that should be distributed throughout the diagram where they naturally conclude their respective flows
 
 ### Key Distinctions:
 
 **Sources vs Sinks vs Values:**
 - **Sources**: Resources gained that CAN be spent elsewhere (currencies, materials)
-- **Sinks**: Resources consumed that come from elsewhere  
+- **Sinks**: Resources consumed that come from elsewhere (but NOT Time/Money if they come directly from initial inputs via edges)
 - **Values**: Metrics that accumulate but CANNOT be spent (player XP, achievement scores)
+
+**Currency Type Consistency:**
+- Once you define a currency as a source, sink, or value, it MUST remain that type throughout the entire economy
+- A currency cannot be both a source in one node and a value in another
+- Choose the type based on the currency's primary function in the game economy
 
 **Examples:**
 - Completing a quest might have:
   - sources: ["100 Gold", "5 Gems"] (can spend these elsewhere)
   - sinks: ["10 Energy"] (consumed from your energy pool)
   - values: ["500 XP", "1 Achievement Point"] (accumulate but can't spend)
+- WRONG: "To Purchase Premium Currency" with edge from "Spend Money" and sinks: ["Money"]
+- CORRECT: "To Purchase Premium Currency" with edge from "Spend Money" and sinks: []
+- WRONG: Using "Free Cosmetics" and "Premium Cosmetics" as different currencies
+- CORRECT: Using "Cosmetics" in both free and premium paths
+- WRONG: "Victory Points" as a source in one node and a value in another
+- CORRECT: "Victory Points" consistently as either a source OR a value throughout
 
-### Research Focus:
+### Example of a Properly Formatted Node
+
+```json
+{
+  "id": "play_matches",
+  "label": "To Play Matches",
+  "sources": ["Gold", "XP"],    // Has sources
+  "sinks": ["Energy"],          // Has sinks
+  "values": ["Battle Pass XP"]  // Has values
+}
+```
+
+### Example of a Node with No Resources (STILL REQUIRES ALL ARRAYS)
+
+```json
+{
+  "id": "unlock_feature",
+  "label": "To Unlock Feature",
+  "sources": [],  // REQUIRED - empty array
+  "sinks": [],    // REQUIRED - empty array
+  "values": []    // REQUIRED - empty array
+}
+```
+
+### Research Focus
+
 1. Start with primary player  **`inputs`** (time and/or money)
-2. Map out how **`nodes`* lead to an additional "To" leading to more "To" **`nodes`*, all the way to a final good you define (`kind`=`"final_good"`)
-3. For each **`nodes`* that are NOT `kind`=`"final_good"`, determine:
-   - What it consumes (sinks)
-   - What spendable resources it produces (sources)
-   - What progress it accumulates (values)
+2. Map out how **`nodes`** lead to additional "To" actions leading to more "To" **`nodes`**, all the way to a final good you define (`kind`=`"final_good"`)
+3. For each **`node`** that is NOT `kind`=`"final_good"`, determine:
+   * What it consumes (sinks) - use empty array `[]` if nothing
+   * What spendable resources it produces (sources) - use empty array `[]` if nothing
+   * What progress it accumulates (values) - use empty array `[]` if nothing
+   * **CRITICAL RULE**: If a node receives Time or Money directly via an edge from the initial inputs, do NOT list "Time" or "Money" as a sink. The edge connection already represents this consumption. Only list resources as sinks if they come from other nodes' sources
 4. Trace flow connections between activities
+5. REMEMBER: Every node MUST have `sources`, `sinks`, and `values` properties, even if they are empty arrays
+6. **Currency Consistency Rules**:
+   * Each currency/resource must be ONE type only throughout the entire economy: either a source (green), sink (red), or value (orange)
+   * NEVER use the same currency as different types in different nodes
+   * Standardize currency names - avoid prefixes like "Free", "Premium", "Basic" in currency names. The path/node already indicates if it's free or paid
+   * Example: Use "Cosmetics" not "Free Cosmetics" or "Premium Cosmetics"
+   * Example: If "XP" is a value (orange) in one node, it must be a value in ALL nodes
+7. **Final Goods Placement**: Final goods should be the terminal nodes in their respective flows. Do NOT group them into a separate "Final Goods" subsection. They should naturally conclude different paths throughout the economy (e.g., "To Dominate PvP" at the end of competitive flow, "To Show Off Rare Skins" at the end of cosmetic flow)
 
 Generate the complete JSON for "[Specify Game Title Here]" following these exact specifications.
-```
 
 ## 4  Files
 
