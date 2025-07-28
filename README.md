@@ -217,6 +217,10 @@ To quickly generate a new flowchart, you can use the following prompt with a cap
 ```text
 You are an expert video game economist and analyst. Your task is to research the economy and player progression systems of the game "[Specify Game Title Here]". Based on your research, generate a JSON object that models the core gameplay loops, resource flows, and progression paths.
 
+The most valuable economy diagram anchors in player action, where currencies play a secondary role. All diagrams start with either spending time or money (**`inputs`**), the two raw ingredients that all output derives from in games. Each further step is an action-driven refinement of the last stage (**`nodes`**). Along the way, usually deriving from the final production step, is a “final” good (`kind`=`"final_good"`). This is ultimately what entertainment produces, or the “bedrock”, akin to appealing to a Bartle-type or higher emotional need, for example, the need to collect, win, or dominate others.
+
+Goods with Green + (`sources`) or Red - (`sources`) are currencies that maintain debits and credits, while player XP (`values`) is orange, a store of value, since players can’t “spend” XP. There are other systems in games that are "tallies", and that's what we're tracking here. Eventually, this will lead to a node that triggers a level-up (usually) or a collection event (such as a milestone or quest system) that sources rewards.
+
 The output MUST be a single, complete JSON object with EXACTLY these three top-level keys: `inputs`, `nodes`, and `edges`. Optional fourth key: `subsections`.
 
 ### Critical JSON Structure Rules:
@@ -236,17 +240,17 @@ The output MUST be a single, complete JSON object with EXACTLY these three top-l
 
 ### JSON Structure Specification:
 
-1. **`inputs`** (required array): Primary resources players invest (time, money). These are economy sources.
+1. **`inputs`** (required array): These are how every game economy starts, players invest time and/or money.
    - `id` (string): Unique snake_case identifier
    - `label` (string): Display name (e.g., "Time", "Money")
    - `kind` (string): MUST be exactly `"initial_sink_node"`
 
-2. **`nodes`** (required array): Game activities, systems, or milestones.
+2. **`nodes`** (required array): These are the actions that derive from the last box. For example, a series of connected strings might have this sequence (Spend Time -> To Play Matches (Player XP) -> To Level Up (+Currency) -> To Spend on Cosmetics (-Currency) -> Final Good: "To Peacock in Front of Other Players")
    - `id` (string): Unique snake_case identifier
-   - `label` (string): Descriptive name (e.g., "Complete Daily Quest")
+   - `label` (string): Descriptive name that starts with "To" (e.g., "To Complete Daily Quests")
    - `sources` (array of strings): Resources GAINED that can be spent elsewhere (e.g., ["Gold", "Crafting Materials"])
    - `sinks` (array of strings): Resources CONSUMED from elsewhere (e.g., ["Energy", "Gold"])
-   - `values` (array of strings): Stores of value that accumulate but CANNOT be spent (e.g., ["Player XP", "Achievement Points", "Account Level"])
+   - `values` (array of strings): Stores of value that accumulate but CANNOT be spent (e.g., ["Player XP", "Achievement Points"])
    - `kind` (string, optional): Set to `"final_good"` for ultimate goals/win conditions
 
 3. **`edges`** (required array): Connections showing flow between nodes.
@@ -264,7 +268,7 @@ The output MUST be a single, complete JSON object with EXACTLY these three top-l
 **Sources vs Sinks vs Values:**
 - **Sources**: Resources gained that CAN be spent elsewhere (currencies, materials)
 - **Sinks**: Resources consumed that come from elsewhere  
-- **Values**: Metrics that accumulate but CANNOT be spent (XP, levels, achievement scores, collection progress)
+- **Values**: Metrics that accumulate but CANNOT be spent (player XP, achievement scores)
 
 **Examples:**
 - Completing a quest might have:
@@ -273,14 +277,13 @@ The output MUST be a single, complete JSON object with EXACTLY these three top-l
   - values: ["500 XP", "1 Achievement Point"] (accumulate but can't spend)
 
 ### Research Focus:
-1. Identify primary player inputs (time, money)
-2. Map core gameplay loops and progression systems
-3. For each activity, determine:
+1. Start with primary player  **`inputs`** (time and/or money)
+2. Map out how **`nodes`* lead to an additional "To" leading to more "To" **`nodes`*, all the way to a final good you define (`kind`=`"final_good"`)
+3. For each **`nodes`* that are NOT `kind`=`"final_good"`, determine:
    - What it consumes (sinks)
    - What spendable resources it produces (sources)
-   - What permanent progress it grants (values)
+   - What progress it accumulates (values)
 4. Trace flow connections between activities
-5. Identify ultimate goals as final_good nodes
 
 Generate the complete JSON for "[Specify Game Title Here]" following these exact specifications.
 ```
