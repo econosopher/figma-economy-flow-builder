@@ -406,11 +406,16 @@ async function generateDiagram(data: Graph, customColorInput?: { [key: string]: 
         maxY - minY + (SECTION_PADDING * 2)
       );
       
+      // Add subsections to the section FIRST (so they render behind the group)
+      subsections.forEach(subsection => {
+        section.appendChild(subsection);
+      });
+      
       // Create the group inside the section
       const group = figma.group(elementsToGroup, figma.currentPage);
       group.name = TAG;
       
-      // Move the group into the section
+      // Move the group into the section AFTER subsections (so it renders on top)
       section.appendChild(group);
       
       // Ensure connectors are behind nodes by reordering within the group
@@ -422,11 +427,6 @@ async function generateDiagram(data: Graph, customColorInput?: { [key: string]: 
       // Remove all children and re-add them in the correct order
       connectorsInGroup.forEach(connector => group.appendChild(connector));
       nonConnectors.forEach(node => group.appendChild(node));
-      
-      // Add subsections to the main section (as siblings of the group)
-      subsections.forEach(subsection => {
-        section.appendChild(subsection);
-      });
       
       figma.currentPage.appendChild(section);
       
