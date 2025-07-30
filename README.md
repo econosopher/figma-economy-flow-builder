@@ -230,6 +230,7 @@ The output MUST be a single, complete JSON object with EXACTLY these three top-l
 1. **NO MARKDOWN FORMATTING**: Output ONLY the raw JSON object. No \`\`\`json tags, no explanations before or after.
 2. **NO TRAILING COMMAS**: Never put a comma after the last item in any array or object.
 3. **EVERY NODE MUST HAVE ALL THREE ARRAY PROPERTIES**: Even if empty, EVERY node MUST include `sources`, `sinks`, and `values` properties:
+```
    ```json
    {
      "id": "example_node",
