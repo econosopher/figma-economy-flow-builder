@@ -11,3 +11,6 @@ coverage/
 
 # Example files (don't track generated examples)
 examples/predecessor.json 
+# Claude configuration
+CLAUDE.md
+.claude/
