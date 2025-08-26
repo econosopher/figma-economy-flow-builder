@@ -4,7 +4,7 @@ import { Graph, Act, Input, Subsection } from './types';
 import { TAG, BOX_SIZE } from './constants';
 import { reply, isShapeWithText } from './utils';
 
-export function syncFromCanvas() {
+export async function syncFromCanvas() {
   try {
     // First try to find a section containing our economy flow
     const section = figma.currentPage.findOne(n => 
@@ -88,13 +88,7 @@ export function syncFromCanvas() {
       if (isShapeWithText(child) && child.width <= BOX_SIZE.ATTR.W) {
         const attrNode = child;
         const fills = attrNode.fills;
-        if (!fills || typeof fills === 'symbol' || fills.length === 0) continue;
-        
-        const firstFill = fills[0];
-        if (firstFill.type !== 'SOLID') continue;
-        
-        const fill = firstFill as SolidPaint;
-        
+
         // Find parent by positional check
         let parentData: {node: SceneNode, act: Act | Input} | undefined;
         let minDistance = Infinity;
@@ -112,23 +106,42 @@ export function syncFromCanvas() {
 
         if (parentData && 'sources' in parentData.act) {
           const text = attrNode.text.characters;
-          const r = Math.round(fill.color.r * 255);
-          const g = Math.round(fill.color.g * 255);
-          const b = Math.round(fill.color.b * 255);
+          const tag = attrNode.getPluginData('attrType');
+          const normalized = text.replace(/^[+-]\s*/, '').trim();
 
-          // More flexible color matching with tolerance
-          const isGreen = r >= 70 && r <= 80 && g >= 170 && g <= 180;
-          const isRed = r >= 213 && r <= 223 && g >= 79 && g <= 89;
-          const isOrange = r >= 231 && r <= 241 && g >= 154 && g <= 164;
-          
-          if (isGreen) {
-            parentData.act.sources?.push(text.replace(/^\+\s*/, '').trim());
-          } else if (isRed) {
-            parentData.act.sinks?.push(text.replace(/^-\s*/, '').trim());
-          } else if (isOrange) {
-            parentData.act.values?.push(text.trim());
-          } else {
-            console.warn(`Unknown attribute color: rgb(${r}, ${g}, ${b}) for text: ${text}`);
+          if (tag === 'source') {
+            parentData.act.sources?.push(normalized);
+            continue;
+          } else if (tag === 'sink') {
+            parentData.act.sinks?.push(normalized);
+            continue;
+          } else if (tag === 'value') {
+            parentData.act.values?.push(normalized);
+            continue;
+          }
+
+          // Fallback: use prefix, then color
+          if (/^\+\s*/.test(text)) {
+            parentData.act.sources?.push(normalized);
+            continue;
+          } else if (/^-\s*/.test(text)) {
+            parentData.act.sinks?.push(normalized);
+            continue;
+          }
+
+          // Last resort: color heuristic
+          if (fills && typeof fills !== 'symbol' && fills.length > 0 && fills[0].type === 'SOLID') {
+            const fill = fills[0] as SolidPaint;
+            const r = Math.round(fill.color.r * 255);
+            const g = Math.round(fill.color.g * 255);
+            const b = Math.round(fill.color.b * 255);
+            const isGreen = r >= 70 && r <= 80 && g >= 170 && g <= 180;
+            const isRed = r >= 213 && r <= 223 && g >= 79 && g <= 89;
+            const isOrange = r >= 231 && r <= 241 && g >= 154 && g <= 164;
+            if (isGreen) parentData.act.sources?.push(normalized);
+            else if (isRed) parentData.act.sinks?.push(normalized);
+            else if (isOrange) parentData.act.values?.push(normalized);
+            else console.warn(`Unknown attribute color: rgb(${r}, ${g}, ${b}) for text: ${text}`);
           }
         }
       }
@@ -225,6 +238,11 @@ export function syncFromCanvas() {
 
     const json = JSON.stringify(graph, null, 2);
     figma.ui.postMessage({ type: 'sync-json', json });
+    try {
+      const prev = await figma.clientStorage.getAsync('economyFlowState');
+      const colors = prev && typeof prev === 'object' ? (prev as any).colors : undefined;
+      await figma.clientStorage.setAsync('economyFlowState', { json, colors });
+    } catch {}
     
     const messages = ['Successfully synced diagram to JSON'];
     if (subsections.length > 0) {

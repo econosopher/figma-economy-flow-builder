@@ -1,17 +1,14 @@
 {
-  "name": "economy-flow-plugin",
-  "version": "1.2.42",
+  "name": "economy_flow_plugin",
+  "version": "1.2.59",
   "description": "Generate economy flow-charts in FigJam from a simple JSON spec. This plugin intelligently lays out nodes and their connections, creating clear and readable diagrams. It offers features like two-way JSON syncing, customizable colors, pre-built templates, and detailed validation to streamline your workflow.",
   "main": "code.js",
   "directories": {
     "example": "examples"
   },
   "scripts": {
-    "build": "npm run compile && npm run bundle",
-    "build:no-increment": "npm run compile && npm run bundle:no-increment",
-    "compile": "tsc",
-    "bundle": "node build.js",
-    "bundle:no-increment": "node build.js --no-increment",
+    "build": "node build.js",
+    "build:no-increment": "node build.js --no-increment",
     "watch": "npm run compile -- --watch",
     "test": "jest",
     "test:watch": "jest --watch",
@@ -29,6 +26,9 @@
   ],
   "author": "",
   "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
   "devDependencies": {
     "@figma/plugin-typings": "^1.19.0",
     "@types/jest": "^29.5.11",

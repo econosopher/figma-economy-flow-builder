@@ -10,3 +10,10 @@
 //   error: originalConsole.error,
 //   debug: originalConsole.debug,
 // };
+
+// Add a simple test to prevent Jest from complaining
+describe('Setup', () => {
+  it('should be defined', () => {
+    expect(true).toBe(true);
+  });
+});

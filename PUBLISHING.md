@@ -15,7 +15,7 @@ This guide covers the steps to publish the Economy-Flow Builder plugin to the Fi
 ## File Structure Required for Publishing
 
 ```
-economy-flow-plugin/
+economy_flow_plugin/
 ├── manifest.json          # Plugin manifest (required)
 ├── code.js               # Compiled plugin code (required)
 ├── ui.html               # Plugin UI (embedded in code.js)

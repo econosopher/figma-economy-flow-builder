@@ -1,7 +1,6 @@
 const esbuild = require('esbuild');
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
 
 // Check if source files have changed since last build
 function hasSourceChanges() {
@@ -17,31 +16,44 @@ function hasSourceChanges() {
   const crypto = require('crypto');
   const hash = crypto.createHash('md5');
   
-  // Add file contents to hash
-  const glob = require('glob');
-  sourceFiles.forEach(pattern => {
-    const files = glob.sync(pattern, { cwd: __dirname });
-    files.sort().forEach(file => {
-      try {
-        let content = fs.readFileSync(path.join(__dirname, file), 'utf8');
-        
-        // For package.json and ui.html, exclude version numbers from hash
-        if (file === 'package.json') {
-          // Remove version field from content for hashing
-          const pkg = JSON.parse(content);
-          delete pkg.version;
-          content = JSON.stringify(pkg);
-        } else if (file === 'ui.html') {
-          // Remove version strings from content for hashing
-          content = content.replace(/v\d+\.\d+\.\d+/g, 'vX.X.X');
-        }
-        
-        hash.update(file + content);
-      } catch (e) {
-        // File might not exist
+  // Add file contents to hash (without glob; manual walk)
+  const addFile = (relPath) => {
+    try {
+      let content = fs.readFileSync(path.join(__dirname, relPath), 'utf8');
+      if (relPath === 'package.json') {
+        const pkg = JSON.parse(content);
+        delete pkg.version;
+        content = JSON.stringify(pkg);
+      } else if (relPath === 'ui.html') {
+        content = content.replace(/v\d+\.\d+\.\d+/g, 'vX.X.X');
       }
-    });
-  });
+      hash.update(relPath + content);
+    } catch (e) {}
+  };
+
+  const walk = (dir, exts) => {
+    try {
+      fs.readdirSync(path.join(__dirname, dir)).forEach((name) => {
+        const full = path.join(__dirname, dir, name);
+        const rel = path.join(dir, name);
+        const stat = fs.statSync(full);
+        if (stat.isDirectory()) {
+          walk(rel, exts);
+        } else {
+          const ok = exts.length === 0 || exts.indexOf(path.extname(name)) !== -1;
+          if (ok) addFile(rel);
+        }
+      });
+    } catch (e) {}
+  };
+
+  // src/**/*.ts
+  walk('src', ['.ts']);
+  // examples/**/*.json
+  walk('examples', ['.json']);
+  // single files
+  addFile('ui.html');
+  addFile('manifest.json');
   
   const currentHash = hash.digest('hex');
   
@@ -111,12 +123,12 @@ if (shouldIncrement) {
   console.log(`📦 No source changes detected. Building with current version (v${newVersion})`);
 }
 
-// Check if TypeScript is compiled
+// Determine entry point: prefer compiled JS if present, otherwise bundle TS directly
 const distDir = path.join(__dirname, 'dist');
-if (!fs.existsSync(distDir)) {
-  console.log('📦 Compiling TypeScript...');
-  execSync('npx tsc', { stdio: 'inherit' });
-}
+const entryTs = path.join(__dirname, 'src', 'main.ts');
+const entryJs = path.join(distDir, 'main.js');
+const entryPoints = fs.existsSync(entryJs) ? [entryJs] : [entryTs];
+console.log(`📦 Using entry: ${path.relative(__dirname, entryPoints[0])}`);
 
 // Read ui.html content
 const uiHtml = fs.readFileSync(path.join(__dirname, 'ui.html'), 'utf-8');
@@ -132,18 +144,31 @@ fs.readdirSync(examplesDir).forEach(file => {
   }
 });
 
+// Load default config if it exists (from compiled dist)
+let defaultConfig = { apiKey: '', validated: false };
+try {
+  const configModule = require('./dist/default-config');
+  defaultConfig = configModule.DEFAULT_CONFIG || defaultConfig;
+  console.log(`📋 Including default config (key: ${defaultConfig.apiKey ? defaultConfig.apiKey.substring(0, 10) + '...' : 'none'})`);
+} catch (e) {
+  console.log('📋 No default config found (production mode)');
+}
+
 console.log('📦 Bundling plugin...');
 
 esbuild.build({
-  entryPoints: ['dist/main.js'],
+  entryPoints,
   bundle: true,
   outfile: 'code.js',
   platform: 'browser',
   target: 'es6',
+  loader: { '.ts': 'ts' },
   // Define global constants
   define: {
     '__html__': JSON.stringify(uiHtml),
     'TEMPLATES': JSON.stringify(templates),
+    'DEFAULT_API_KEY': JSON.stringify(defaultConfig.apiKey || ''),
+    'DEFAULT_VALIDATED': JSON.stringify(defaultConfig.validated || false),
   },
 }).then(() => {
   console.log(`✅ Build complete! (v${newVersion})`);

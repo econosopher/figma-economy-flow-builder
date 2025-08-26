@@ -10,6 +10,15 @@
       header { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
       header img { width: 32px; height: 32px; }
       header h1 { font-size: 16px; margin: 0; }
+      
+      /* Tab styles */
+      .tabs { display: flex !important; gap: 4px; margin-bottom: 12px; border-bottom: 2px solid #e0e0e0; visibility: visible !important; }
+      .tab { padding: 8px 16px; background: transparent; border: none; cursor: pointer; font-size: 14px; font-weight: 600; color: #666; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.2s; display: inline-block !important; visibility: visible !important; }
+      .tab:hover { color: #333; background: rgba(0,0,0,0.05); }
+      .tab.active { color: #18a058; border-bottom-color: #18a058; background: rgba(24,160,88,0.05); }
+      .tab-content { display: none; flex: 1; flex-direction: column; }
+      .tab-content.active { display: flex; }
+      
       section { border: 1px solid #e0e0e0; border-radius: 4px; padding: 12px; margin-bottom: 12px; }
       h2 { font-size: 14px; margin-top: 0; margin-bottom: 8px; font-weight: bold; }
       #templates{margin-bottom:8px}
@@ -20,8 +29,200 @@
       .buttons { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 12px; }
       button{height:32px;border:none;border-radius:4px;font-weight:bold;color:#fff;cursor:pointer}
       #go{background:#18a058} #sync{background:#1E88E5} #clear{background:#b71c1c}
+      #generate-cache{background:#1976D2} #copy-cache{background:#1976D2} #create-pr{background:#24292e}
       #status{font-size:11px;margin-top:8px}
       ul { padding-left: 20px; margin: 0; }
+      
+      /* Research panel specific styles */
+      .research-section { margin-bottom: 16px; }
+      .api-key-input { width: 100%; padding: 8px; border: 1px solid #999; border-radius: 4px; font-family: monospace; font-size: 12px; }
+      .research-button { background: #1976D2; }
+      .research-info { font-size: 12px; color: #666; margin-top: 8px; }
+      
+      /* Button states */
+      button:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+        filter: grayscale(50%);
+      }
+      
+      button:not(:disabled):hover {
+        filter: brightness(1.1);
+        transform: translateY(-1px);
+        transition: all 0.2s;
+      }
+      
+      /* API key validation styles */
+      .api-key-container {
+        position: relative;
+      }
+      
+      .api-key-status {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 16px;
+      }
+      
+      .api-key-input.valid {
+        border-color: #4CAF50;
+        background: #f1f8f4;
+      }
+      
+      .api-key-input.invalid {
+        border-color: #f44336;
+        background: #fff8f7;
+      }
+      
+      .api-key-input.validating {
+        border-color: #2196F3;
+        background: #f3f8ff;
+      }
+      
+      .validate-btn {
+        padding: 4px 12px;
+        font-size: 11px;
+        background: #4CAF50;
+        color: white;
+        border: none;
+        border-radius: 3px;
+        cursor: pointer;
+        margin-left: 8px;
+      }
+      
+      .validate-btn:disabled {
+        background: #ccc;
+      }
+      
+      .api-key-warning {
+        background: #fff3cd;
+        border: 1px solid #ffc107;
+        border-radius: 4px;
+        padding: 8px;
+        margin: 8px 0;
+        font-size: 12px;
+        color: #856404;
+        display: none;
+      }
+      
+      .api-key-warning.show {
+        display: block;
+      }
+      
+      /* Progress indicator styles */
+      .progress-container {
+          display: none;
+          margin: 12px 0;
+          padding: 12px;
+          background: #f5f5f5;
+          border-radius: 6px;
+          border: 1px solid #e0e0e0;
+      }
+      
+      .progress-container.active {
+          display: block;
+      }
+      
+      .progress-bar {
+          width: 100%;
+          height: 6px;
+          background: #e0e0e0;
+          border-radius: 3px;
+          overflow: hidden;
+          margin: 8px 0;
+      }
+      
+      .progress-fill {
+          height: 100%;
+          background: linear-gradient(90deg, #4CAF50, #2196F3);
+          border-radius: 3px;
+          transition: width 0.3s ease;
+          animation: shimmer 1.5s infinite;
+      }
+      
+      @keyframes shimmer {
+          0% { opacity: 1; }
+          50% { opacity: 0.7; }
+          100% { opacity: 1; }
+      }
+      
+      .progress-steps {
+          display: flex;
+          justify-content: space-between;
+          margin-top: 8px;
+          font-size: 10px;
+      }
+      
+      .progress-step {
+          flex: 1;
+          text-align: center;
+          color: #999;
+          padding: 4px;
+          position: relative;
+      }
+      
+      .progress-step.completed {
+          color: #4CAF50;
+          font-weight: 600;
+      }
+      
+      .progress-step.active {
+          color: #2196F3;
+          font-weight: 600;
+      }
+      
+      .progress-step.active::after {
+          content: '';
+          position: absolute;
+          bottom: -2px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 4px;
+          height: 4px;
+          background: #2196F3;
+          border-radius: 50%;
+          animation: pulse 1s infinite;
+      }
+      
+      @keyframes pulse {
+          0%, 100% { transform: translateX(-50%) scale(1); opacity: 1; }
+          50% { transform: translateX(-50%) scale(1.2); opacity: 0.7; }
+      }
+      
+      .progress-message {
+          font-size: 11px;
+          color: #666;
+          margin-top: 6px;
+          font-style: italic;
+      }
+      
+      /* Error panel styles */
+      .error-panel {
+          display: none;
+          margin-top: 8px;
+          padding: 8px;
+          background: #ffebee;
+          border: 1px solid #ef5350;
+          border-radius: 4px;
+      }
+      
+      .error-panel.show {
+          display: block;
+      }
+      
+      .error-panel textarea {
+          width: 100%;
+          min-height: 60px;
+          margin-top: 4px;
+          padding: 4px;
+          border: 1px solid #e0e0e0;
+          border-radius: 3px;
+          font-family: monospace;
+          font-size: 11px;
+          background: white;
+          resize: vertical;
+      }
     </style>
 </head>
 <body>
@@ -30,37 +231,131 @@
             <img src="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3ccircle cx='12' cy='12' r='3'%3e%3c/circle%3e%3cpath d='M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z'%3e%3c/path%3e%3c/svg%3e" alt="Logo">
             <div style="flex: 1;">
                 <h1 style="margin: 0;">Economy-Flow Builder</h1>
-                <div id="version-info" style="font-size: 10px; color: #666; margin-top: 2px;">v1.2.42 • Loading...</div>
+                <div id="version-info" style="font-size: 10px; color: #666; margin-top: 2px;">v1.2.59 • Loading...</div>
             </div>
         </header>
 
-        <section>
-            <h2>Templates & Colors</h2>
-            <div id="templates">
-              <label for="template-select">Start with a template: </label>
-              <select id="template-select">
-                <option value="">--Select--</option>
-              </select>
-            </div>
-            <div id="colors">
-              <div><label for="color-sink">Input/Sink</label><input id="color-sink" type="color"></div>
-              <div><label for="color-source">Source</label><input id="color-source" type="color"></div>
-              <div><label for="color-xp">Store of Value</label><input id="color-xp" type="color"></div>
-              <div><label for="color-final">Final Good</label><input id="color-final" type="color"></div>
-            </div>
-        </section>
+        <div class="tabs">
+            <button class="tab active" data-tab="main">Builder</button>
+            <button class="tab" data-tab="research">Research (Beta)</button>
+        </div>
 
-        <section style="flex: 1; display: flex; flex-direction: column;">
-            <h2>JSON Spec</h2>
-            <textarea id="json"></textarea>
-        </section>
-        
-        <div id="status"></div>
+        <!-- Main Builder Tab -->
+        <div id="main-tab" class="tab-content active">
+            <section>
+                <h2>Templates & Colors</h2>
+                <div id="templates">
+                  <label for="template-select">Start with a template: </label>
+                  <select id="template-select">
+                    <option value="">--Select--</option>
+                  </select>
+                </div>
+                <div id="colors">
+                  <div><label for="color-sink">Input/Sink</label><input id="color-sink" type="color"></div>
+                  <div><label for="color-source">Source</label><input id="color-source" type="color"></div>
+                  <div><label for="color-xp">Store of Value</label><input id="color-xp" type="color"></div>
+                  <div><label for="color-final">Final Good</label><input id="color-final" type="color"></div>
+                </div>
+            </section>
 
-        <div class="buttons">
-            <button id="go" title="Creates diagram inside a section">Generate from JSON ⌘/Ctrl+Enter</button>
-            <button id="sync" title="Syncs only plugin-created nodes from section">Sync from Canvas</button>
-            <button id="clear" title="Removes all plugin-created sections">Clear Canvas</button>
+            <section style="flex: 1; display: flex; flex-direction: column;">
+                <h2>JSON Spec</h2>
+                <textarea id="json"></textarea>
+            </section>
+            
+            <div id="status"></div>
+
+            <div class="buttons">
+                <button id="go" title="Creates diagram inside a section">Generate from JSON ⌘/Ctrl+Enter</button>
+                <button id="validate" title="Validate JSON without drawing">Validate JSON</button>
+                <button id="copy" title="Copy JSON to clipboard">Copy JSON</button>
+                <button id="sync" title="Syncs only plugin-created nodes from section">Sync from Canvas</button>
+                <button id="clear" title="Removes all plugin-created sections">Clear Canvas</button>
+            </div>
+        </div>
+
+        <!-- Research Tab -->
+        <div id="research-tab" class="tab-content">
+            <section>
+                <h2>Economy Research Settings</h2>
+                <div class="research-section">
+                    <label for="api-key" style="display: block; margin-bottom: 8px; font-size: 12px; font-weight: 600;">
+                        Gemini API Key
+                        <a href="https://aistudio.google.com/app/apikey" target="_blank" title="Get your API key from Google AI Studio" style="text-decoration: none; margin-left: 4px;">
+                            <span style="background: #e3f2fd; color: #1976d2; padding: 2px 6px; border-radius: 3px; font-size: 11px; cursor: pointer;">?</span>
+                        </a>
+                        <button id="validate-key" class="validate-btn" style="float: right;">Test Connection</button>
+                    </label>
+                    <div class="api-key-container" style="position: relative;">
+                        <input type="password" id="api-key" class="api-key-input" placeholder="Enter your Gemini API key" style="font-family: Inter, sans-serif; padding-right: 40px;">
+                        <span id="api-key-status" class="api-key-status"></span>
+                    </div>
+                    <div class="research-info" style="margin-top: 4px; font-size: 11px; color: #666;">
+                        Your API key is stored locally and never shared. <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color: #1976d2;">Get a free API key →</a>
+                    </div>
+                    <div id="api-key-warning" class="api-key-warning">
+                        ⚠️ API key required: Enter your Gemini API key above to generate economy JSONs. The key will be saved securely for future sessions.
+                    </div>
+                </div>
+                <div class="research-section">
+                    <label for="game-name" style="display: block; margin-bottom: 8px; font-size: 12px; font-weight: 600;">Game Name</label>
+                    <input type="text" id="game-name" class="api-key-input" placeholder="e.g., Helldivers 2" style="font-family: Inter, sans-serif;">
+                </div>
+                <div class="research-section">
+                    <label for="depth-selector" style="display: block; margin-bottom: 8px; font-size: 12px; font-weight: 600;">Research Depth</label>
+                    <select id="depth-selector" style="width: 100%; padding: 8px; border: 1px solid #999; border-radius: 4px; font-size: 14px;">
+                        <option value="1">Level 1 - Basic Economy (Quick Overview)</option>
+                        <option value="2" selected>Level 2 - Detailed Economy (Recommended)</option>
+                        <option value="3">Level 3 - Comprehensive Analysis (Most Thorough)</option>
+                    </select>
+                    <div class="research-info" style="margin-top: 4px;">
+                        Higher depth levels provide more detailed analysis but take longer.
+                    </div>
+                </div>
+                
+                <!-- Progress Indicator -->
+                <div id="progress-container" class="progress-container">
+                    <div class="progress-bar">
+                        <div id="progress-fill" class="progress-fill" style="width: 0%"></div>
+                    </div>
+                    <div class="progress-steps">
+                        <div id="step-1" class="progress-step">Connecting</div>
+                        <div id="step-2" class="progress-step">Researching</div>
+                        <div id="step-3" class="progress-step">Analyzing</div>
+                        <div id="step-4" class="progress-step">Generating</div>
+                        <div id="step-5" class="progress-step">Finalizing</div>
+                    </div>
+                    <div id="progress-message" class="progress-message">Initializing AI research...</div>
+                </div>
+            </section>
+
+            <section style="flex: 1; display: flex; flex-direction: column;">
+                <h2>Generated Prompt Cache</h2>
+                <textarea id="research-output" style="flex: 1; border: 1px solid #999; border-radius: 4px; padding: 6px; font-family: monospace; min-height: 150px;" readonly placeholder="Generated cache JSON will appear here..."></textarea>
+            </section>
+            
+            <div id="research-status" style="font-size: 11px; margin-top: 8px; color: #666;">Ready to generate research prompt.</div>
+            <div id="error-panel" class="error-panel">
+              <div style="display:flex; gap:8px; align-items:center; margin-bottom:4px;">
+                <strong style="font-size:12px;">Error Details</strong>
+                <button id="copy-error" class="research-button" style="background:#c62828; height:24px; padding:0 8px;">Copy Error</button>
+              </div>
+              <textarea id="error-details" readonly placeholder="No errors."></textarea>
+            </div>
+
+            <div class="buttons">
+                <button id="generate-cache" class="research-button" title="Generate cache JSON">Generate Cache</button>
+                <button id="generate-economy" class="research-button" style="background: #9c27b0;" title="Generate full economy JSON using AI">Generate Economy JSON</button>
+                <button id="copy-cache" style="background: #1976D2;" title="Copy output to clipboard">Copy Output</button>
+                <button id="download-output" class="research-button" style="background:#455A64;" title="Download current output">Download Output</button>
+                <button id="use-research" style="background: #18a058;" title="Use in builder">Use in Builder</button>
+            </div>
+            
+            <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e0e0e0;">
+                <label style="display: block; margin-bottom: 8px; font-size: 12px; font-weight: 600;">Submit as Community Preset</label>
+                <textarea id="pr-comment" style="width: 100%; min-height: 60px; padding: 8px; border: 1px solid #999; border-radius: 4px; font-size: 12px; margin-bottom: 8px;" placeholder="Optional: Add a comment about this economy (e.g., 'Added missing crafting recipes', 'Fixed currency connections')"></textarea>
+                <button id="create-pr" style="background: #24292e; width: 100%; height: 32px; border: none; border-radius: 4px; font-weight: bold; color: #fff; cursor: pointer;" title="Create GitHub PR">Submit to GitHub</button>
+            </div>
         </div>
     </div>
 
@@ -73,9 +368,38 @@
        const now = new Date();
        const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
        const dateStr = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-       document.getElementById('version-info').textContent = `v1.2.42 • ${dateStr} ${timeStr}`;
+       document.getElementById('version-info').textContent = `v1.2.59 • ${dateStr} ${timeStr}`;
      };
      updateTimestamp();
+     
+     // Tab switching
+     const tabs = document.querySelectorAll('.tab');
+     const tabContents = document.querySelectorAll('.tab-content');
+     
+     // Debug: Check if tabs are found
+     console.log('Tabs found:', tabs.length);
+     console.log('Tab contents found:', tabContents.length);
+     
+     tabs.forEach(tab => {
+       console.log('Setting up tab:', tab.textContent, tab.dataset.tab);
+       tab.addEventListener('click', () => {
+         const targetTab = tab.dataset.tab;
+         console.log('Tab clicked:', targetTab);
+         
+         // Update active tab
+         tabs.forEach(t => t.classList.remove('active'));
+         tab.classList.add('active');
+         
+         // Show corresponding content
+         tabContents.forEach(content => {
+           if (content.id === `${targetTab}-tab`) {
+             content.classList.add('active');
+           } else {
+             content.classList.remove('active');
+           }
+         });
+       });
+     });
      
      document.getElementById('go').onclick=()=>{
        const colors = {
@@ -101,6 +425,8 @@
      };
      document.getElementById('clear').onclick=()=>{post('clear'); updateTimestamp();};
      document.getElementById('sync').onclick=()=>{post('sync-from-canvas'); updateTimestamp();};
+     document.getElementById('validate').onclick=()=>{post('validate',{json:t.value}); updateTimestamp();};
+     document.getElementById('copy').onclick=async()=>{try{await navigator.clipboard.writeText(t.value); s.style.color='#2e7d32'; s.textContent='JSON copied to clipboard.';}catch(e){s.style.color='#c62828'; s.textContent='Copy failed.';}};
 
      t.onkeydown=e=>{if((e.metaKey||e.ctrlKey)&&e.key==='Enter')document.getElementById('go').click();}
      
@@ -149,6 +475,503 @@
           s.style.color = '#2e7d32';
           s.textContent = 'JSON synced from canvas (free-form objects ignored).';
       }
+      if (m.type === 'restore') {
+          if (m.colors) {
+            if (m.colors.sink) document.getElementById('color-sink').value = m.colors.sink;
+            if (m.colors.source) document.getElementById('color-source').value = m.colors.source;
+            if (m.colors.xp) document.getElementById('color-xp').value = m.colors.xp;
+            if (m.colors.final) document.getElementById('color-final').value = m.colors.final;
+          }
+          if (m.json) {
+            t.value = m.json;
+          }
+      }
+      
+      if (m.type === 'research-result') {
+          if (m.success) {
+            researchOutput.value = m.json;
+            researchStatus.style.color = '#2e7d32';
+            researchStatus.textContent = 'Research completed successfully!';
+            clearError();
+          } else {
+            hideProgress(); // Hide progress on error
+            if (m.error && m.error.includes('\n')) {
+              // Multi-line error (like GitHub PR instructions)
+              researchOutput.value = m.error;
+              researchStatus.style.color = '#1976D2';
+              researchStatus.textContent = 'See instructions above';
+              showError(m.error);
+            } else {
+              researchOutput.value = '';
+              researchStatus.style.color = '#c62828';
+              researchStatus.textContent = m.error || 'Research failed. Please try again.';
+              showError(m.error || 'Unknown error');
+            }
+          }
+      }
+      
+      if (m.type === 'cache-generated') {
+          researchOutput.value = m.cache;
+          researchStatus.style.color = '#2e7d32';
+          researchStatus.textContent = 'Cache generated!';
+          
+          // Store markdown for potential use
+          if (m.markdown) {
+            researchOutput.dataset.markdown = m.markdown;
+          }
+          hideProgress();
+      }
+      
+      if (m.type === 'economy-generated') {
+          researchOutput.value = m.json;
+          researchStatus.style.color = '#2e7d32';
+          researchStatus.textContent = 'Economy JSON generated successfully!';
+          updateProgress(5, 100, 'Complete! Economy JSON is ready.');
+          setTimeout(() => hideProgress(), 2000);
+          if (useResearchBtn) useResearchBtn.disabled = false;
+          clearError();
+          try {
+            const size = (m.json || '').length;
+            if (size > 1_000_000) {
+              researchStatus.textContent += ' (Large output)';
+            }
+          } catch {}
+      }
+      
+      if (m.type === 'progress-update') {
+          const { step, percent, message } = m;
+          updateProgress(step, percent, message);
+      }
+     };
+     
+     // Research panel functionality
+     const gameNameInput = document.getElementById('game-name');
+     const depthSelector = document.getElementById('depth-selector');
+     const researchOutput = document.getElementById('research-output');
+     const researchStatus = document.getElementById('research-status');
+     const apiKeyInput = document.getElementById('api-key');
+     const apiKeyStatus = document.getElementById('api-key-status');
+     const apiKeyWarning = document.getElementById('api-key-warning');
+     const validateBtn = document.getElementById('validate-key');
+     const generateCacheBtn = document.getElementById('generate-cache');
+     const generateEconomyBtn = document.getElementById('generate-economy');
+     const copyCacheBtn = document.getElementById('copy-cache');
+     const useResearchBtn = document.getElementById('use-research');
+     const createPrBtn = document.getElementById('create-pr');
+     const errorPanel = document.getElementById('error-panel');
+     const errorDetails = document.getElementById('error-details');
+     const copyErrorBtn = document.getElementById('copy-error');
+     
+     let apiKeyValidated = false;
+     
+     // Error handling functions
+     function showError(message) {
+       if (errorPanel && errorDetails) {
+         errorDetails.value = message;
+         errorPanel.classList.add('show');
+       }
+     }
+     
+     function clearError() {
+       if (errorPanel && errorDetails) {
+         errorDetails.value = '';
+         errorPanel.classList.remove('show');
+       }
+     }
+     
+     // Copy error button handler
+     if (copyErrorBtn) {
+       copyErrorBtn.onclick = async () => {
+         const errorText = errorDetails.value;
+         if (errorText) {
+           try {
+             await navigator.clipboard.writeText(errorText);
+             researchStatus.textContent = 'Error details copied to clipboard';
+           } catch (e) {
+             researchStatus.textContent = 'Failed to copy error';
+           }
+         }
+       };
+     }
+     
+     // Check and update button states
+     function updateButtonStates() {
+       const hasApiKey = apiKeyInput.value.trim().length > 0;
+       const hasGameName = gameNameInput.value.trim().length > 0;
+       
+       // Show/hide warning
+       if (!hasApiKey) {
+         apiKeyWarning.classList.add('show');
+       } else {
+         apiKeyWarning.classList.remove('show');
+       }
+       
+       // Enable/disable generate button
+       generateEconomyBtn.disabled = !hasApiKey || !apiKeyValidated;
+       
+       // Update button title for better UX
+       if (!hasApiKey) {
+         generateEconomyBtn.title = 'Enter API key first';
+       } else if (!apiKeyValidated) {
+         generateEconomyBtn.title = 'Test API key connection first';
+       } else if (!hasGameName) {
+         generateEconomyBtn.title = 'Enter game name';
+       } else {
+         generateEconomyBtn.title = 'Generate full economy JSON using AI';
+       }
+     }
+     
+     // Load saved API key and init UI
+     post('load-api-key');
+     post('load-research-inputs');
+     if (useResearchBtn) useResearchBtn.disabled = true;
+     
+     // API key input handler
+     apiKeyInput.addEventListener('input', () => {
+       const apiKey = apiKeyInput.value.trim();
+       apiKeyValidated = false;
+       apiKeyInput.classList.remove('valid', 'invalid', 'validating');
+       apiKeyStatus.textContent = '';
+       
+       if (apiKey.length > 0) {
+         validateBtn.disabled = false;
+         if (apiKey.startsWith('AIza') && apiKey.length > 30) {
+           apiKeyStatus.textContent = '🔑';
+           apiKeyStatus.title = 'Key format looks valid';
+         }
+       } else {
+         validateBtn.disabled = true;
+       }
+       
+       updateButtonStates();
+     });
+     
+     // Save API key when it changes
+     apiKeyInput.addEventListener('change', () => {
+       const apiKey = apiKeyInput.value.trim();
+       if (apiKey) {
+         post('save-api-key', { apiKey });
+       }
+     });
+     
+     // Game name input handler
+     gameNameInput.addEventListener('input', updateButtonStates);
+     
+     // Validate API key button
+     validateBtn.addEventListener('click', async () => {
+       const apiKey = apiKeyInput.value.trim();
+       if (!apiKey) return;
+       
+       apiKeyInput.classList.remove('valid', 'invalid');
+       apiKeyInput.classList.add('validating');
+       apiKeyStatus.textContent = '⏳';
+       validateBtn.disabled = true;
+       researchStatus.style.color = '#1976d2';
+       researchStatus.textContent = 'Testing API key connection...';
+       
+       // Send validation request
+       post('validate-api-key', { apiKey });
+     });
+     
+     // Handle validation responses in message handler
+     const originalMessageHandler = window.onmessage;
+     window.addEventListener('message', (e) => {
+       const m = e.data.pluginMessage;
+       if (!m) return;
+       
+       if (m.type === 'api-key-loaded') {
+         if (m.apiKey) {
+           apiKeyInput.value = m.apiKey;
+           apiKeyValidated = m.validated || false;
+           if (apiKeyValidated) {
+             apiKeyInput.classList.add('valid');
+             apiKeyStatus.textContent = '✅';
+             apiKeyStatus.title = 'API key validated';
+           }
+           updateButtonStates();
+         }
+       }
+       
+       if (m.type === 'research-inputs-loaded') {
+         if (m.gameName) gameNameInput.value = m.gameName;
+         if (typeof m.depth === 'number') depthSelector.value = String(m.depth);
+         updateButtonStates();
+       }
+       
+       if (m.type === 'api-key-validation') {
+         apiKeyInput.classList.remove('validating');
+         validateBtn.disabled = false;
+         
+         if (m.valid) {
+           apiKeyValidated = true;
+           apiKeyInput.classList.add('valid');
+           apiKeyStatus.textContent = '✅';
+           apiKeyStatus.title = 'API key is valid';
+           researchStatus.style.color = '#2e7d32';
+           researchStatus.textContent = 'API key validated successfully! Ready to generate.';
+           
+           // Save the validated key
+           post('save-api-key', { apiKey: apiKeyInput.value.trim(), validated: true });
+         } else {
+           apiKeyValidated = false;
+           apiKeyInput.classList.add('invalid');
+           apiKeyStatus.textContent = '❌';
+           apiKeyStatus.title = m.error || 'Invalid API key';
+           researchStatus.style.color = '#c62828';
+           researchStatus.textContent = m.error || 'Invalid API key. Please check and try again.';
+         }
+         
+         updateButtonStates();
+       }
+     });
+     
+     // Initialize button states
+     updateButtonStates();
+     
+     document.getElementById('generate-cache').onclick = () => {
+       const gameName = gameNameInput.value.trim();
+       const depth = depthSelector.value;
+       
+       if (!gameName) {
+         researchStatus.style.color = '#c62828';
+         researchStatus.textContent = 'Please enter a game name.';
+         return;
+       }
+       // Show lightweight progress for cache building
+       showProgress();
+       updateProgress(1, 15, 'Preparing research prompt...');
+       
+       // Generate cache JSON structure
+       const cache = {
+         game: gameName,
+         depth: parseInt(depth),
+         timestamp: new Date().toISOString(),
+         prompt_version: "1.0",
+         instructions: `Research the economy of ${gameName} at depth level ${depth}`
+       };
+       
+       researchOutput.value = JSON.stringify(cache, null, 2);
+       researchStatus.style.color = '#2e7d32';
+       researchStatus.textContent = `Cache generated for ${gameName} (Depth ${depth})`;
+       
+       // Send to plugin to potentially generate the actual economy JSON
+       post('save-research-inputs', { gameName, depth: parseInt(depth) });
+       post('generate-cache', { gameName, depth: parseInt(depth) });
+     };
+     
+     // Progress management functions
+     const progressContainer = document.getElementById('progress-container');
+     const progressFill = document.getElementById('progress-fill');
+     const progressMessage = document.getElementById('progress-message');
+     const progressSteps = [
+       document.getElementById('step-1'),
+       document.getElementById('step-2'),
+       document.getElementById('step-3'),
+       document.getElementById('step-4'),
+       document.getElementById('step-5')
+     ];
+     
+     function setResearchControlsEnabled(enabled) {
+       [generateCacheBtn, generateEconomyBtn, copyCacheBtn, useResearchBtn, createPrBtn, apiKeyInput, gameNameInput, depthSelector]
+         .forEach(el => { if (el) el.disabled = !enabled; });
+     }
+
+     function showProgress() {
+       progressContainer.classList.add('active');
+       setResearchControlsEnabled(false);
+       resetProgress();
+     }
+     
+     function hideProgress() {
+       progressContainer.classList.remove('active');
+       resetProgress();
+       setResearchControlsEnabled(true);
+     }
+     
+     function resetProgress() {
+       progressFill.style.width = '0%';
+       progressSteps.forEach(step => {
+         step.classList.remove('active', 'completed');
+       });
+       progressMessage.textContent = 'Initializing AI research...';
+     }
+     
+     function updateProgress(step, percent, message) {
+       progressFill.style.width = percent + '%';
+       progressMessage.textContent = message;
+       
+       // Update step indicators
+       progressSteps.forEach((stepEl, index) => {
+         if (index < step - 1) {
+           stepEl.classList.add('completed');
+           stepEl.classList.remove('active');
+         } else if (index === step - 1) {
+           stepEl.classList.add('active');
+           stepEl.classList.remove('completed');
+         } else {
+           stepEl.classList.remove('active', 'completed');
+         }
+       });
+     }
+     
+     generateEconomyBtn.onclick = () => {
+       const gameName = gameNameInput.value.trim();
+       const depth = depthSelector.value;
+       const apiKey = apiKeyInput.value.trim();
+       
+       if (!gameName) {
+         researchStatus.style.color = '#c62828';
+         researchStatus.textContent = 'Please enter a game name.';
+         gameNameInput.focus();
+         return;
+       }
+       
+       if (!apiKey) {
+         researchStatus.style.color = '#c62828';
+         researchStatus.textContent = 'Please enter your Gemini API key. Get one free at aistudio.google.com';
+         apiKeyInput.focus();
+         apiKeyWarning.classList.add('show');
+         return;
+       }
+       
+       if (!apiKeyValidated) {
+         researchStatus.style.color = '#f57c00';
+         researchStatus.textContent = 'Please test your API key connection first.';
+         validateBtn.focus();
+         return;
+       }
+       
+       // Show progress indicator
+       showProgress();
+       updateProgress(1, 10, 'Connecting to API server...');
+       
+       researchStatus.style.color = '#1976d2';
+       researchStatus.textContent = 'AI is researching the economy...';
+       researchOutput.value = '';
+       
+       // Send to plugin to generate full economy JSON
+       post('save-research-inputs', { gameName, depth: parseInt(depth) });
+       post('generate-economy', { 
+         gameName, 
+         depth: parseInt(depth),
+         apiKey,
+         provider: 'gemini'
+       });
+     };
+     
+     document.getElementById('copy-cache').onclick = async () => {
+       const cacheJson = researchOutput.value.trim();
+       if (!cacheJson || cacheJson === 'Generated cache JSON will appear here...') {
+         researchStatus.style.color = '#c62828';
+         researchStatus.textContent = 'No cache to copy. Generate one first.';
+         return;
+       }
+       
+       try {
+         await navigator.clipboard.writeText(cacheJson);
+         researchStatus.style.color = '#2e7d32';
+         researchStatus.textContent = 'Output copied to clipboard!';
+       } catch (e) {
+         researchStatus.style.color = '#c62828';
+         researchStatus.textContent = 'Failed to copy cache.';
+       }
+     };
+
+     document.getElementById('download-output').onclick = () => {
+       const content = researchOutput.value.trim();
+       if (!content) {
+         researchStatus.style.color = '#c62828';
+         researchStatus.textContent = 'No output to download.';
+         return;
+       }
+       try {
+         const blob = new Blob([content], { type: 'application/json;charset=utf-8' });
+         const url = URL.createObjectURL(blob);
+         const a = document.createElement('a');
+         a.href = url;
+         a.download = 'economy_output.json';
+         document.body.appendChild(a);
+         a.click();
+         document.body.removeChild(a);
+         URL.revokeObjectURL(url);
+         researchStatus.style.color = '#2e7d32';
+         researchStatus.textContent = 'Output downloaded.';
+       } catch (e) {
+         researchStatus.style.color = '#c62828';
+         researchStatus.textContent = 'Failed to download output.';
+       }
+     };
+     
+     document.getElementById('use-research').onclick = () => {
+       const researchJson = researchOutput.value.trim();
+       if (!researchJson || researchJson === 'Generated cache JSON will appear here...') {
+         researchStatus.style.color = '#c62828';
+         researchStatus.textContent = 'No results to use. Generate a cache first.';
+         return;
+       }
+       
+       // Try to parse and see if it's an economy JSON (not just cache)
+       try {
+         const data = JSON.parse(researchJson);
+         if (data.inputs && data.nodes && data.edges) {
+           // It's a full economy JSON, use it
+           document.querySelector('[data-tab="main"]').click();
+           t.value = researchJson;
+           s.style.color = '#2e7d32';
+           s.textContent = 'Economy loaded into builder.';
+         } else {
+           researchStatus.style.color = '#c62828';
+           researchStatus.textContent = 'This is a cache, not an economy JSON. Generate the economy first.';
+         }
+       } catch (e) {
+         researchStatus.style.color = '#c62828';
+         researchStatus.textContent = 'Invalid JSON format.';
+       }
+     };
+     
+     const prCommentInput = document.getElementById('pr-comment');
+     
+     document.getElementById('create-pr').onclick = () => {
+       const researchJson = researchOutput.value.trim();
+       const gameName = gameNameInput.value.trim();
+       const prComment = prCommentInput.value.trim();
+       
+       if (!researchJson || researchJson === 'Generated cache JSON will appear here...') {
+         researchStatus.style.color = '#c62828';
+         researchStatus.textContent = 'No economy JSON to submit. Generate one first.';
+         return;
+       }
+       
+       if (!gameName) {
+         researchStatus.style.color = '#c62828';
+         researchStatus.textContent = 'Please enter a game name for the preset.';
+         gameNameInput.focus();
+         return;
+       }
+       
+       // Validate it's an economy JSON
+       try {
+         const data = JSON.parse(researchJson);
+         if (!data.inputs || !data.nodes || !data.edges) {
+           researchStatus.style.color = '#c62828';
+           researchStatus.textContent = 'Please generate a full economy JSON first, not just a cache.';
+           return;
+         }
+         
+         // Send to plugin to create PR
+         post('create-github-pr', { 
+           gameName, 
+           json: researchJson,
+           fileName: gameName.toLowerCase().replace(/\s+/g, '_') + '.json',
+           comment: prComment || null
+         });
+         
+         researchStatus.style.color = '#1976D2';
+         researchStatus.textContent = 'Preparing GitHub submission...';
+       } catch (e) {
+         researchStatus.style.color = '#c62828';
+         researchStatus.textContent = 'Invalid JSON format.';
+       }
      };
     </script>
 </body>

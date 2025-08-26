@@ -15,7 +15,7 @@ describe('LayoutEngine', () => {
       ];
 
       engine.calculateNodeHeights(nodes);
-      expect(engine.getNodeHeight('time')).toBe(72); // BOX_SIZE.INPUT.H
+      expect(engine.getNodeHeight('time')).toBe(90); // BOX_SIZE.INPUT.H is same as NODE.H
     });
 
     it('should calculate correct height for nodes with attributes', () => {
@@ -99,6 +99,32 @@ describe('LayoutEngine', () => {
       expect(columns[1]).toContain('buy');
       expect(columns[2]).toContain('equip');
     });
+
+    it('should place reconverging nodes in appropriate later columns', () => {
+      const graph: Graph = {
+        inputs: [
+          { id: 'time', label: 'Time', kind: 'initial_sink_node' }
+        ],
+        nodes: [
+          { id: 'a', label: 'A' },
+          { id: 'b', label: 'B' },
+          { id: 'c', label: 'C' }
+        ],
+        edges: [
+          ['time', 'a'],
+          ['time', 'b'],
+          ['a', 'c'],
+          ['b', 'c']
+        ]
+      };
+
+      const columns = engine.calculateColumns(graph);
+      expect(columns[0]).toContain('time');
+      // A and B can both be in column 1
+      expect(columns[1]).toEqual(expect.arrayContaining(['a', 'b']));
+      // C should be in column 2
+      expect(columns[2]).toContain('c');
+    });
   });
 
   describe('findConflictFreeY', () => {
@@ -130,8 +156,9 @@ describe('LayoutEngine', () => {
         new Map()
       );
 
-      // Should be pushed down: 50 + 90 + 40 + 7 = 187
-      expect(result).toBe(187);
+      // Should be pushed down: 50 + 72 + 40 + 14 = 176 (using collision margin of 14)
+      expect(result).toBe(176);
     });
   });
+
 });

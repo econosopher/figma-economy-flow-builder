@@ -45,6 +45,26 @@ describe('validateGraphData', () => {
     const errors = validateGraphData(invalidGraph);
     expect(errors.some(e => e.includes("'id' is missing"))).toBe(true);
   });
+
+  it('should detect cycles in edges', () => {
+    const graph: Graph = {
+      inputs: [{ id: 'time', label: 'Time', kind: 'initial_sink_node' }],
+      nodes: [
+        { id: 'a', label: 'A' },
+        { id: 'b', label: 'B' },
+        { id: 'c', label: 'C' }
+      ],
+      edges: [
+        ['time', 'a'],
+        ['a', 'b'],
+        ['b', 'c'],
+        ['c', 'a']
+      ]
+    };
+
+    const errors = validateGraphData(graph);
+    expect(errors.some(e => e.includes('cycle'))).toBe(true);
+  });
 });
 
 describe('isValidColor', () => {
@@ -161,3 +181,26 @@ describe('subsections validation', () => {
     expect(errors.some(e => e.includes("Duplicate subsection id 'sub1'"))).toBe(true);
   });
 });
+  it('should enforce snake_case ids', () => {
+    const invalidGraph: any = {
+      inputs: [{ id: 'TimeInput', label: 'Time', kind: 'initial_sink_node' }],
+      nodes: [{ id: 'PlayGame', label: 'Play' }],
+      edges: []
+    };
+
+    const errors = validateGraphData(invalidGraph);
+    expect(errors.some(e => e.includes("snake_case"))).toBe(true);
+  });
+
+  it('should enforce currency type consistency', () => {
+    const graph: Graph = {
+      inputs: [{ id: 'time', label: 'Time', kind: 'initial_sink_node' }],
+      nodes: [
+        { id: 'a', label: 'A', sources: ['Gold'] },
+        { id: 'b', label: 'B', sinks: ['Gold'] }
+      ],
+      edges: [['time', 'a'], ['a', 'b']]
+    };
+    const errors = validateGraphData(graph);
+    expect(errors.some(e => e.includes("both source and sink"))).toBe(true);
+  });

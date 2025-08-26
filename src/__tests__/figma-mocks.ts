@@ -39,6 +39,11 @@ export class MockGroupNode extends MockSceneNode {
   }
   
   appendChild(child: MockSceneNode) {
+    // If child already exists, move it to the end (Figma semantics)
+    const idx = this.children.indexOf(child);
+    if (idx !== -1) {
+      this.children.splice(idx, 1);
+    }
     this.children.push(child);
     child.parent = this;
   }
@@ -161,3 +166,13 @@ export const mockFigma = {
 export function isShapeWithText(node: any): node is MockShapeWithTextNode {
   return 'text' in node;
 }
+
+// Add a simple test to prevent Jest from complaining
+describe('Figma Mocks', () => {
+  it('should export mock objects', () => {
+    expect(mockFigma).toBeDefined();
+    expect(MockSceneNode).toBeDefined();
+    expect(MockGroupNode).toBeDefined();
+    expect(MockSectionNode).toBeDefined();
+  });
+});

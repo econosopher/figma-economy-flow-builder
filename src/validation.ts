@@ -17,7 +17,12 @@ export function validateGraphData(data: Partial<Graph>): string[] {
   } else {
     data.inputs.forEach((input: Input, i: number) => {
       if (typeof input.id !== 'string') errors.push(`Input ${i}: 'id' is missing or not a string.`);
-      else ids.add(input.id);
+      else {
+        if (!/^[a-z0-9_]+$/.test(input.id)) {
+          errors.push(`Input ${i}: 'id' must be snake_case (lowercase, digits, underscores).`);
+        }
+        ids.add(input.id);
+      }
       if (typeof input.label !== 'string') errors.push(`Input ${i}: 'label' is missing or not a string.`);
       if (typeof input.kind !== 'string') errors.push(`Input ${i}: 'kind' is missing or not a string.`);
     });
@@ -28,7 +33,12 @@ export function validateGraphData(data: Partial<Graph>): string[] {
   } else {
     data.nodes.forEach((node: Act, i: number) => {
       if (typeof node.id !== 'string') errors.push(`Node ${i}: 'id' is missing or not a string.`);
-      else ids.add(node.id);
+      else {
+        if (!/^[a-z0-9_]+$/.test(node.id)) {
+          errors.push(`Node ${i}: 'id' must be snake_case (lowercase, digits, underscores).`);
+        }
+        ids.add(node.id);
+      }
       if (typeof node.label !== 'string') errors.push(`Node ${i}: 'label' is missing or not a string.`);
       if (node.sources && !Array.isArray(node.sources)) errors.push(`Node ${i}: 'sources' must be an array of strings.`);
       if (node.sinks && !Array.isArray(node.sinks)) errors.push(`Node ${i}: 'sinks' must be an array of strings.`);
@@ -39,14 +49,36 @@ export function validateGraphData(data: Partial<Graph>): string[] {
   if (!Array.isArray(data.edges)) {
     errors.push("'edges' property must be an array.");
   } else {
-    data.edges.forEach((edge: [string, string] | [string], i: number) => {
-      if (!Array.isArray(edge) || (edge.length !== 2 && edge.length !== 1) || typeof edge[0] !== 'string') {
-        errors.push(`Edge ${i}: must be an array of one or two strings.`);
-      } else {
-        if (!ids.has(edge[0])) errors.push(`Edge ${i}: 'from' id '${edge[0]}' not found in inputs or nodes.`);
-        if (edge.length === 2 && (typeof edge[1] !== 'string' || !ids.has(edge[1]))) errors.push(`Edge ${i}: 'to' id '${edge[1]}' not found in inputs or nodes.`);
+    data.edges.forEach((edge: any, i: number) => {
+      if (!Array.isArray(edge) || edge.length !== 2 || typeof edge[0] !== 'string' || typeof edge[1] !== 'string') {
+        errors.push(`Edge ${i}: must be a pair of strings [from, to].`);
+        return;
       }
+      if (!ids.has(edge[0])) errors.push(`Edge ${i}: 'from' id '${edge[0]}' not found in inputs or nodes.`);
+      if (!ids.has(edge[1])) errors.push(`Edge ${i}: 'to' id '${edge[1]}' not found in inputs or nodes.`);
     });
+  }
+
+  // Validate currency type consistency across all nodes
+  if (Array.isArray(data.nodes)) {
+    const sourceSet = new Set<string>();
+    const sinkSet = new Set<string>();
+    const valueSet = new Set<string>();
+    for (const node of data.nodes) {
+      node.sources?.forEach(s => sourceSet.add(s));
+      node.sinks?.forEach(s => sinkSet.add(s));
+      node.values?.forEach(v => valueSet.add(v));
+    }
+    const conflicts: string[] = [];
+    // check overlaps
+    sourceSet.forEach(tok => {
+      if (sinkSet.has(tok)) conflicts.push(`'${tok}' used as both source and sink.`);
+      if (valueSet.has(tok)) conflicts.push(`'${tok}' used as both source and value.`);
+    });
+    sinkSet.forEach(tok => {
+      if (valueSet.has(tok)) conflicts.push(`'${tok}' used as both sink and value.`);
+    });
+    errors.push(...conflicts);
   }
 
   // Validate subsections if present
@@ -82,6 +114,61 @@ export function validateGraphData(data: Partial<Graph>): string[] {
           errors.push(`Subsection ${i}: Invalid color format '${subsection.color}'.`);
         }
       });
+    }
+  }
+
+  // Cycle detection (treat as an error)
+  if (Array.isArray(data.edges)) {
+    const allIds = Array.from(ids);
+    const adj = new Map<string, string[]>(allIds.map(id => [id, []]));
+    data.edges.forEach(([from, to]) => {
+      if (adj.has(from)) adj.get(from)!.push(to);
+    });
+
+    const visited = new Set<string>();
+    const onStack = new Set<string>();
+    const parent = new Map<string, string>();
+    let cycle: string[] | null = null;
+
+    const buildCycle = (u: string, v: string): string[] => {
+      const path: string[] = [u];
+      let cur = u;
+      while (cur !== v && parent.has(cur)) {
+        cur = parent.get(cur)!;
+        path.push(cur);
+      }
+      path.reverse();
+      path.push(v);
+      return path;
+    };
+
+    const dfs = (u: string) => {
+      if (cycle) return; // early exit once found
+      visited.add(u);
+      onStack.add(u);
+      for (const v of adj.get(u) || []) {
+        if (!visited.has(v)) {
+          parent.set(v, u);
+          dfs(v);
+          if (cycle) return;
+        } else if (onStack.has(v)) {
+          cycle = buildCycle(u, v);
+          return;
+        }
+      }
+      onStack.delete(u);
+    };
+
+    for (const id of allIds) {
+      if (!visited.has(id)) {
+        dfs(id);
+        if (cycle) break;
+      }
+    }
+
+    if (cycle) {
+      const cyclePath: string[] = cycle;
+      errors.push(`Graph contains a cycle: ${cyclePath.join(' -> ')}`);
     }
   }
 

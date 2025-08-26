@@ -5,7 +5,8 @@
   "main": "code.js",
   "editorType": ["figjam"],
   "networkAccess": {
-    "allowedDomains": ["none"]
+    "allowedDomains": ["*"],
+    "reasoning": "Required for AI research features to connect to localhost API server"
   },
   "documentAccess": "dynamic-page"
 }

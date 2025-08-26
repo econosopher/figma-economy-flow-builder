@@ -18,6 +18,32 @@ An example `helldivers.json` can be found in the `/examples` directory.
 
 ## Update Log
 
+### Version 1.2.50 - AI-Powered Economy Generation
+
+#### New Features
+- **AI Economy Generation**: Generate complete economy JSONs using Google's Gemini AI
+  - Enter any game name and get a full economy structure in 30-60 seconds
+  - Three depth levels for different analysis granularity
+  - Secure API key storage in Figma
+  - Free tier supports 1,500 requests per day
+  - See [API_KEY_SETUP.md](./API_KEY_SETUP.md) for setup instructions
+
+### Version 1.2.45 - Research Panel & Simplified JSON
+
+#### New Features
+- **Research Panel (Beta)**: New tab interface for deep economy research
+  - Dedicated research tab with API key management
+  - Game name input for targeted research
+  - Secure local storage of API keys
+  - Integration with main builder for seamless workflow
+  - Foundation for AI-powered economy analysis
+
+#### JSON Improvements  
+- **Simplified Node Structure**: `sources`, `sinks`, and `values` arrays are now optional
+  - No need to include empty arrays anymore
+  - Cleaner, more concise JSON specifications
+  - Backward compatible with existing JSON files
+
 ### Version 1.2.39 - Post-Publication Updates
 
 Since the initial publication to the Figma Community, we've made several significant improvements:
@@ -67,12 +93,13 @@ Since the initial publication to the Figma Community, we've made several signifi
 ## 2  Build
 
 ```bash
-cd economy-flow-plugin
+cd economy_flow_plugin
 npm install
 npm run build
 ```
 
-This will install the necessary dependencies and run the build script, which compiles `code.ts` and bundles `ui.html` into the final `code.js`.
+This installs dependencies and runs the build script, which compiles TypeScript in `src/` to `dist/` and bundles with `ui.html` into the final `code.js`.
+Note: Source of truth is `src/` TypeScript; `code.js` is the build output.
 
 ---
 
@@ -82,9 +109,11 @@ This will install the necessary dependencies and run the build script, which com
 2.  **Choose a Template (Optional):** Select a "Basic" or "Complex" example from the "Start with a template" dropdown to pre-fill the JSON. A confirmation will appear if you have existing JSON.
 3.  **Customize Colors (Optional):** Use the color pickers to change the default colors for different node types.
 4.  **Provide JSON:** Write or paste your flowchart definition into the main text area.
-5.  **Generate from JSON:** Click the "Generate from JSON" button. The plugin will validate your JSON and render the diagram on the canvas.
-6.  **Sync from Canvas:** Modify the diagram, then click "Sync from Canvas" to update the JSON spec.
-7.  **Clear:** Click "Clear Canvas" to remove all elements created by the plugin.
+5.  **Validate JSON (Optional):** Click "Validate JSON" to check formatting and references without drawing.
+6.  **Generate from JSON:** Click the "Generate from JSON" button. The plugin will validate your JSON and render the diagram on the canvas.
+7.  **Sync from Canvas:** Modify the diagram, then click "Sync from Canvas" to update the JSON spec.
+8.  **Copy JSON:** Click "Copy JSON" to copy the current JSON to your clipboard.
+9.  **Clear:** Click "Clear Canvas" to remove all elements created by the plugin.
 
 ---
 
@@ -153,24 +182,32 @@ An array of objects representing the actions, activities, or states in your flow
 *   `id` (string, required): A unique identifier for this node.
 *   `label` (string, required): The text for the node's main box.
 *   `kind` (string, optional): Set to `"final_good"` to render a special "Final Good" box. Otherwise, it's a standard white action box.
-*   `sources` (array of strings, optional): Resources *gained* that can be spent elsewhere (e.g., Gold, Gems). Rendered as green attribute boxes.
-*   `sinks` (array of strings, optional): Resources *consumed* from elsewhere (e.g., Energy, Gold). Rendered as red attribute boxes.
-*   `values` (array of strings, optional): **Stores of Value** - Resources that accumulate but CANNOT be spent directly (e.g., XP, Level, Achievement Points). Rendered as orange attribute boxes.
+*   `sources` (array of strings, optional): Resources *gained* that can be spent elsewhere (e.g., Gold, Gems). Rendered as green attribute boxes. **Can be omitted if empty.**
+*   `sinks` (array of strings, optional): Resources *consumed* from elsewhere (e.g., Energy, Gold). Rendered as red attribute boxes. **Can be omitted if empty.**
+*   `values` (array of strings, optional): **Stores of Value** - Resources that accumulate but CANNOT be spent directly (e.g., XP, Level, Achievement Points). Rendered as orange attribute boxes. **Can be omitted if empty.**
 
-**Example:**
+**Examples:**
 ```json
+// With resources
 "nodes": [
   {
     "id": "complete_mission",
     "label": "To Complete Mission Objectives",
-    "sources": ["Player XP", "Stratagem Slips", "Warbond Credits"],
-    "sinks": []
+    "sources": ["Player XP", "Stratagem Slips", "Warbond Credits"]
+  }
+]
+
+// Without resources - much cleaner!
+"nodes": [
+  {
+    "id": "unlock_feature",
+    "label": "To Unlock Feature"
   }
 ]
 ```
 
 ### `edges`
-An array that defines the connections between your `inputs` and `nodes`. Each edge is an array tuple `[from_id, to_id]`.
+An array that defines the connections between your `inputs` and `nodes`. Each edge is a pair `[from_id, to_id]` (exactly two strings). The graph must be acyclic (no cycles).
 
 *   `from_id` (string): The `id` of the starting node for the connection.
 *   `to_id` (string): The `id` of the ending node for the connection.
@@ -229,25 +266,32 @@ The output MUST be a single, complete JSON object with EXACTLY these three top-l
 
 1. **NO MARKDOWN FORMATTING**: Output ONLY the raw JSON object. No \`\`\`json tags, no explanations before or after.
 2. **NO TRAILING COMMAS**: Never put a comma after the last item in any array or object.
-3. **EVERY NODE MUST HAVE ALL THREE ARRAY PROPERTIES**: Even if empty, EVERY node MUST include `sources`, `sinks`, and `values` properties:
+3. **SIMPLIFIED NODE ARRAYS**: The `sources`, `sinks`, and `values` properties are now OPTIONAL:
 ```
    ```json
+   // Preferred - omit empty arrays
+   {
+     "id": "example_node",
+     "label": "Example Node"
+   }
+   
+   // Also valid - explicit empty arrays
    {
      "id": "example_node",
      "label": "Example Node",
-     "sources": [],  // REQUIRED - use empty array if no sources
-     "sinks": [],    // REQUIRED - use empty array if no sinks
-     "values": []    // REQUIRED - use empty array if no values
+     "sources": [],
+     "sinks": [],
+     "values": []
    }
    ```
-4. **NEVER LEAVE EMPTY VALUES**: Every property MUST have a value. Common mistakes to avoid:
+4. **NEVER LEAVE EMPTY VALUES**: If you DO include a property, it MUST have a value:
    - WRONG: `"sources":,` or `"sinks":,` or `"values":,`
-   - CORRECT: `"sources": [],` or `"sinks": [],` or `"values": []`
-   - If a node has no sources/sinks/values, use an empty array `[]`, never leave it blank
-5. **ALL ARRAYS MUST BE PROPERLY INITIALIZED**: Properties like `sources`, `sinks`, and `values` must ALWAYS be followed by either:
-   - An array with items: `"sources": ["Gold", "XP"]`
-   - An empty array: `"sources": []`
-   - NEVER just a comma or nothing: `"sources":,` ← THIS WILL CAUSE JSON PARSING ERRORS
+   - CORRECT: Omit the property entirely OR use `"sources": []`
+5. **PROPERTY INITIALIZATION**: When including `sources`, `sinks`, or `values`:
+   - With items: `"sources": ["Gold", "XP"]`
+   - Empty array: `"sources": []`
+   - Omitted entirely: (no property at all)
+   - NEVER just a comma: `"sources":,` ← THIS WILL CAUSE JSON PARSING ERRORS
 6. **CONSISTENT ID FORMAT**: All `id` values must be lowercase with underscores (snake_case). Example: `daily_quest`, not `dailyQuest` or `DailyQuest`.
 7. **VALID EDGES**: Every edge must connect existing nodes. Each edge is a two-element array: `["from_id", "to_id"]`.
 
@@ -261,9 +305,9 @@ The output MUST be a single, complete JSON object with EXACTLY these three top-l
 2. **`nodes`** (required array): These are the actions that derive from the last box. For example, a series of connected strings might have this sequence (Spend Time -> To Play Matches (Player XP) -> To Level Up (+Currency) -> To Spend on Cosmetics (-Currency) -> Final Good: "To Peacock in Front of Other Players")
    - `id` (string): Unique snake_case identifier
    - `label` (string): Descriptive name that starts with "To" (e.g., "To Complete Daily Quests")
-   - `sources` (array of strings, REQUIRED): Resources GAINED that can be spent elsewhere (e.g., ["Gold", "Crafting Materials"]) - USE EMPTY ARRAY `[]` IF NONE
-   - `sinks` (array of strings, REQUIRED): Resources CONSUMED from elsewhere (e.g., ["Energy", "Gold"]) - USE EMPTY ARRAY `[]` IF NONE
-   - `values` (array of strings, REQUIRED): Stores of value that accumulate but CANNOT be spent (e.g., ["Player XP", "Achievement Points"]) - USE EMPTY ARRAY `[]` IF NONE
+   - `sources` (array of strings, optional): Resources GAINED that can be spent elsewhere (e.g., ["Gold", "Crafting Materials"]) - OMIT IF NONE
+   - `sinks` (array of strings, optional): Resources CONSUMED from elsewhere (e.g., ["Energy", "Gold"]) - OMIT IF NONE
+   - `values` (array of strings, optional): Stores of value that accumulate but CANNOT be spent (e.g., ["Player XP", "Achievement Points"]) - OMIT IF NONE
    - `kind` (string, optional): Set to `"final_good"` for ultimate goals/win conditions
 
 3. **`edges`** (required array): Connections showing flow between nodes.
@@ -313,15 +357,13 @@ The output MUST be a single, complete JSON object with EXACTLY these three top-l
 }
 ```
 
-### Example of a Node with No Resources (STILL REQUIRES ALL ARRAYS)
+### Example of a Node with No Resources (SIMPLIFIED)
 
 ```json
 {
   "id": "unlock_feature",
-  "label": "To Unlock Feature",
-  "sources": [],  // REQUIRED - empty array
-  "sinks": [],    // REQUIRED - empty array
-  "values": []    // REQUIRED - empty array
+  "label": "To Unlock Feature"
+  // No sources, sinks, or values - much cleaner!
 }
 ```
 
@@ -335,7 +377,7 @@ The output MUST be a single, complete JSON object with EXACTLY these three top-l
    * What progress it accumulates (values) - use empty array `[]` if nothing
    * **CRITICAL RULE**: If a node receives Time or Money directly via an edge from the initial inputs, do NOT list "Time" or "Money" as a sink. The edge connection already represents this consumption. Only list resources as sinks if they come from other nodes' sources
 4. Trace flow connections between activities
-5. REMEMBER: Every node MUST have `sources`, `sinks`, and `values` properties, even if they are empty arrays
+5. REMEMBER: The `sources`, `sinks`, and `values` properties are OPTIONAL - omit them if empty
 6. **Currency Consistency Rules**:
    * Each currency/resource must be ONE type only throughout the entire economy: either a source (green), sink (red), or value (orange)
    * NEVER use the same currency as different types in different nodes
@@ -343,6 +385,9 @@ The output MUST be a single, complete JSON object with EXACTLY these three top-l
    * Example: Use "Cosmetics" not "Free Cosmetics" or "Premium Cosmetics"
    * Example: If "XP" is a value (orange) in one node, it must be a value in ALL nodes
 7. **Final Goods Placement**: Final goods should be the terminal nodes in their respective flows. Do NOT group them into a separate "Final Goods" subsection. They should naturally conclude different paths throughout the economy (e.g., "To Dominate PvP" at the end of competitive flow, "To Show Off Rare Skins" at the end of cosmetic flow)
+
+### Persistence
+The plugin remembers your most recent JSON and chosen colors between runs on the same file using Figma client storage.
 
 Generate the complete JSON for "[Specify Game Title Here]" following these exact specifications.
 
@@ -363,10 +408,28 @@ Generate the complete JSON for "[Specify Game Title Here]" following these exact
 
 ```bash
 # clone repo (or move unzipped folder)
-cd ~/economy-flow-plugin
+cd ~/economy_flow_plugin
 npm install
 npm run build         # compile and bundle
 open -a Figma .       # open Figma and import the manifest
 ```
 
 Happy diagramming!
+
+---
+
+## 6  Testing
+
+- Requirements: Node >= 18
+- Commands:
+  - `npm run test`: Runs Jest unit tests (ts-jest)
+  - `npm run test:watch`: Watch mode
+
+### Covered Areas
+- Validation: structure, snake_case IDs, currency type consistency, cycle detection
+- Layout basics: heights/columns, conflict-free Y
+- Collision: rectangle/line intersection fundamentals, edge avoidance behavior
+- Sync: canvas → JSON reconstruction using Figma API mocks
+- Legend: currency extraction and section building
+
+If you see failures due to environment (older Node), upgrade Node to 18 LTS.

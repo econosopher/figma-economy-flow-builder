@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Progress Indicator Demo</title>
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, system-ui, sans-serif;
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        /* Copy of progress styles from ui.html */
+        .progress-container {
+            margin: 12px 0;
+            padding: 12px;
+            background: #f5f5f5;
+            border-radius: 6px;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #e0e0e0;
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 8px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #2196F3);
+            border-radius: 3px;
+            transition: width 0.3s ease;
+            animation: shimmer 1.5s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+        
+        .progress-steps {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+            font-size: 10px;
+        }
+        
+        .progress-step {
+            flex: 1;
+            text-align: center;
+            color: #999;
+            padding: 4px;
+            position: relative;
+        }
+        
+        .progress-step.completed {
+            color: #4CAF50;
+            font-weight: 600;
+        }
+        
+        .progress-step.active {
+            color: #2196F3;
+            font-weight: 600;
+        }
+        
+        .progress-step.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 4px;
+            height: 4px;
+            background: #2196F3;
+            border-radius: 50%;
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: translateX(-50%) scale(1); opacity: 1; }
+            50% { transform: translateX(-50%) scale(1.2); opacity: 0.7; }
+        }
+        
+        .progress-message {
+            font-size: 11px;
+            color: #666;
+            margin-top: 6px;
+            font-style: italic;
+        }
+        
+        button {
+            background: #9c27b0;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        
+        button:hover {
+            background: #7b1fa2;
+        }
+    </style>
+</head>
+<body>
+    <h1>Progress Indicator Demo</h1>
+    <p>Click the button to see the progress animation that users will experience when generating economy JSONs.</p>
+    
+    <div class="progress-container">
+        <div class="progress-bar">
+            <div id="progress-fill" class="progress-fill" style="width: 0%"></div>
+        </div>
+        <div class="progress-steps">
+            <div id="step-1" class="progress-step">Connecting</div>
+            <div id="step-2" class="progress-step">Researching</div>
+            <div id="step-3" class="progress-step">Analyzing</div>
+            <div id="step-4" class="progress-step">Generating</div>
+            <div id="step-5" class="progress-step">Finalizing</div>
+        </div>
+        <div id="progress-message" class="progress-message">Click the button to start demo...</div>
+    </div>
+    
+    <button onclick="runDemo()">Start Progress Demo</button>
+    
+    <script>
+        const progressFill = document.getElementById('progress-fill');
+        const progressMessage = document.getElementById('progress-message');
+        const steps = [
+            document.getElementById('step-1'),
+            document.getElementById('step-2'),
+            document.getElementById('step-3'),
+            document.getElementById('step-4'),
+            document.getElementById('step-5')
+        ];
+        
+        function updateProgress(stepNum, percent, message) {
+            progressFill.style.width = percent + '%';
+            progressMessage.textContent = message;
+            
+            steps.forEach((step, index) => {
+                step.classList.remove('active', 'completed');
+                if (index < stepNum - 1) {
+                    step.classList.add('completed');
+                } else if (index === stepNum - 1) {
+                    step.classList.add('active');
+                }
+            });
+        }
+        
+        async function runDemo() {
+            // Reset
+            updateProgress(0, 0, 'Initializing AI research...');
+            
+            // Simulate the actual flow
+            const sequence = [
+                { step: 1, percent: 10, message: 'Connecting to API server...', delay: 500 },
+                { step: 2, percent: 20, message: 'Researching Clash Royale economy systems...', delay: 2000 },
+                { step: 3, percent: 40, message: 'AI is analyzing game mechanics and resource flows...', delay: 3000 },
+                { step: 3, percent: 60, message: 'Mapping progression systems and monetization...', delay: 2000 },
+                { step: 4, percent: 80, message: 'Structuring economy model...', delay: 2000 },
+                { step: 5, percent: 100, message: 'Complete! Economy JSON is ready.', delay: 1000 }
+            ];
+            
+            for (const item of sequence) {
+                await new Promise(resolve => setTimeout(resolve, item.delay));
+                updateProgress(item.step, item.percent, item.message);
+            }
+            
+            // Reset after completion
+            setTimeout(() => {
+                updateProgress(0, 0, 'Click the button to start demo...');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
