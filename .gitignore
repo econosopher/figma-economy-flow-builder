@@ -9,6 +9,12 @@ coverage/
 .vscode/
 *.tar.gz
 
+# SECURITY: Never commit API keys
+src/default-config.ts
+*api_key*
+*.key
+.env.*
+
 # Example files (don't track generated examples)
 examples/predecessor.json 
 # Claude configuration
