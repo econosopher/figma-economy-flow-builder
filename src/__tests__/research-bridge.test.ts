@@ -127,20 +127,16 @@ describe('Research Bridge', () => {
       );
     });
 
-    it('should return placeholder on API failure', async () => {
+    it('should throw an error on API failure', async () => {
       mockFetch.mockRejectedValueOnce(new Error('API error'));
 
-      const result = await generateEconomyJSON({
-        gameName: 'Failed Game',
-        depth: 1,
-        apiKey: 'test-api-key'  // Add API key since it's now required
-      });
-
-      // Should return placeholder structure
-      expect(result.name).toBe('Failed Game');
-      expect(result.inputs).toHaveLength(2);
-      expect(result.nodes).toBeDefined();
-      expect(result.edges).toBeDefined();
+      await expect(
+        generateEconomyJSON({
+          gameName: 'Failed Game',
+          depth: 1,
+          apiKey: 'test-api-key'
+        })
+      ).rejects.toThrow('Failed to generate economy JSON');
     });
   });
 

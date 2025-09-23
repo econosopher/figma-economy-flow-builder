@@ -111,7 +111,16 @@ export class LayoutEngine {
     nodeData: Input | Act,
     revAdj: Map<string, string[]>
   ): number {
-    const totalHeight = this.nodeTotalHeights.get(id) || 0;
+    let totalHeight = this.nodeTotalHeights.get(id) || 0;
+    if (totalHeight === 0) {
+      if ('kind' in nodeData && nodeData.kind === 'initial_sink_node') {
+        totalHeight = BOX_SIZE.INPUT.H;
+      } else if ('kind' in nodeData && nodeData.kind === 'final_good') {
+        totalHeight = BOX_SIZE.FINAL_GOOD.H;
+      } else {
+        totalHeight = BOX_SIZE.NODE.H;
+      }
+    }
     const boxWidth = ('kind' in nodeData && nodeData.kind === 'initial_sink_node') ? BOX_SIZE.INPUT.W : BOX_SIZE.NODE.W;
     const x = INITIAL_X_OFFSET + (colIndex * (BOX_SIZE.NODE.W + paddingX));
     

@@ -10,12 +10,15 @@ describe('hex', () => {
   });
 
   it('should return gray for invalid hex colors', () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
     const gray = { r: 0.8, g: 0.8, b: 0.8 };
     expect(hex('#FFF')).toEqual(gray);
     expect(hex('red')).toEqual(gray);
     expect(hex('#GGGGGG')).toEqual(gray);
     expect(hex('')).toEqual(gray);
     expect(hex(null as any)).toEqual(gray);
+    expect(warnSpy).toHaveBeenCalled();
+    warnSpy.mockRestore();
   });
 
   it('should handle lowercase hex colors', () => {

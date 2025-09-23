@@ -59,28 +59,6 @@ export function validateGraphData(data: Partial<Graph>): string[] {
     });
   }
 
-  // Validate currency type consistency across all nodes
-  if (Array.isArray(data.nodes)) {
-    const sourceSet = new Set<string>();
-    const sinkSet = new Set<string>();
-    const valueSet = new Set<string>();
-    for (const node of data.nodes) {
-      node.sources?.forEach(s => sourceSet.add(s));
-      node.sinks?.forEach(s => sinkSet.add(s));
-      node.values?.forEach(v => valueSet.add(v));
-    }
-    const conflicts: string[] = [];
-    // check overlaps
-    sourceSet.forEach(tok => {
-      if (sinkSet.has(tok)) conflicts.push(`'${tok}' used as both source and sink.`);
-      if (valueSet.has(tok)) conflicts.push(`'${tok}' used as both source and value.`);
-    });
-    sinkSet.forEach(tok => {
-      if (valueSet.has(tok)) conflicts.push(`'${tok}' used as both sink and value.`);
-    });
-    errors.push(...conflicts);
-  }
-
   // Validate subsections if present
   if (data.subsections !== undefined) {
     if (!Array.isArray(data.subsections)) {

@@ -192,7 +192,7 @@ describe('subsections validation', () => {
     expect(errors.some(e => e.includes("snake_case"))).toBe(true);
   });
 
-  it('should enforce currency type consistency', () => {
+  it('should allow currencies that are both sources and sinks', () => {
     const graph: Graph = {
       inputs: [{ id: 'time', label: 'Time', kind: 'initial_sink_node' }],
       nodes: [
@@ -202,5 +202,29 @@ describe('subsections validation', () => {
       edges: [['time', 'a'], ['a', 'b']]
     };
     const errors = validateGraphData(graph);
-    expect(errors.some(e => e.includes("both source and sink"))).toBe(true);
+    expect(errors).toHaveLength(0);
+  });
+
+  it('should allow currencies reused as both source and value', () => {
+    const graph: Graph = {
+      inputs: [{ id: 'time', label: 'Time', kind: 'initial_sink_node' }],
+      nodes: [
+        { id: 'a', label: 'A', sources: ['Gold'], values: ['Gold'] }
+      ],
+      edges: []
+    };
+    const errors = validateGraphData(graph);
+    expect(errors).toHaveLength(0);
+  });
+
+  it('should allow currencies reused as both sink and value', () => {
+    const graph: Graph = {
+      inputs: [{ id: 'time', label: 'Time', kind: 'initial_sink_node' }],
+      nodes: [
+        { id: 'a', label: 'A', sinks: ['Gold'], values: ['Gold'] }
+      ],
+      edges: []
+    };
+    const errors = validateGraphData(graph);
+    expect(errors).toHaveLength(0);
   });

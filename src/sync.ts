@@ -23,20 +23,100 @@ export async function syncFromCanvas() {
       group = figma.currentPage.findOne(n => n.name === TAG);
     }
     
-    if (!group || !('children' in group)) {
-      reply('No diagram found to sync. Please generate a diagram first.', false);
-      return;
-    }
-
     const graph: Graph = { inputs: [], nodes: [], edges: [] };
     const tempNodeData = new Map<string, {node: SceneNode, act: Act | Input}>();
     const figmaIdToStableId = new Map<string, string>();
     const ignoredNodes: string[] = [];
 
-    const children = [...(group as GroupNode).children];
+    const connectorNodes: ConnectorNode[] = [];
+    const connectorGroup = searchContainer.findOne(n => n.getPluginData('economyFlowConnectorGroup') === 'true');
+    if (connectorGroup && 'children' in connectorGroup) {
+      for (const child of (connectorGroup as GroupNode).children) {
+        if (child.type === 'CONNECTOR') {
+          connectorNodes.push(child as ConnectorNode);
+        }
+      }
+    } else {
+      // Legacy fallback: connectors lived inside the main group
+      if (group && 'children' in group) {
+        for (const child of (group as GroupNode).children) {
+          if (child.type === 'CONNECTOR') {
+            connectorNodes.push(child as ConnectorNode);
+          }
+        }
+      }
+
+      // As a final fallback, scan the container directly for connectors
+      if (connectorNodes.length === 0 && 'children' in searchContainer) {
+        for (const child of (searchContainer as PageNode | SectionNode).children) {
+          if (child.type === 'CONNECTOR') {
+            connectorNodes.push(child as ConnectorNode);
+          }
+        }
+      }
+    }
+
+    const seenNodeIds = new Set<string>();
+    const nodeCandidates: SceneNode[] = [];
+    const pushNode = (node: SceneNode) => {
+      if (!seenNodeIds.has(node.id)) {
+        seenNodeIds.add(node.id);
+        nodeCandidates.push(node);
+      }
+    };
+
+    if (group && 'children' in group) {
+      for (const child of (group as GroupNode).children) {
+        if (child.type !== 'CONNECTOR') {
+          pushNode(child);
+        }
+      }
+    }
+
+    if (section && 'children' in section) {
+      for (const child of section.children) {
+        if (child.getPluginData && child.getPluginData('economyFlowConnectorGroup') === 'true') {
+          continue;
+        }
+        if (child.type === 'SECTION' && child.getPluginData("subsectionId") && 'children' in child) {
+          for (const grandChild of (child as SectionNode).children) {
+            if (grandChild.type !== 'CONNECTOR') {
+              pushNode(grandChild as SceneNode);
+            }
+          }
+          continue;
+        }
+        if (child.type !== 'CONNECTOR') {
+          pushNode(child as SceneNode);
+        }
+      }
+    }
+
+    const attributeCandidates: SceneNode[] = [];
+    const seenAttributeIds = new Set<string>();
+    const collectAttributeNodes = (node: SceneNode) => {
+      if (isShapeWithText(node) && node.width <= BOX_SIZE.ATTR.W) {
+        if (!seenAttributeIds.has(node.id)) {
+          seenAttributeIds.add(node.id);
+          attributeCandidates.push(node);
+        }
+      }
+      if ('children' in node) {
+        for (const child of (node as GroupNode).children) {
+          collectAttributeNodes(child as SceneNode);
+        }
+      }
+    };
+
+    nodeCandidates.forEach(node => collectAttributeNodes(node));
+
+    if (nodeCandidates.length === 0) {
+      reply('No diagram found to sync. Please generate a diagram first.', false);
+      return;
+    }
 
     // Pass 1: Reconstruct all nodes
-    for (const child of children) {
+    for (const child of nodeCandidates) {
       const id = child.getPluginData("id");
       if (!id) {
         // Skip attributes (they're handled in pass 2) and connectors
@@ -84,80 +164,80 @@ export async function syncFromCanvas() {
     }
 
     // Pass 2: Find attributes
-    for (const child of children) {
-      if (isShapeWithText(child) && child.width <= BOX_SIZE.ATTR.W) {
-        const attrNode = child;
-        const fills = attrNode.fills;
+    for (const attrNode of attributeCandidates) {
+      if (!isShapeWithText(attrNode)) continue;
+      const fills = attrNode.fills;
 
-        // Find parent by positional check
-        let parentData: {node: SceneNode, act: Act | Input} | undefined;
-        let minDistance = Infinity;
+      // Find parent by positional check
+      let parentData: {node: SceneNode, act: Act | Input} | undefined;
+      let minDistance = Infinity;
 
-        for (const data of tempNodeData.values()) {
-          const p = data.node;
-          if (Math.abs(p.x - attrNode.x) < 5 && attrNode.y > p.y) {
-            const distance = attrNode.y - (p.y + p.height);
-            if (distance >= 0 && distance < minDistance) {
-              minDistance = distance;
-              parentData = data;
-            }
+      for (const data of tempNodeData.values()) {
+        const p = data.node;
+        if (Math.abs(p.x - attrNode.x) < 5 && attrNode.y > p.y) {
+          const distance = attrNode.y - (p.y + p.height);
+          if (distance >= 0 && distance < minDistance) {
+            minDistance = distance;
+            parentData = data;
           }
         }
+      }
 
-        if (parentData && 'sources' in parentData.act) {
-          const text = attrNode.text.characters;
-          const tag = attrNode.getPluginData('attrType');
-          const normalized = text.replace(/^[+-]\s*/, '').trim();
+      if (parentData && 'sources' in parentData.act) {
+        const text = attrNode.text.characters;
+        const tag = attrNode.getPluginData('attrType');
+        const normalized = text.replace(/^[+-]\s*/, '').trim();
 
-          if (tag === 'source') {
-            parentData.act.sources?.push(normalized);
-            continue;
-          } else if (tag === 'sink') {
-            parentData.act.sinks?.push(normalized);
-            continue;
-          } else if (tag === 'value') {
-            parentData.act.values?.push(normalized);
-            continue;
-          }
+        if (tag === 'source') {
+          parentData.act.sources?.push(normalized);
+          continue;
+        } else if (tag === 'sink') {
+          parentData.act.sinks?.push(normalized);
+          continue;
+        } else if (tag === 'value') {
+          parentData.act.values?.push(normalized);
+          continue;
+        }
 
-          // Fallback: use prefix, then color
-          if (/^\+\s*/.test(text)) {
-            parentData.act.sources?.push(normalized);
-            continue;
-          } else if (/^-\s*/.test(text)) {
-            parentData.act.sinks?.push(normalized);
-            continue;
-          }
+        // Fallback: use prefix, then color
+        if (/^\+\s*/.test(text)) {
+          parentData.act.sources?.push(normalized);
+          continue;
+        } else if (/^-\s*/.test(text)) {
+          parentData.act.sinks?.push(normalized);
+          continue;
+        }
 
-          // Last resort: color heuristic
-          if (fills && typeof fills !== 'symbol' && fills.length > 0 && fills[0].type === 'SOLID') {
-            const fill = fills[0] as SolidPaint;
-            const r = Math.round(fill.color.r * 255);
-            const g = Math.round(fill.color.g * 255);
-            const b = Math.round(fill.color.b * 255);
-            const isGreen = r >= 70 && r <= 80 && g >= 170 && g <= 180;
-            const isRed = r >= 213 && r <= 223 && g >= 79 && g <= 89;
-            const isOrange = r >= 231 && r <= 241 && g >= 154 && g <= 164;
-            if (isGreen) parentData.act.sources?.push(normalized);
-            else if (isRed) parentData.act.sinks?.push(normalized);
-            else if (isOrange) parentData.act.values?.push(normalized);
-            else console.warn(`Unknown attribute color: rgb(${r}, ${g}, ${b}) for text: ${text}`);
-          }
+        // Last resort: color heuristic
+        if (fills && typeof fills !== 'symbol' && fills.length > 0 && fills[0].type === 'SOLID') {
+          const fill = fills[0] as SolidPaint;
+          const r = Math.round(fill.color.r * 255);
+          const g = Math.round(fill.color.g * 255);
+          const b = Math.round(fill.color.b * 255);
+          const isGreen = r >= 70 && r <= 80 && g >= 170 && g <= 180;
+          const isRed = r >= 213 && r <= 223 && g >= 79 && g <= 89;
+          const isOrange = r >= 231 && r <= 241 && g >= 154 && g <= 164;
+          if (isGreen) parentData.act.sources?.push(normalized);
+          else if (isRed) parentData.act.sinks?.push(normalized);
+          else if (isOrange) parentData.act.values?.push(normalized);
+          else console.warn(`Unknown attribute color: rgb(${r}, ${g}, ${b}) for text: ${text}`);
         }
       }
     }
 
-    // Pass 3: Reconstruct edges
-    for (const child of children) {
-      if (child.type === 'CONNECTOR') {
-        const connector = child as ConnectorNode;
-        const startId = (connector.connectorStart as any).endpointNodeId;
-        const endId = (connector.connectorEnd as any).endpointNodeId;
-        
-        const fromStableId = figmaIdToStableId.get(startId);
-        const toStableId = figmaIdToStableId.get(endId);
+    // Pass 3: Reconstruct edges (de-duplicated)
+    const edgeKeys = new Set<string>();
+    for (const connector of connectorNodes) {
+      const startId = (connector.connectorStart as any).endpointNodeId;
+      const endId = (connector.connectorEnd as any).endpointNodeId;
 
-        if (fromStableId && toStableId) {
+      const fromStableId = figmaIdToStableId.get(startId);
+      const toStableId = figmaIdToStableId.get(endId);
+
+      if (fromStableId && toStableId) {
+        const key = `${fromStableId}→${toStableId}`;
+        if (!edgeKeys.has(key)) {
+          edgeKeys.add(key);
           graph.edges.push([fromStableId, toStableId]);
         }
       }
@@ -230,7 +310,7 @@ export async function syncFromCanvas() {
     // Validate the reconstructed graph
     if (graph.inputs.length === 0 && graph.nodes.length === 0) {
       console.error('Sync failed - no nodes found');
-      console.error('Group children:', children.length);
+      console.error('Node candidates:', nodeCandidates.length);
       console.error('TempNodeData entries:', tempNodeData.size);
       reply('No valid nodes found in the diagram. Please check the console for debugging info.', false);
       return;

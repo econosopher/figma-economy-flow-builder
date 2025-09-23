@@ -7,7 +7,6 @@ import { makeBox, makeFinalGoodBox, createConnector } from './node-creation';
 import { validateGraphData, validateCustomColors, isValidColor } from './validation';
 import { LayoutEngine } from './layout';
 import { syncFromCanvas } from './sync';
-import { reorderConnectorsBehind } from './grouping';
 import { extractCurrenciesByType, createLegendSection } from './legend';
 import { generateResearchCache, generateEconomyJSON, createResearchMarkdown } from './research-bridge';
 
@@ -530,6 +529,10 @@ async function generateDiagram(data: Graph, customColorInput?: { [key: string]: 
         return;
       }
       const connector = createConnector(fromNode, toNode);
+      try {
+        connector.name = `${TAG} Connector`;
+        connector.setPluginData('economyFlowConnector', 'true');
+      } catch {}
       connectors.push(connector);
     } catch (error) {
       failedEdges.push(`Edge ${index}: ${(error as Error).message}`);
@@ -540,14 +543,15 @@ async function generateDiagram(data: Graph, customColorInput?: { [key: string]: 
     console.warn('Some edges failed to render:', failedEdges);
   }
 
-  // Combine elements with connectors first (so they render behind nodes)
-  const elementsToGroup = [...connectors, ...nodesAndAttributes];
+  // Combine elements to determine section bounds
+  const layoutElements = [...nodesAndAttributes, ...connectors];
   
   // Create section and group
-  if (elementsToGroup.length > 0) {
+  if (layoutElements.length > 0) {
     try {
       // Create subsections if defined
       const subsections: SectionNode[] = [];
+      const nodesPlacedInSubsections = new Set<SceneNode>();
       let initialSectionX = 0; // Track X position of initial section for legend alignment
       let legendSection: SectionNode | null = null;
       if (data.subsections && data.subsections.length > 0) {
@@ -595,6 +599,12 @@ async function generateDiagram(data: Graph, customColorInput?: { [key: string]: 
             subsection.setPluginData("subsectionId", subsectionData.id);
             subsections.push(subsection);
             // Don't add subsections to elementsToGroup - they should be siblings of the group
+
+            // Move nodes into the subsection so the hierarchy reflects visual grouping
+            subsectionNodes.forEach(node => {
+              subsection.appendChild(node);
+              nodesPlacedInSubsections.add(node);
+            });
           }
         }
       }
@@ -606,7 +616,7 @@ async function generateDiagram(data: Graph, customColorInput?: { [key: string]: 
       
       // Calculate bounds for the main section
       let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-      elementsToGroup.forEach(node => {
+      layoutElements.forEach(node => {
         minX = Math.min(minX, node.x);
         minY = Math.min(minY, node.y);
         maxX = Math.max(maxX, node.x + node.width);
@@ -621,22 +631,35 @@ async function generateDiagram(data: Graph, customColorInput?: { [key: string]: 
         maxY - minY + (SECTION_PADDING * 2)
       );
       
-      // Add subsections to the section FIRST (so they render behind the group)
+      // Add subsections to the section FIRST (so they render behind other groups)
       subsections.forEach(subsection => {
         section.appendChild(subsection);
       });
       
-      // Create the group inside the section
-      const group = figma.group(elementsToGroup, figma.currentPage);
-      group.name = TAG;
-      
-      // Move the group into the section AFTER subsections (so it renders on top)
-      section.appendChild(group);
-      
-      // Ensure connectors are behind nodes by reordering within the group
-      reorderConnectorsBehind(group);
+      // Group any nodes not assigned to a subsection for easier manipulation
+      const looseNodes = nodesAndAttributes.filter(node => !nodesPlacedInSubsections.has(node));
+      let nodeGroup: GroupNode | null = null;
+      if (looseNodes.length > 0) {
+        nodeGroup = figma.group(looseNodes, figma.currentPage);
+        nodeGroup.name = TAG;
+      }
+
+      if (nodeGroup) {
+        section.appendChild(nodeGroup);
+      }
       
       figma.currentPage.appendChild(section);
+
+      if (connectors.length > 0) {
+        try {
+          const connectorGroup = figma.group(connectors, section);
+          connectorGroup.name = `${TAG} Connectors`;
+          connectorGroup.setPluginData('economyFlowConnectorGroup', 'true');
+          section.insertChild(0, connectorGroup);
+        } catch (error) {
+          console.warn('Failed to group connectors inside section:', error);
+        }
+      }
       
       // Create and add legend section OUTSIDE the main section
       const currencies = extractCurrenciesByType(data);

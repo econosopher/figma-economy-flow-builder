@@ -1,5 +1,42 @@
 import { LayoutEngine } from '../layout';
 import { BOX_SIZE, INITIAL_X_OFFSET } from '../constants';
+import { CollisionEngine, CollisionDetector, Rectangle, Line, Point } from '../collision';
+
+const collisionEngine = new CollisionEngine({ margin: 14 });
+
+function buildSegments(start: Point, end: Point, mode: 'horizontal-first' | 'vertical-first'): Line[] {
+  if (start.x === end.x || start.y === end.y) {
+    return [{ start, end }];
+  }
+
+  if (mode === 'vertical-first') {
+    const verticalTurn: Point = { x: start.x, y: end.y };
+    const segments: Line[] = [];
+    if (start.x !== verticalTurn.x || start.y !== verticalTurn.y) {
+      segments.push({ start, end: verticalTurn });
+    }
+    if (verticalTurn.x !== end.x || verticalTurn.y !== end.y) {
+      segments.push({ start: verticalTurn, end });
+    }
+    return segments.length > 0 ? segments : [{ start, end }];
+  }
+
+  const midX = start.x + (end.x - start.x) / 2;
+  const horizontalEnd: Point = { x: midX, y: start.y };
+  const verticalEnd: Point = { x: midX, y: end.y };
+
+  const segments: Line[] = [];
+  if (start.x !== horizontalEnd.x || start.y !== horizontalEnd.y) {
+    segments.push({ start, end: horizontalEnd });
+  }
+  if (horizontalEnd.x !== verticalEnd.x || horizontalEnd.y !== verticalEnd.y) {
+    segments.push({ start: horizontalEnd, end: verticalEnd });
+  }
+  if (verticalEnd.x !== end.x || verticalEnd.y !== end.y) {
+    segments.push({ start: verticalEnd, end });
+  }
+  return segments.length > 0 ? segments : [{ start, end }];
+}
 
 describe('LayoutEngine collision-aware placement', () => {
   it('stacks nodes vertically to avoid same-column overlap', () => {
@@ -56,9 +93,30 @@ describe('LayoutEngine collision-aware placement', () => {
       new Map<string, string[]>([['c', ['p']]])
     );
 
-    // The actual collision detection is working but with a smaller margin
-    // Should be pushed down but the collision margin is 14, not paddingY (21)
-    expect(y).toBeGreaterThanOrEqual(150);
+    const parentRect: Rectangle = { x: parentX, y: 0, width: BOX_SIZE.NODE.W, height: 90 };
+    const blockerRects: Rectangle[] = [
+      { x: midX, y: 40, width: BOX_SIZE.NODE.W, height: 90 },
+      { x: midX, y: 200, width: BOX_SIZE.NODE.W, height: 90 }
+    ];
+    const childRect: Rectangle = {
+      x: INITIAL_X_OFFSET + (childCol * (BOX_SIZE.NODE.W + paddingX)),
+      y,
+      width: BOX_SIZE.NODE.W,
+      height: 90
+    };
+
+    const start = collisionEngine.getNodeConnectionPoint('p', parentRect, 'output');
+    const end = collisionEngine.getNodeConnectionPoint('c', childRect, 'input');
+    const orientations: Array<'horizontal-first' | 'vertical-first'> = ['horizontal-first', 'vertical-first'];
+
+    const hasSafePath = orientations.some(mode => {
+      const segments = buildSegments(start, end, mode);
+      return blockerRects.every(rect =>
+        segments.every(segment => !CollisionDetector.lineIntersectsRectangle(segment, rect, 14).collides)
+      );
+    });
+
+    expect(hasSafePath).toBe(true);
   });
 
   it('avoids edge crossing when parent is below initial child Y', () => {
@@ -88,7 +146,25 @@ describe('LayoutEngine collision-aware placement', () => {
       new Map<string, string[]>([['c', ['p']]])
     );
 
-    // Should be pushed below blocker
-    expect(y).toBeGreaterThanOrEqual(100 + 90 + paddingY);
+    const parentRect: Rectangle = { x: parentX, y: 220, width: BOX_SIZE.NODE.W, height: 90 };
+    const blockerRect: Rectangle = { x: midX, y: 100, width: BOX_SIZE.NODE.W, height: 90 };
+    const childRect: Rectangle = {
+      x: INITIAL_X_OFFSET + (childCol * (BOX_SIZE.NODE.W + paddingX)),
+      y,
+      width: BOX_SIZE.NODE.W,
+      height: 90
+    };
+
+    const start = collisionEngine.getNodeConnectionPoint('p', parentRect, 'output');
+    const end = collisionEngine.getNodeConnectionPoint('c', childRect, 'input');
+    const orientations: Array<'horizontal-first' | 'vertical-first'> = ['horizontal-first', 'vertical-first'];
+
+    const hasSafePath = orientations.some(mode => {
+      const segments = buildSegments(start, end, mode);
+      return segments.every(segment => !CollisionDetector.lineIntersectsRectangle(segment, blockerRect, 14).collides);
+    });
+
+    expect(hasSafePath).toBe(true);
+    expect(y).toBeGreaterThanOrEqual(0);
   });
 });

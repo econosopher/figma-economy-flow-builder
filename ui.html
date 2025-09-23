@@ -231,7 +231,7 @@
             <img src="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3ccircle cx='12' cy='12' r='3'%3e%3c/circle%3e%3cpath d='M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z'%3e%3c/path%3e%3c/svg%3e" alt="Logo">
             <div style="flex: 1;">
                 <h1 style="margin: 0;">Economy-Flow Builder</h1>
-                <div id="version-info" style="font-size: 10px; color: #666; margin-top: 2px;">v1.2.59 • Loading...</div>
+                <div id="version-info" style="font-size: 10px; color: #666; margin-top: 2px;">v1.2.65 • Loading...</div>
             </div>
         </header>
 
@@ -346,6 +346,7 @@
             <div class="buttons">
                 <button id="generate-cache" class="research-button" title="Generate cache JSON">Generate Cache</button>
                 <button id="generate-economy" class="research-button" style="background: #9c27b0;" title="Generate full economy JSON using AI">Generate Economy JSON</button>
+                <button id="refresh-economy" class="research-button" style="background:#1565C0;" title="Regenerate the last economy JSON request">Refresh Economy JSON</button>
                 <button id="copy-cache" style="background: #1976D2;" title="Copy output to clipboard">Copy Output</button>
                 <button id="download-output" class="research-button" style="background:#455A64;" title="Download current output">Download Output</button>
                 <button id="use-research" style="background: #18a058;" title="Use in builder">Use in Builder</button>
@@ -368,8 +369,9 @@
        const now = new Date();
        const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
        const dateStr = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-       document.getElementById('version-info').textContent = `v1.2.59 • ${dateStr} ${timeStr}`;
+       document.getElementById('version-info').textContent = `v1.2.65 • ${dateStr} ${timeStr}`;
      };
+     
      updateTimestamp();
      
      // Tab switching
@@ -529,6 +531,7 @@
           updateProgress(5, 100, 'Complete! Economy JSON is ready.');
           setTimeout(() => hideProgress(), 2000);
           if (useResearchBtn) useResearchBtn.disabled = false;
+          if (refreshEconomyBtn && lastEconomyRequest) refreshEconomyBtn.disabled = false;
           clearError();
           try {
             const size = (m.json || '').length;
@@ -555,6 +558,7 @@
      const validateBtn = document.getElementById('validate-key');
      const generateCacheBtn = document.getElementById('generate-cache');
      const generateEconomyBtn = document.getElementById('generate-economy');
+     const refreshEconomyBtn = document.getElementById('refresh-economy');
      const copyCacheBtn = document.getElementById('copy-cache');
      const useResearchBtn = document.getElementById('use-research');
      const createPrBtn = document.getElementById('create-pr');
@@ -563,6 +567,9 @@
      const copyErrorBtn = document.getElementById('copy-error');
      
      let apiKeyValidated = false;
+     let lastEconomyRequest = null;
+
+     if (refreshEconomyBtn) refreshEconomyBtn.disabled = true;
      
      // Error handling functions
      function showError(message) {
@@ -577,6 +584,11 @@
          errorDetails.value = '';
          errorPanel.classList.remove('show');
        }
+     }
+
+     function clearLastEconomyRequest() {
+       lastEconomyRequest = null;
+       if (refreshEconomyBtn) refreshEconomyBtn.disabled = true;
      }
      
      // Copy error button handler
@@ -619,6 +631,14 @@
        } else {
          generateEconomyBtn.title = 'Generate full economy JSON using AI';
        }
+
+       if (refreshEconomyBtn) {
+         const canRefresh = Boolean(lastEconomyRequest);
+         refreshEconomyBtn.disabled = !canRefresh;
+         refreshEconomyBtn.title = canRefresh
+           ? 'Regenerate the last economy JSON request'
+           : 'Generate an economy JSON first';
+       }
      }
      
      // Load saved API key and init UI
@@ -629,6 +649,7 @@
      // API key input handler
      apiKeyInput.addEventListener('input', () => {
        const apiKey = apiKeyInput.value.trim();
+       clearLastEconomyRequest();
        apiKeyValidated = false;
        apiKeyInput.classList.remove('valid', 'invalid', 'validating');
        apiKeyStatus.textContent = '';
@@ -655,7 +676,15 @@
      });
      
      // Game name input handler
-     gameNameInput.addEventListener('input', updateButtonStates);
+     gameNameInput.addEventListener('input', () => {
+       clearLastEconomyRequest();
+       updateButtonStates();
+     });
+
+     depthSelector.addEventListener('change', () => {
+       clearLastEconomyRequest();
+       updateButtonStates();
+     });
      
      // Validate API key button
      validateBtn.addEventListener('click', async () => {
@@ -712,17 +741,18 @@
            
            // Save the validated key
            post('save-api-key', { apiKey: apiKeyInput.value.trim(), validated: true });
-         } else {
-           apiKeyValidated = false;
-           apiKeyInput.classList.add('invalid');
-           apiKeyStatus.textContent = '❌';
-           apiKeyStatus.title = m.error || 'Invalid API key';
-           researchStatus.style.color = '#c62828';
-           researchStatus.textContent = m.error || 'Invalid API key. Please check and try again.';
-         }
-         
-         updateButtonStates();
-       }
+        } else {
+          apiKeyValidated = false;
+          apiKeyInput.classList.add('invalid');
+          apiKeyStatus.textContent = '❌';
+          apiKeyStatus.title = m.error || 'Invalid API key';
+          researchStatus.style.color = '#c62828';
+          researchStatus.textContent = m.error || 'Invalid API key. Please check and try again.';
+          clearLastEconomyRequest();
+        }
+        
+        updateButtonStates();
+      }
      });
      
      // Initialize button states
@@ -772,7 +802,7 @@
      ];
      
      function setResearchControlsEnabled(enabled) {
-       [generateCacheBtn, generateEconomyBtn, copyCacheBtn, useResearchBtn, createPrBtn, apiKeyInput, gameNameInput, depthSelector]
+       [generateCacheBtn, generateEconomyBtn, refreshEconomyBtn, copyCacheBtn, useResearchBtn, createPrBtn, apiKeyInput, gameNameInput, depthSelector]
          .forEach(el => { if (el) el.disabled = !enabled; });
      }
 
@@ -786,6 +816,7 @@
        progressContainer.classList.remove('active');
        resetProgress();
        setResearchControlsEnabled(true);
+       updateButtonStates();
      }
      
      function resetProgress() {
@@ -849,16 +880,47 @@
        researchStatus.textContent = 'AI is researching the economy...';
        researchOutput.value = '';
        
-       // Send to plugin to generate full economy JSON
-       post('save-research-inputs', { gameName, depth: parseInt(depth) });
-       post('generate-economy', { 
-         gameName, 
-         depth: parseInt(depth),
+       const depthValue = parseInt(depth, 10);
+       lastEconomyRequest = {
+         gameName,
+         depth: depthValue,
          apiKey,
          provider: 'gemini'
-       });
+       };
+       updateButtonStates();
+
+       // Send to plugin to generate full economy JSON
+       post('save-research-inputs', { gameName, depth: depthValue });
+       post('generate-economy', lastEconomyRequest);
      };
      
+     if (refreshEconomyBtn) {
+       refreshEconomyBtn.onclick = () => {
+         if (!lastEconomyRequest) {
+           researchStatus.style.color = '#c62828';
+           researchStatus.textContent = 'Generate an economy JSON first.';
+           return;
+         }
+
+         const { gameName, depth } = lastEconomyRequest;
+         if (!gameName) {
+           researchStatus.style.color = '#c62828';
+           researchStatus.textContent = 'Missing game name for refresh.';
+           return;
+         }
+
+         showProgress();
+         updateProgress(1, 10, 'Refreshing economy JSON...');
+
+         researchStatus.style.color = '#1976d2';
+         researchStatus.textContent = 'Refreshing economy JSON...';
+         researchOutput.value = '';
+
+         post('save-research-inputs', { gameName, depth });
+         post('generate-economy', lastEconomyRequest);
+       };
+     }
+
      document.getElementById('copy-cache').onclick = async () => {
        const cacheJson = researchOutput.value.trim();
        if (!cacheJson || cacheJson === 'Generated cache JSON will appear here...') {
@@ -975,4 +1037,4 @@
      };
     </script>
 </body>
-</html> 
+</html>

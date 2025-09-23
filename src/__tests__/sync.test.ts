@@ -1,4 +1,4 @@
-import { mockFigma, MockSectionNode, MockGroupNode, MockShapeWithTextNode, isShapeWithText } from './figma-mocks';
+import { mockFigma, MockSectionNode, MockGroupNode, MockShapeWithTextNode, MockConnectorNode, isShapeWithText } from './figma-mocks';
 import { TAG, BOX_SIZE } from '../constants';
 
 // Mock the figma global
@@ -136,6 +136,90 @@ describe('syncFromCanvas', () => {
     if (syncCall) {
       const result = JSON.parse(syncCall[0].json);
       expect(result.inputs).toHaveLength(2);
+    }
+  });
+
+  it('should sync nodes nested inside subsections', () => {
+    const section = new MockSectionNode();
+    section.name = `${TAG} Section`;
+    section.setPluginData('economyFlowSection', 'true');
+
+    const subsection = new MockSectionNode();
+    subsection.name = 'Sub';
+    subsection.setPluginData('subsectionId', 'sub');
+
+    const node = new MockShapeWithTextNode();
+    node.width = BOX_SIZE.NODE.W;
+    node.height = BOX_SIZE.NODE.H;
+    node.text.characters = 'Nested Node';
+    node.setPluginData('id', 'nested');
+
+    subsection.appendChild(node);
+    section.appendChild(subsection);
+    mockFigma.currentPage.appendChild(section);
+
+    syncFromCanvas();
+
+    const calls = mockFigma.ui.postMessage.mock.calls;
+    const syncCall = calls.find(call => call[0].type === 'sync-json');
+    expect(syncCall).toBeDefined();
+
+    if (syncCall) {
+      const result = JSON.parse(syncCall[0].json);
+      expect(result.nodes).toEqual([
+        {
+          id: 'nested',
+          label: 'Nested Node',
+          sources: [],
+          sinks: [],
+          values: []
+        }
+      ]);
+    }
+  });
+
+  it('should read connectors from the dedicated connector group', () => {
+    const section = new MockSectionNode();
+    section.name = `${TAG} Section`;
+    section.setPluginData('economyFlowSection', 'true');
+
+    const nodeGroup = new MockGroupNode();
+    nodeGroup.name = TAG;
+
+    const fromNode = new MockShapeWithTextNode();
+    fromNode.text.characters = 'From';
+    fromNode.setPluginData('id', 'from');
+    fromNode.resize(BOX_SIZE.NODE.W, BOX_SIZE.NODE.H);
+    nodeGroup.appendChild(fromNode);
+
+    const toNode = new MockShapeWithTextNode();
+    toNode.text.characters = 'To';
+    toNode.setPluginData('id', 'to');
+    toNode.resize(BOX_SIZE.NODE.W, BOX_SIZE.NODE.H);
+    nodeGroup.appendChild(toNode);
+
+    const connectorGroup = new MockGroupNode();
+    connectorGroup.name = `${TAG} Connectors`;
+    connectorGroup.setPluginData('economyFlowConnectorGroup', 'true');
+
+    const connector = new MockConnectorNode();
+    connector.connectorStart = { endpointNodeId: fromNode.id } as any;
+    connector.connectorEnd = { endpointNodeId: toNode.id } as any;
+    connectorGroup.appendChild(connector);
+
+    section.appendChild(connectorGroup);
+    section.appendChild(nodeGroup);
+    mockFigma.currentPage.appendChild(section);
+
+    syncFromCanvas();
+
+    const calls = mockFigma.ui.postMessage.mock.calls;
+    const syncCall = calls.find(call => call[0].type === 'sync-json');
+    expect(syncCall).toBeDefined();
+
+    if (syncCall) {
+      const result = JSON.parse(syncCall[0].json);
+      expect(result.edges).toContainEqual(['from', 'to']);
     }
   });
 

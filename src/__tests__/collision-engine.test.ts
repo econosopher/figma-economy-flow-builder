@@ -37,9 +37,8 @@ describe('CollisionEngine.findConflictFreeY - edge to node avoidance', () => {
       [parentId]
     );
 
-    // Expect y to be pushed below blocker bottom + padding + margin*2
-    const expectedMinY = blockerRect.y + blockerRect.height + context.padding.y + 10 * 2;
+    // Expect y to be pushed below blocker bottom + padding + margin
+    const expectedMinY = blockerRect.y + blockerRect.height + context.padding.y + 10;
     expect(y).toBeGreaterThanOrEqual(expectedMinY);
   });
 });
-

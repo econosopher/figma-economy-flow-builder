@@ -1,0 +1,273 @@
+{
+  "inputs": [
+    {
+      "id": "money",
+      "label": "Money",
+      "kind": "initial_sink_node"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "to_execute_heist_contract",
+      "label": "To Execute Heist Contract",
+      "sources": [
+        "Stolen Goods",
+        "Cash",
+        "Offshore Funds",
+        "Weapon Tokens",
+        "Skill Points",
+        "Cosmetic Unlock Materials"
+      ],
+      "sinks": [
+        "Cash"
+      ],
+      "values": [
+        "Heister Level",
+        "Infamy Tier",
+        "Weapon Mastery",
+        "Challenge Progress",
+        "Social Cooperation and Camaraderie"
+      ]
+    },
+    {
+      "id": "to_launder_stolen_goods",
+      "label": "To Launder Stolen Goods",
+      "sources": [
+        "Cash",
+        "Offshore Funds"
+      ],
+      "sinks": [
+        "Stolen Goods"
+      ],
+      "values": []
+    },
+    {
+      "id": "to_modify_weapons",
+      "label": "To Modify Weapons",
+      "sources": [],
+      "sinks": [
+        "Weapon Tokens",
+        "Cash"
+      ],
+      "values": [
+        "Weapon Mastery",
+        "Mastery and Power Fantasy"
+      ]
+    },
+    {
+      "id": "to_upgrade_gear",
+      "label": "To Upgrade Gear",
+      "sources": [],
+      "sinks": [
+        "Cash",
+        "Cosmetic Unlock Materials"
+      ],
+      "values": [
+        "Heister Level",
+        "Mastery and Power Fantasy"
+      ]
+    },
+    {
+      "id": "to_unlock_skills",
+      "label": "To Unlock Skills",
+      "sources": [],
+      "sinks": [
+        "Skill Points"
+      ],
+      "values": [
+        "Heister Level",
+        "Mastery and Power Fantasy"
+      ]
+    },
+    {
+      "id": "to_complete_challenges",
+      "label": "To Complete Challenges",
+      "sources": [
+        "Cash",
+        "Offshore Funds",
+        "Weapon Tokens",
+        "Skill Points",
+        "Cosmetic Unlock Materials"
+      ],
+      "sinks": [],
+      "values": [
+        "Challenge Progress",
+        "Battle Pass Progress"
+      ]
+    },
+    {
+      "id": "to_negotiate_hostage_trade",
+      "label": "To Negotiate Hostage Trade",
+      "sources": [],
+      "sinks": [
+        "Hostages"
+      ],
+      "values": [
+        "Heister Level",
+        "Infamy Tier"
+      ]
+    },
+    {
+      "id": "to_purchase_from_black_market",
+      "label": "To Purchase From Black Market",
+      "sources": [
+        "Cosmetics",
+        "Weapon Mods",
+        "Crew Equipment"
+      ],
+      "sinks": [
+        "Premium Currency",
+        "Cash"
+      ],
+      "values": [
+        "Mastery and Power Fantasy"
+      ]
+    },
+    {
+      "id": "to_acquire_dlc_content",
+      "label": "To Acquire DLC Content",
+      "sources": [
+        "New Heists",
+        "New Weapons",
+        "New Cosmetics"
+      ],
+      "sinks": [
+        "Money"
+      ],
+      "values": []
+    },
+    {
+      "id": "to_claim_battle_pass_rewards",
+      "label": "To Claim Battle Pass Rewards",
+      "sources": [
+        "Cash",
+        "Offshore Funds",
+        "Weapon Tokens",
+        "Skill Points",
+        "Cosmetic Unlock Materials",
+        "Cosmetics",
+        "Favors"
+      ],
+      "sinks": [],
+      "values": []
+    },
+    {
+      "id": "thrilling_heist_experience",
+      "label": "Thrilling Heist EXPerience",
+      "sources": [],
+      "sinks": [],
+      "values": []
+    }
+  ],
+  "edges": [
+    [
+      "money",
+      "to_acquire_dlc_content"
+    ],
+    [
+      "money",
+      "to_purchase_from_black_market"
+    ],
+    [
+      "to_execute_heist_contract",
+      "to_launder_stolen_goods"
+    ],
+    [
+      "to_launder_stolen_goods",
+      "to_modify_weapons"
+    ],
+    [
+      "to_launder_stolen_goods",
+      "to_upgrade_gear"
+    ],
+    [
+      "to_launder_stolen_goods",
+      "to_unlock_skills"
+    ],
+    [
+      "to_launder_stolen_goods",
+      "to_purchase_from_black_market"
+    ],
+    [
+      "to_modify_weapons",
+      "thrilling_heist_experience"
+    ],
+    [
+      "to_upgrade_gear",
+      "thrilling_heist_experience"
+    ],
+    [
+      "to_unlock_skills",
+      "thrilling_heist_experience"
+    ],
+    [
+      "to_execute_heist_contract",
+      "thrilling_heist_experience"
+    ],
+    [
+      "to_complete_challenges",
+      "to_execute_heist_contract"
+    ],
+    [
+      "to_negotiate_hostage_trade",
+      "to_execute_heist_contract"
+    ],
+    [
+      "to_acquire_dlc_content",
+      "to_execute_heist_contract"
+    ],
+    [
+      "to_claim_battle_pass_rewards",
+      "to_modify_weapons"
+    ],
+    [
+      "to_claim_battle_pass_rewards",
+      "to_upgrade_gear"
+    ],
+    [
+      "to_claim_battle_pass_rewards",
+      "to_unlock_skills"
+    ]
+  ],
+  "subsections": [
+    {
+      "id": "core_gameplay",
+      "label": "Core Gameplay",
+      "nodeIds": [
+        "to_execute_heist_contract",
+        "to_launder_stolen_goods",
+        "to_negotiate_hostage_trade"
+      ],
+      "color": "#FFD700"
+    },
+    {
+      "id": "progression_customization",
+      "label": "Progression & Customization",
+      "nodeIds": [
+        "to_modify_weapons",
+        "to_upgrade_gear",
+        "to_unlock_skills"
+      ],
+      "color": "#8A2BE2"
+    },
+    {
+      "id": "rewards_monetization",
+      "label": "Rewards & Monetization",
+      "nodeIds": [
+        "to_complete_challenges",
+        "to_purchase_from_black_market",
+        "to_acquire_dlc_content",
+        "to_claim_battle_pass_rewards"
+      ],
+      "color": "#32CD32"
+    },
+    {
+      "id": "experiential_outcomes",
+      "label": "Experiential Outcomes",
+      "nodeIds": [
+        "thrilling_heist_experience"
+      ],
+      "color": "#1E90FF"
+    }
+  ]
+}

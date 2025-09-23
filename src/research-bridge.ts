@@ -125,38 +125,9 @@ export async function generateEconomyJSON(request: ResearchRequest): Promise<any
     throw new Error(data.error || 'Failed to generate economy JSON');
   } catch (error) {
     console.error('Error calling API (economy):', error);
-    
-    // Fallback placeholder if API is unavailable
-    const placeholder = {
-      name: request.gameName,
-      inputs: [
-        { id: "time", label: "Time", kind: "initial_sink_node" },
-        { id: "money", label: "Money", kind: "initial_sink_node" }
-      ],
-      nodes: [
-        {
-          id: "play_game",
-          label: "To Play Game",
-          sources: ["XP", "Currency"],
-          sinks: ["Energy"],
-          values: ["Player Level"]
-        },
-        {
-          id: "win_match", 
-          label: "To Win Match",
-          sources: ["Victory Points"],
-          values: ["Rank"],
-          kind: "final_good"
-        }
-      ],
-      edges: [
-        ["time", "play_game"],
-        ["money", "play_game"],
-        ["play_game", "win_match"]
-      ]
-    };
-    
-    return placeholder;
+    throw new Error(
+      `Failed to generate economy JSON: ${(error as Error)?.message || 'Unknown error'}`
+    );
   }
 }
 
