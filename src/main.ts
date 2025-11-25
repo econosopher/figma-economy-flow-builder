@@ -32,12 +32,13 @@ declare const TEMPLATES: { [key: string]: any };
 /* ── UI ── */
 figma.showUI(__html__, { width: 400, height: 720 });
 figma.ui.postMessage({ type: 'templates', templates: TEMPLATES, colors: COLOR });
-// Restore last state from client storage
+// Restore only colors from client storage, not the JSON (start with empty/template selection)
 figma.clientStorage.getAsync('economyFlowState').then((state) => {
   if (state && typeof state === 'object') {
-    figma.ui.postMessage({ type: 'restore', json: state.json, colors: state.colors });
+    // Only restore colors, not the JSON - user should select a template or paste their own
+    figma.ui.postMessage({ type: 'restore', colors: state.colors });
   }
-}).catch(() => {});
+}).catch(() => { });
 
 /* ── main handler ── */
 figma.ui.onmessage = async (m: PluginMessage) => {
@@ -53,9 +54,9 @@ figma.ui.onmessage = async (m: PluginMessage) => {
     }
     return;
   }
-  
 
-  
+
+
   if (m.cmd === 'save-research-inputs') {
     const { gameName, depth } = m as any;
     await figma.clientStorage.setAsync('researchInputs', { gameName, depth });
@@ -73,7 +74,7 @@ figma.ui.onmessage = async (m: PluginMessage) => {
   if (m.cmd === 'load-api-key') {
     let apiKey = await figma.clientStorage.getAsync('gemini-api-key');
     let validated = await figma.clientStorage.getAsync('gemini-api-key-validated');
-    
+
     // Try to load default config if no saved key
     if (!apiKey && DEFAULT_API_KEY) {
       apiKey = DEFAULT_API_KEY;
@@ -84,7 +85,7 @@ figma.ui.onmessage = async (m: PluginMessage) => {
         await figma.clientStorage.setAsync('gemini-api-key-validated', 'true');
       }
     }
-    
+
     figma.ui.postMessage({
       type: 'api-key-loaded',
       apiKey: apiKey || '',
@@ -92,7 +93,7 @@ figma.ui.onmessage = async (m: PluginMessage) => {
     });
     return;
   }
-  
+
   if (m.cmd === 'validate-api-key') {
     const { apiKey } = m;
     if (!apiKey) {
@@ -103,7 +104,7 @@ figma.ui.onmessage = async (m: PluginMessage) => {
       });
       return;
     }
-    
+
     try {
       // Test the API key by making a simple request
       const testRequest = {
@@ -112,14 +113,14 @@ figma.ui.onmessage = async (m: PluginMessage) => {
         apiKey: apiKey,
         provider: 'gemini'
       };
-      
+
       // Try to validate with a minimal request
       const response = await fetch('http://localhost:5001/api/research/validate-key', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ apiKey })
       }).catch(() => null);
-      
+
       if (response && response.ok) {
         const result = await response.json();
         figma.ui.postMessage({
@@ -136,7 +137,7 @@ figma.ui.onmessage = async (m: PluginMessage) => {
           error: isValidFormat ? undefined : 'Invalid API key format. Ensure you copied the complete key.'
         });
       }
-      
+
       if (response?.ok) {
         await figma.clientStorage.setAsync('gemini-api-key-validated', 'true');
       }
@@ -147,19 +148,19 @@ figma.ui.onmessage = async (m: PluginMessage) => {
         error: `Validation failed: ${(error as Error).message}`
       });
     }
-    
+
     return;
   }
-  
-  if (m.cmd === 'clear') { 
-    clear(); 
-    reply('Canvas cleared', true); 
-    return; 
+
+  if (m.cmd === 'clear') {
+    clear();
+    reply('Canvas cleared', true);
+    return;
   }
-  
-  if (m.cmd === 'sync-from-canvas') { 
-    syncFromCanvas(); 
-    return; 
+
+  if (m.cmd === 'sync-from-canvas') {
+    syncFromCanvas();
+    return;
   }
   if (m.cmd === 'validate') {
     try {
@@ -171,42 +172,28 @@ figma.ui.onmessage = async (m: PluginMessage) => {
     }
     return;
   }
-  
-  if (m.cmd === 'save-research-inputs') {
-    const { gameName, depth } = m as any;
-    await figma.clientStorage.setAsync('researchInputs', { gameName, depth });
-    return;
-  }
 
-  if (m.cmd === 'load-research-inputs') {
-    const inputs = (await figma.clientStorage.getAsync('researchInputs')) as any;
-    figma.ui.postMessage({
-      type: 'research-inputs-loaded',
-      gameName: inputs?.gameName,
-      depth: inputs?.depth
-    });
-    return;
-  }
+
 
   if (m.cmd === 'generate-cache') {
     const { gameName, depth } = m;
     // Persist inputs
     await figma.clientStorage.setAsync('researchInputs', { gameName, depth });
-    
+
     try {
       // Generate the research cache
       const cache = await generateResearchCache({ gameName, depth });
-      
+
       // Also generate the markdown for research
       const markdown = createResearchMarkdown(gameName, depth);
-      
+
       // Send cache back to UI
       figma.ui.postMessage({
         type: 'cache-generated',
         cache: JSON.stringify(cache, null, 2),
         markdown: markdown
       });
-      
+
     } catch (error) {
       console.error('Failed to generate cache:', error);
       figma.ui.postMessage({
@@ -215,15 +202,15 @@ figma.ui.onmessage = async (m: PluginMessage) => {
         error: `Failed to generate cache: ${(error as Error).message}`
       });
     }
-    
+
     return;
   }
-  
+
   if (m.cmd === 'generate-economy') {
     const { gameName, depth, apiKey, provider } = m;
     // Persist inputs
     await figma.clientStorage.setAsync('researchInputs', { gameName, depth });
-    
+
     if (!apiKey) {
       figma.ui.postMessage({
         type: 'research-result',
@@ -232,7 +219,7 @@ figma.ui.onmessage = async (m: PluginMessage) => {
       });
       return;
     }
-    
+
     try {
       // Send progress updates
       figma.ui.postMessage({
@@ -241,23 +228,23 @@ figma.ui.onmessage = async (m: PluginMessage) => {
         percent: 20,
         message: `Researching ${gameName} economy systems...`
       });
-      
+
       // Simulate initial connection
       await new Promise(resolve => setTimeout(resolve, 500));
-      
+
       figma.ui.postMessage({
         type: 'progress-update',
         step: 3,
         percent: 40,
         message: 'AI is analyzing game mechanics and resource flows...'
       });
-      
+
       // Generate full economy JSON using the API
-      const economyJson = await generateEconomyJSON({ 
-        gameName, 
+      const economyJson = await generateEconomyJSON({
+        gameName,
         depth,
         apiKey,
-        provider: provider || 'gemini'
+        provider: (provider as any) || 'gemini'
       });
       // Validate economy JSON before posting to UI
       const validationErrors = validateGraphData(economyJson);
@@ -269,23 +256,23 @@ figma.ui.onmessage = async (m: PluginMessage) => {
         });
         return;
       }
-      
+
       figma.ui.postMessage({
         type: 'progress-update',
         step: 4,
         percent: 80,
         message: 'Structuring economy model...'
       });
-      
+
       // Small delay before finalizing
       await new Promise(resolve => setTimeout(resolve, 300));
-      
+
       // Send the economy JSON to UI
       figma.ui.postMessage({
-        type: 'economy-generated', 
+        type: 'economy-generated',
         json: JSON.stringify(economyJson, null, 2)
       });
-      
+
     } catch (error) {
       console.error('Failed to generate economy:', error);
       figma.ui.postMessage({
@@ -294,10 +281,10 @@ figma.ui.onmessage = async (m: PluginMessage) => {
         error: `Failed to generate economy: ${(error as Error).message}`
       });
     }
-    
+
     return;
   }
-  
+
   if (m.cmd === 'create-github-pr') {
     const { gameName, json, fileName, comment } = m as any;
 
@@ -308,8 +295,9 @@ figma.ui.onmessage = async (m: PluginMessage) => {
     // Attempt to open a pre-filled GitHub new file page
     try {
       const draftUrl = `${REPO_URL}/new/main?filename=${encodeURIComponent(filePath)}&value=${encodeURIComponent(json)}`;
-      figma.openURL(draftUrl);
-    } catch {}
+      // @ts-ignore
+      figma.openExternal(draftUrl);
+    } catch { }
 
     const prInstructions = [
       'To submit this as a preset:',
@@ -327,13 +315,13 @@ figma.ui.onmessage = async (m: PluginMessage) => {
     figma.ui.postMessage({ type: 'research-result', success: false, error: prInstructions.join('\n') });
     return;
   }
-  
+
   if (m.cmd !== 'draw') return;
 
   let data: Graph;
-  try { 
-    data = JSON.parse(m.json); 
-  } catch (e: any) { 
+  try {
+    data = JSON.parse(m.json);
+  } catch (e: any) {
     const errorMsg = [
       "JSON Parsing Error:",
       e.message,
@@ -345,8 +333,8 @@ figma.ui.onmessage = async (m: PluginMessage) => {
       "• Using single quotes instead of double quotes for keys and string values.",
       "• Properties with no value (e.g. `\"sources\":,` should be `\"sources\": []`)."
     ];
-    reply(errorMsg, false); 
-    return; 
+    reply(errorMsg, false);
+    return;
   }
 
   const errors = validateGraphData(data);
@@ -361,11 +349,11 @@ figma.ui.onmessage = async (m: PluginMessage) => {
     reply(['Font loading error:', (error as Error).message], false);
     return;
   }
-  
+
   // Persist state on successful parse and validation
   try {
     await figma.clientStorage.setAsync('economyFlowState', { json: JSON.stringify(data), colors: m.colors });
-  } catch {}
+  } catch { }
   clear();
   await generateDiagram(data, m.colors);
 };
@@ -376,15 +364,18 @@ async function generateDiagram(data: Graph, customColorInput?: { [key: string]: 
   const connectors: SceneNode[] = [];
   const nodesAndAttributes: SceneNode[] = [];
   const customColors = validateCustomColors(customColorInput);
-  
+
   // Layout calculation
   const layoutEngine = new LayoutEngine();
   const allNodesData = [...data.inputs, ...data.nodes];
   const nodeDataMap = new Map(allNodesData.map(n => [n.id, n]));
-  
+
   layoutEngine.calculateNodeHeights(allNodesData);
   const columns = layoutEngine.calculateColumns(data);
-  
+
+  // Initialize subsection bands for vertical grouping (prevents subsection overlap)
+  layoutEngine.initializeSubsectionBands(data.subsections, allNodesData);
+
   // Build reverse adjacency for layout
   const revAdj = new Map<string, string[]>();
   allNodesData.forEach(node => revAdj.set(node.id, []));
@@ -393,7 +384,7 @@ async function generateDiagram(data: Graph, customColorInput?: { [key: string]: 
       revAdj.get(to)!.push(from);
     }
   });
-  
+
   // Position and create nodes
   columns.forEach((nodeIdsInCol, colIndex) => {
     const yTargets = new Map<string, number>();
@@ -411,8 +402,10 @@ async function generateDiagram(data: Graph, customColorInput?: { [key: string]: 
       const targetY = parentYs.length > 0 ? parentYs.reduce((s, y) => s + y, 0) / parentYs.length : 0;
       yTargets.set(id, targetY);
     });
-    
+
     const sortedByYTarget = nodeIdsInCol.sort((a, b) => (yTargets.get(a) || 0) - (yTargets.get(b) || 0));
+
+    let prevNodeInColumn: { y: number, height: number } | undefined;
 
     sortedByYTarget.forEach(id => {
       const nodeData = nodeDataMap.get(id);
@@ -421,14 +414,17 @@ async function generateDiagram(data: Graph, customColorInput?: { [key: string]: 
       }
 
       const y_initial = yTargets.get(id) || 0;
-      const y_final = layoutEngine.findConflictFreeY(id, colIndex, y_initial, PADDING.X, PADDING.Y, nodeData, revAdj);
+      const y_final = layoutEngine.findConflictFreeY(id, colIndex, y_initial, PADDING.X, PADDING.Y, nodeData, revAdj, prevNodeInColumn);
       const x_pos = INITIAL_X_OFFSET + (colIndex * (BOX_SIZE.NODE.W + PADDING.X));
-      
+
       // Record position BEFORE creating the node so collision detection works for subsequent nodes
       const totalHeight = layoutEngine.getNodeHeight(id);
       const boxWidth = ('kind' in nodeData && nodeData.kind === 'initial_sink_node') ? BOX_SIZE.INPUT.W : BOX_SIZE.NODE.W;
       layoutEngine.recordNodePosition(id, x_pos, INITIAL_Y_OFFSET + y_final, boxWidth, totalHeight);
-      
+
+      // Update prevNodeInColumn for the next iteration
+      prevNodeInColumn = { y: y_final, height: totalHeight };
+
       let mainBox: SceneNode;
       let actualConnectorTarget: SceneNode; // The actual box to connect to
       try {
@@ -440,7 +436,7 @@ async function generateDiagram(data: Graph, customColorInput?: { [key: string]: 
           // For final good, the main box is a group - find the body box inside it
           if (mainBox.type === 'GROUP' && 'children' in mainBox && mainBox.children.length > 1) {
             // Find the body box (the one with y > 0, as header is at y=0)
-            const bodyBox = mainBox.children.find(child => 
+            const bodyBox = mainBox.children.find(child =>
               child.type === 'SHAPE_WITH_TEXT' && child.y > 0
             );
             if (bodyBox) {
@@ -463,19 +459,19 @@ async function generateDiagram(data: Graph, customColorInput?: { [key: string]: 
         console.error('Failed to create node:', error);
         return;
       }
-      
+
       mainBox.x = x_pos;
       mainBox.y = INITIAL_Y_OFFSET + y_final;
       mainBox.setPluginData("id", id);
-      
+
       // Collect main box and its attributes for grouping
       const nodeElements: SceneNode[] = [mainBox];
 
       // Add attributes
-      if (!('kind' in nodeData && nodeData.kind === 'final_good') && 
-          ('sources' in nodeData || 'sinks' in nodeData || 'values' in nodeData)) {
+      if (!('kind' in nodeData && nodeData.kind === 'final_good') &&
+        ('sources' in nodeData || 'sinks' in nodeData || 'values' in nodeData)) {
         let attrY = mainBox.height + 5;
-        const addAttribute = (text: string, color: string, attrType: 'source'|'sink'|'value') => {
+        const addAttribute = (text: string, color: string, attrType: 'source' | 'sink' | 'value') => {
           try {
             const attrBox = makeBox(text, BOX_SIZE.ATTR.W, BOX_SIZE.ATTR.H, color, 'LEFT');
             attrBox.x = mainBox.x;
@@ -487,13 +483,13 @@ async function generateDiagram(data: Graph, customColorInput?: { [key: string]: 
             console.error(`Failed to create attribute box for "${text}":`, error);
           }
         };
-        
+
         const act = nodeData as Act;
         act.sources?.forEach(s => addAttribute('+ ' + s, customColors.source, 'source'));
         act.sinks?.forEach(s => addAttribute('- ' + s, customColors.sink, 'sink'));
         act.values?.forEach(v => addAttribute(v, customColors.xp, 'value'));
       }
-      
+
       // Group the node with its attributes if there are attributes
       let nodeGroup: SceneNode;
       if (nodeElements.length > 1) {
@@ -507,45 +503,33 @@ async function generateDiagram(data: Graph, customColorInput?: { [key: string]: 
       } else {
         nodeGroup = mainBox;
       }
-      
+
       nodes.set(id, nodeGroup);
       mainBoxes.set(id, actualConnectorTarget); // Store the actual connector target
       nodesAndAttributes.push(nodeGroup);
     });
   });
 
-  // Draw edges
-  const failedEdges: string[] = [];
-  data.edges.forEach(([fromId, toId], index) => {
-    try {
-      if (!fromId || !toId) {
-        failedEdges.push(`Edge ${index}: Missing from/to ID`);
-        return;
-      }
-      const fromNode = mainBoxes.get(fromId) || nodes.get(fromId);
-      const toNode = mainBoxes.get(toId) || nodes.get(toId);
-      if (!fromNode || !toNode) {
-        failedEdges.push(`Edge ${index}: Node not found (${!fromNode ? fromId : toId})`);
-        return;
-      }
-      const connector = createConnector(fromNode, toNode);
-      try {
-        connector.name = `${TAG} Connector`;
-        connector.setPluginData('economyFlowConnector', 'true');
-      } catch {}
-      connectors.push(connector);
-    } catch (error) {
-      failedEdges.push(`Edge ${index}: ${(error as Error).message}`);
+  // Run post-layout optimization to reduce edge crossings
+  // This may adjust node positions to minimize connectors crossing through nodes
+  layoutEngine.optimizeLayout(data.edges as [string, string][], PADDING.Y);
+
+  // Update node positions after optimization
+  nodes.forEach((node, id) => {
+    const optimizedPos = layoutEngine.getNodePosition(id);
+    if (optimizedPos) {
+      node.x = optimizedPos.x;
+      node.y = optimizedPos.y;
     }
   });
 
-  if (failedEdges.length > 0) {
-    console.warn('Some edges failed to render:', failedEdges);
-  }
+  // Draw edges
+  const failedEdges: string[] = [];
+  const pendingEdges = data.edges.map(([fromId, toId], index) => ({ fromId, toId, index }));
 
   // Combine elements to determine section bounds
-  const layoutElements = [...nodesAndAttributes, ...connectors];
-  
+  const layoutElements = [...nodesAndAttributes];
+
   // Create section and group
   if (layoutElements.length > 0) {
     try {
@@ -557,7 +541,7 @@ async function generateDiagram(data: Graph, customColorInput?: { [key: string]: 
       if (data.subsections && data.subsections.length > 0) {
         for (const subsectionData of data.subsections) {
           const subsectionNodes: SceneNode[] = [];
-          
+
           // Collect nodes that belong to this subsection
           subsectionData.nodeIds.forEach(nodeId => {
             const node = nodes.get(nodeId);
@@ -566,11 +550,11 @@ async function generateDiagram(data: Graph, customColorInput?: { [key: string]: 
               // No need to collect attributes separately as they're now grouped with the node
             }
           });
-          
+
           if (subsectionNodes.length > 0) {
             // Use layout engine to calculate subsection bounds with proper margins
             const bounds = layoutEngine.calculateSubsectionBounds(subsectionData.nodeIds, nodeDataMap);
-            
+
             // Create subsection
             const subsection = figma.createSection();
             subsection.name = subsectionData.label;
@@ -580,7 +564,7 @@ async function generateDiagram(data: Graph, customColorInput?: { [key: string]: 
               bounds.width,
               bounds.height
             );
-            
+
             // Check if this is the initial section (contains initial_sink_nodes)
             const hasInitialNodes = subsectionData.nodeIds.some(id => {
               const nodeData = nodeDataMap.get(id);
@@ -589,31 +573,42 @@ async function generateDiagram(data: Graph, customColorInput?: { [key: string]: 
             if (hasInitialNodes) {
               initialSectionX = bounds.x;
             }
-            
+
             // Apply custom color if specified
             if (subsectionData.color && isValidColor(subsectionData.color)) {
               const rgb = hex(subsectionData.color);
               subsection.fills = [{ type: 'SOLID', color: rgb, opacity: 0.1 }];
             }
-            
+
             subsection.setPluginData("subsectionId", subsectionData.id);
             subsections.push(subsection);
             // Don't add subsections to elementsToGroup - they should be siblings of the group
 
             // Move nodes into the subsection so the hierarchy reflects visual grouping
+            // When appending to a section, node positions become relative to the section
             subsectionNodes.forEach(node => {
+              // Store the absolute position before reparenting
+              const absX = node.x;
+              const absY = node.y;
+
               subsection.appendChild(node);
+
+              // After appendChild, position becomes relative to subsection
+              // We need to adjust the position to maintain visual placement
+              node.x = absX - bounds.x;
+              node.y = absY - bounds.y;
+
               nodesPlacedInSubsections.add(node);
             });
           }
         }
       }
-      
+
       // Create main section to contain everything
       const section = figma.createSection();
       // Use the graph name if provided, otherwise use default
       section.name = data.name ? `${data.name} Economy` : `${TAG} Section`;
-      
+
       // Calculate bounds for the main section
       let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
       layoutElements.forEach(node => {
@@ -622,7 +617,7 @@ async function generateDiagram(data: Graph, customColorInput?: { [key: string]: 
         maxX = Math.max(maxX, node.x + node.width);
         maxY = Math.max(maxY, node.y + node.height);
       });
-      
+
       // Add padding to section bounds
       section.x = minX - SECTION_PADDING;
       section.y = minY - SECTION_PADDING;
@@ -630,12 +625,12 @@ async function generateDiagram(data: Graph, customColorInput?: { [key: string]: 
         maxX - minX + (SECTION_PADDING * 2),
         maxY - minY + (SECTION_PADDING * 2)
       );
-      
+
       // Add subsections to the section FIRST (so they render behind other groups)
       subsections.forEach(subsection => {
         section.appendChild(subsection);
       });
-      
+
       // Group any nodes not assigned to a subsection for easier manipulation
       const looseNodes = nodesAndAttributes.filter(node => !nodesPlacedInSubsections.has(node));
       let nodeGroup: GroupNode | null = null;
@@ -647,20 +642,86 @@ async function generateDiagram(data: Graph, customColorInput?: { [key: string]: 
       if (nodeGroup) {
         section.appendChild(nodeGroup);
       }
-      
+
       figma.currentPage.appendChild(section);
 
-      if (connectors.length > 0) {
-        try {
-          const connectorGroup = figma.group(connectors, section);
-          connectorGroup.name = `${TAG} Connectors`;
-          connectorGroup.setPluginData('economyFlowConnectorGroup', 'true');
-          section.insertChild(0, connectorGroup);
-        } catch (error) {
-          console.warn('Failed to group connectors inside section:', error);
+      // Helper function to find the best connector target for a node
+      const findConnectorTarget = (nodeId: string): SceneNode | null => {
+        // First try the mainBoxes map
+        const mainBox = mainBoxes.get(nodeId);
+        if (mainBox) {
+          // Verify the node is still valid by checking if it has a parent
+          try {
+            if (mainBox.parent) {
+              return mainBox;
+            }
+          } catch {
+            // Node reference is invalid
+          }
         }
+
+        // Fallback: find the node and traverse to find connector target
+        const nodeGroup = nodes.get(nodeId);
+        if (!nodeGroup) return null;
+
+        // For groups with children, find the main box (first SHAPE_WITH_TEXT child)
+        if (nodeGroup.type === 'GROUP' && 'children' in nodeGroup) {
+          // Check if this is a Final Good group
+          if (nodeGroup.name.startsWith('Final Good')) {
+            // Find the body box (y > 0)
+            const bodyBox = nodeGroup.children.find(child =>
+              child.type === 'SHAPE_WITH_TEXT' && child.y > 0
+            );
+            if (bodyBox) return bodyBox;
+            if (nodeGroup.children.length > 1) return nodeGroup.children[1];
+          } else {
+            // Regular node group - first child is the main box
+            const mainBox = nodeGroup.children.find(child => child.type === 'SHAPE_WITH_TEXT');
+            if (mainBox) return mainBox;
+          }
+        }
+
+        // Fallback to the node itself
+        return nodeGroup;
+      };
+
+      pendingEdges.forEach(({ fromId, toId, index }) => {
+        try {
+          if (!fromId || !toId) {
+            failedEdges.push(`Edge ${index}: Missing from/to ID`);
+            return;
+          }
+
+          // Use fresh lookups to get valid connector targets
+          const fromNode = findConnectorTarget(fromId);
+          const toNode = findConnectorTarget(toId);
+
+          if (!fromNode || !toNode) {
+            failedEdges.push(`Edge ${index}: Node not found (${!fromNode ? fromId : toId})`);
+            return;
+          }
+
+          // Create connector at page level first (Figma connectors work best at page level)
+          const connector = createConnector(fromNode, toNode);
+          connector.name = `${TAG} Connector`;
+          connector.setPluginData('economyFlowConnector', 'true');
+
+          // Keep connector at page level - don't move into section
+          // This ensures the connector can reference nodes in any subsection
+          connectors.push(connector);
+        } catch (error) {
+          failedEdges.push(`Edge ${index}: ${(error as Error).message}`);
+        }
+      });
+
+      // Note: Connectors in FigJam render behind shapes by default in most cases.
+      // We don't move them with insertChild as that breaks their endpoint connections.
+      // The visual layering is generally acceptable as connectors route around nodes.
+
+      if (failedEdges.length > 0) {
+        console.warn('Some edges failed to render:', failedEdges);
       }
-      
+
       // Create and add legend section OUTSIDE the main section
       const currencies = extractCurrenciesByType(data);
       legendSection = createLegendSection(currencies, section.x); // Use main section's X position
@@ -672,16 +733,16 @@ async function generateDiagram(data: Graph, customColorInput?: { [key: string]: 
         }
         figma.currentPage.appendChild(legendSection);
       }
-      
+
       // Store section ID for sync purposes
       section.setPluginData("economyFlowSection", "true");
-      
+
       const nodesToView = [section];
       if (legendSection) {
         nodesToView.push(legendSection);
       }
       figma.viewport.scrollAndZoomIntoView(nodesToView);
-      
+
       const messages = ['Diagram created successfully in section'];
       if (data.subsections && data.subsections.length > 0) {
         messages.push(`Created ${data.subsections.length} subsection(s)`);

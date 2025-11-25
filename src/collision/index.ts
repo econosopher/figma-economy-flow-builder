@@ -9,11 +9,13 @@ export * from './resolver';
 import { CollisionConfig, CollisionContext, Rectangle, Point, Line } from './types';
 import { CollisionDetector } from './detector';
 import { CollisionResolver } from './resolver';
+import { SpatialGrid } from './spatial-grid';
 
 export class CollisionEngine {
   private detector = CollisionDetector;
   private resolver: CollisionResolver;
   private config: CollisionConfig;
+  private spatialGrid: SpatialGrid;
 
   constructor(config?: Partial<CollisionConfig>) {
     this.config = {
@@ -25,6 +27,7 @@ export class CollisionEngine {
       ...config
     };
     this.resolver = new CollisionResolver(this.config);
+    this.spatialGrid = new SpatialGrid(100);
   }
 
   /**
@@ -40,6 +43,14 @@ export class CollisionEngine {
     parentIds: string[] = []
   ): number {
     const nodeRect: Rectangle = { x, y: initialY, width: nodeWidth, height: nodeHeight };
+
+    // Populate spatial grid with existing nodes
+    this.spatialGrid.clear();
+    for (const [id, pos] of context.nodePositions) {
+      if (id !== nodeId) {
+        this.spatialGrid.insert(id, pos);
+      }
+    }
 
     // First resolve direct rectangle overlaps so we have a stable baseline
     const resolvedY = this.resolveNodeOverlaps(nodeId, nodeRect, context);
@@ -75,8 +86,13 @@ export class CollisionEngine {
       iterations++;
 
       if (this.config.nodeToNode) {
-        for (const [id, pos] of context.nodePositions) {
-          if (id === nodeId) continue;
+        // Use spatial grid to query potential collisions
+        const potentialColliders = this.spatialGrid.query(nodeRect);
+
+        for (const id of potentialColliders) {
+          const pos = context.nodePositions.get(id);
+          if (!pos) continue;
+
           const collision = this.detector.rectanglesOverlap(nodeRect, pos, this.config.margin);
           if (collision.collides) {
             const newY = pos.y + pos.height + context.padding.y + this.config.margin;
@@ -131,96 +147,141 @@ export class CollisionEngine {
     context: CollisionContext,
     orientation: 'horizontal-first' | 'vertical-first'
   ): number | null {
-    let adjusted = true;
-    let iterations = 0;
-    const maxIterations = 50;
+    let currentY = testRect.y;
+    const maxPushDown = 500; // Maximum pixels to push down to find a path
+    const step = 20; // Step size for searching
+    let totalPush = 0;
 
-    while (adjusted && iterations < maxIterations) {
-      adjusted = false;
-      iterations++;
+    while (totalPush < maxPushDown) {
+      let collisionFound = false;
+      const currentRect = { ...testRect, y: currentY };
 
       for (const parentId of parentIds) {
         const parentPos = context.nodePositions.get(parentId);
         if (!parentPos) continue;
 
         const edgeStart = this.getNodeConnectionPoint(parentId, parentPos, 'output');
-        const edgeEnd = this.getNodeConnectionPoint(nodeId, testRect, 'input');
+        const edgeEnd = this.getNodeConnectionPoint(nodeId, currentRect, 'input');
+
+        // Use A* pathfinding to check if a valid path exists
+        // We use a simplified check: if A* finds a path, we assume the elbow connector *might* work
+        // or at least it's a better bet than a blocked straight line.
+        // Ideally, we'd check if the specific elbow path is clear, but A* gives us a "reachability" check.
+        // For strict elbow compliance, we can still use the segment check, but fallback to A* if needed?
+        // Actually, let's stick to the segment check for strict visual compliance with Figma's default connectors,
+        // BUT use the spatial grid for performance.
+
         const segments = this.buildElbowSegments(edgeStart, edgeEnd, orientation);
 
-        for (const [id, pos] of context.nodePositions) {
-          if (id === nodeId || id === parentId) continue;
-          if (this.pathIntersectsRectangle(segments, pos)) {
-            const pushY = pos.y + pos.height + context.padding.y + this.config.margin * 2;
-            if (pushY > testRect.y) {
-              testRect.y = pushY;
-              adjusted = true;
+        // Check segments against obstacles using spatial grid would be ideal, 
+        // but segments are lines, not rects. We can approximate segments as rects.
+
+        for (const segment of segments) {
+          // Create a bounding box for the segment
+          const segmentRect: Rectangle = {
+            x: Math.min(segment.start.x, segment.end.x),
+            y: Math.min(segment.start.y, segment.end.y),
+            width: Math.abs(segment.end.x - segment.start.x),
+            height: Math.abs(segment.end.y - segment.start.y)
+          };
+
+          const potentialColliders = this.spatialGrid.query(segmentRect);
+
+          for (const id of potentialColliders) {
+            if (id === nodeId || id === parentId) continue;
+            const pos = context.nodePositions.get(id);
+            if (pos && this.detector.lineIntersectsRectangle(segment, pos, this.config.margin).collides) {
+              collisionFound = true;
+              break;
+            }
+          }
+          if (collisionFound) break;
+        }
+
+        if (collisionFound) break;
+      }
+
+      if (!collisionFound) {
+        // Also check if the new node position itself collides with anything
+        // This is a double-check because moving the node might create new node-to-node collisions
+        let nodeCollision = false;
+        if (this.config.nodeToNode) {
+          const potentialColliders = this.spatialGrid.query(currentRect);
+          for (const id of potentialColliders) {
+            if (id === nodeId) continue;
+            const pos = context.nodePositions.get(id);
+            if (pos && this.detector.rectanglesOverlap(currentRect, pos, this.config.margin).collides) {
+              nodeCollision = true;
               break;
             }
           }
         }
 
-        if (adjusted) {
-          break;
+        if (!nodeCollision) {
+          return currentY;
         }
       }
+
+      // If collision, push down and try again
+      currentY += step;
+      totalPush += step;
     }
 
-    // Ensure the final layout for this orientation is collision free
-    for (const parentId of parentIds) {
-      const parentPos = context.nodePositions.get(parentId);
-      if (!parentPos) continue;
-      const edgeStart = this.getNodeConnectionPoint(parentId, parentPos, 'output');
-      const edgeEnd = this.getNodeConnectionPoint(nodeId, testRect, 'input');
-      const segments = this.buildElbowSegments(edgeStart, edgeEnd, orientation);
-
-      for (const [id, pos] of context.nodePositions) {
-        if (id === nodeId || id === parentId) continue;
-        if (this.pathIntersectsRectangle(segments, pos)) {
-          return null;
-        }
-      }
-    }
-
-    return testRect.y;
+    return null;
   }
 
+  /**
+   * Build elbow connector segments that better match Figma's actual routing.
+   * Figma typically uses a 3-segment elbow: horizontal -> vertical -> horizontal
+   * when connecting nodes left-to-right.
+   */
   private buildElbowSegments(
     start: Point,
     end: Point,
     orientation: 'horizontal-first' | 'vertical-first'
   ): Line[] {
-    if (start.x === end.x || start.y === end.y) {
+    // Handle degenerate cases
+    if (Math.abs(start.x - end.x) < 1 && Math.abs(start.y - end.y) < 1) {
+      return [];
+    }
+
+    // Straight horizontal line
+    if (Math.abs(start.y - end.y) < 1) {
+      return [{ start, end }];
+    }
+
+    // Straight vertical line
+    if (Math.abs(start.x - end.x) < 1) {
       return [{ start, end }];
     }
 
     if (orientation === 'vertical-first') {
-      const verticalTurn: Point = { x: start.x, y: end.y };
-      const segments: Line[] = [];
-      if (start.x !== verticalTurn.x || start.y !== verticalTurn.y) {
-        segments.push({ start, end: verticalTurn });
-      }
-      if (verticalTurn.x !== end.x || verticalTurn.y !== end.y) {
-        segments.push({ start: verticalTurn, end });
-      }
-      return segments.length > 0 ? segments : [{ start, end }];
+      // Two-segment L-shape: vertical then horizontal
+      const turn: Point = { x: start.x, y: end.y };
+      return [
+        { start, end: turn },
+        { start: turn, end }
+      ];
     }
 
+    // Default: 3-segment S-shape (Figma's typical left-to-right connector)
+    // horizontal -> vertical -> horizontal
     const midX = start.x + (end.x - start.x) / 2;
-    const horizontal1End: Point = { x: midX, y: start.y };
-    const verticalEnd: Point = { x: midX, y: end.y };
 
-    const segments: Line[] = [];
-    if (start.x !== horizontal1End.x || start.y !== horizontal1End.y) {
-      segments.push({ start, end: horizontal1End });
-    }
-    if (horizontal1End.x !== verticalEnd.x || horizontal1End.y !== verticalEnd.y) {
-      segments.push({ start: horizontal1End, end: verticalEnd });
-    }
-    if (verticalEnd.x !== end.x || verticalEnd.y !== end.y) {
-      segments.push({ start: verticalEnd, end });
-    }
+    const segments: Line[] = [
+      // First horizontal segment from start to midpoint X
+      { start, end: { x: midX, y: start.y } },
+      // Vertical segment at midpoint
+      { start: { x: midX, y: start.y }, end: { x: midX, y: end.y } },
+      // Final horizontal segment to end
+      { start: { x: midX, y: end.y }, end }
+    ];
 
-    return segments.length > 0 ? segments : [{ start, end }];
+    // Filter out zero-length segments
+    return segments.filter(seg =>
+      Math.abs(seg.start.x - seg.end.x) > 0.5 ||
+      Math.abs(seg.start.y - seg.end.y) > 0.5
+    );
   }
 
   private pathIntersectsRectangle(segments: Line[], rect: Rectangle): boolean {
@@ -290,6 +351,48 @@ export class CollisionEngine {
    */
   checkOverlap(rect1: Rectangle, rect2: Rectangle): boolean {
     return this.detector.rectanglesOverlap(rect1, rect2, this.config.margin).collides;
+  }
+
+  /**
+   * Resolve overlaps between subsection bounds.
+   * Returns adjusted bounds for each subsection.
+   */
+  resolveSubsectionOverlaps(
+    subsections: Array<{ id: string; bounds: Rectangle }>
+  ): Map<string, Rectangle> {
+    const result = new Map<string, Rectangle>();
+
+    // Sort subsections by their top-left position (top to bottom, left to right)
+    const sorted = [...subsections].sort((a, b) => {
+      if (Math.abs(a.bounds.x - b.bounds.x) > 50) {
+        return a.bounds.x - b.bounds.x;
+      }
+      return a.bounds.y - b.bounds.y;
+    });
+
+    for (let i = 0; i < sorted.length; i++) {
+      const current = sorted[i];
+      let adjustedBounds = { ...current.bounds };
+
+      // Check against all previously placed subsections
+      for (let j = 0; j < i; j++) {
+        const other = result.get(sorted[j].id);
+        if (!other) continue;
+
+        const collision = this.detector.rectanglesOverlap(adjustedBounds, other, 20);
+        if (collision.collides) {
+          // Push current subsection down to avoid overlap
+          const overlapBottom = other.y + other.height + 30; // 30px gap
+          if (adjustedBounds.y < overlapBottom) {
+            adjustedBounds.y = overlapBottom;
+          }
+        }
+      }
+
+      result.set(current.id, adjustedBounds);
+    }
+
+    return result;
   }
 
   /**

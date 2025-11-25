@@ -10,7 +10,7 @@ const SAMPLE_FILES = [
   'examples/apex_legends.json',
   'examples/helldivers.json',
   'examples/mecha_break.json',
-  'examples/rainbow_six_siege_gemini.json',
+  'examples/rainbow_six_siege.json',
   'examples/subsections_example.json'
 ];
 

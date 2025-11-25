@@ -6,7 +6,7 @@ export const COLOR = {
   XP_ORANGE: '#EC9F53',
   FINAL_GOOD_YELLOW: '#F5C95C',
   SOURCE_GREEN: '#4CAF50',
-  
+
   // Default/Neutral colors
   MAIN_WHITE: '#FFFFFF',
   HEADER_BLACK: '#000000',
@@ -20,7 +20,7 @@ export const TAG = 'EconomyFlowChart';
 const BASE_BOX_WIDTH = 144;
 const BASE_BOX_HEIGHT = 90;
 
-export const BOX_SIZE = { 
+export const BOX_SIZE = {
   INPUT: { W: BASE_BOX_WIDTH, H: BASE_BOX_HEIGHT }, // Always same as NODE
   NODE: { W: BASE_BOX_WIDTH, H: BASE_BOX_HEIGHT },
   ATTR: { W: 112, H: 20 },
@@ -28,7 +28,7 @@ export const BOX_SIZE = {
   FINAL_GOOD_HEADER: { H: 24 } // Black tether height
 };
 
-export const PADDING = { X: 100, Y: 21 }; // Further reduced Y padding by 30% for tighter layout
+export const PADDING = { X: 140, Y: 80 }; // Increased padding to prevent connector lines from overlapping
 export const SECTION_PADDING = 100; // Increased from 50 for more margin
 export const INITIAL_X_OFFSET = 40; // Offset from left edge to prevent nodes being flush with subsection
 export const INITIAL_Y_OFFSET = 40; // Offset from top edge to prevent nodes being flush with subsection

@@ -82,7 +82,7 @@ describe('Research Bridge', () => {
   });
 
   describe('generateEconomyJSON', () => {
-    it('should generate economy JSON from API', async () => {
+    it('should generate economy JSON from API and repair it', async () => {
       const mockEconomy = {
         name: 'Test Game',
         inputs: [
@@ -112,7 +112,25 @@ describe('Research Bridge', () => {
         apiKey: 'test-key'
       });
 
-      expect(result).toEqual(mockEconomy);
+      // repairEconomyJSON adds 'kind' to nodes and 'subsections' array
+      expect(result).toEqual({
+        name: 'Test Game',
+        inputs: [
+          { id: 'time', label: 'Time', kind: 'initial_sink_node' }
+        ],
+        nodes: [
+          {
+            id: 'play',
+            label: 'To Play',
+            sources: ['XP'],
+            sinks: ['Energy'],
+            values: [],
+            kind: 'node'
+          }
+        ],
+        edges: [['time', 'play']],
+        subsections: []
+      });
       expect(mockFetch).toHaveBeenCalledWith(
         'http://localhost:5001/api/research/generate',
         expect.objectContaining({

@@ -28,16 +28,26 @@ export async function loadFonts() {
 
 export function clear() {
   try {
-    // First try to find and remove sections
-    const sectionsToRemove = figma.currentPage.findAll(n => 
+    // First try to find and remove sections with our plugin data
+    const sectionsToRemove = figma.currentPage.findAll(n =>
       n.type === 'SECTION' && n.getPluginData("economyFlowSection") === "true"
     );
-    
+
     // Also find and remove legend sections
-    const legendSections = figma.currentPage.findAll(n => 
+    const legendSections = figma.currentPage.findAll(n =>
       n.type === 'SECTION' && n.name === 'Legend'
     );
-    
+
+    // Find connectors with our plugin data
+    const connectorsToRemove = figma.currentPage.findAll(n =>
+      n.type === 'CONNECTOR' && n.getPluginData('economyFlowConnector') === 'true'
+    );
+
+    // Find sections that match our naming pattern (e.g., "Game Name Economy")
+    const economySections = figma.currentPage.findAll(n =>
+      n.type === 'SECTION' && n.name.endsWith(' Economy')
+    );
+
     sectionsToRemove.forEach(section => {
       try {
         section.remove();
@@ -45,7 +55,7 @@ export function clear() {
         console.error('Failed to remove section:', error);
       }
     });
-    
+
     legendSections.forEach(section => {
       try {
         section.remove();
@@ -53,11 +63,27 @@ export function clear() {
         console.error('Failed to remove legend section:', error);
       }
     });
-    
-    // Then remove any remaining nodes (legacy support)
+
+    economySections.forEach(section => {
+      try {
+        section.remove();
+      } catch (error) {
+        console.error('Failed to remove economy section:', error);
+      }
+    });
+
+    connectorsToRemove.forEach(connector => {
+      try {
+        connector.remove();
+      } catch (error) {
+        console.error('Failed to remove connector:', error);
+      }
+    });
+
+    // Then remove any remaining nodes with our TAG (legacy support)
     const nodesToRemove = figma.currentPage.findAll(n => n.name.includes(TAG));
-    console.log(`Clearing ${sectionsToRemove.length} sections, ${legendSections.length} legend sections, and ${nodesToRemove.length} nodes`);
-    
+    console.log(`Clearing ${sectionsToRemove.length + economySections.length} sections, ${legendSections.length} legend sections, ${connectorsToRemove.length} connectors, and ${nodesToRemove.length} nodes`);
+
     nodesToRemove.forEach(n => {
       try {
         n.remove();

@@ -126,9 +126,10 @@ export function createConnector(A: SceneNode, B: SceneNode) {
       c.dashPattern = [10, 10];
     }
 
-    // Force left-to-right connection points
-    c.connectorStart = { endpointNodeId: A.id, magnet: 'RIGHT' } as any;
-    c.connectorEnd = { endpointNodeId: targetNode.id, magnet: 'LEFT' } as any;
+    // Use AUTO magnet to let Figma choose optimal connection points
+    // This helps spread out multiple connectors going to the same node
+    c.connectorStart = { endpointNodeId: A.id, magnet: 'AUTO' } as any;
+    c.connectorEnd = { endpointNodeId: targetNode.id, magnet: 'AUTO' } as any;
     return c;
   } catch (error) {
     console.error('Error creating connector:', error);
