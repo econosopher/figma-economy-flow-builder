@@ -54,13 +54,17 @@ function layoutGraph(graph: Graph): Map<string, PositionedNode> {
     nodeIdsInCol.forEach(id => {
       const parentIds = revAdj.get(id) || [];
       const parentYs = parentIds
-        .map(parentId => layout.getNodePosition(parentId)?.y)
+        .map(parentId => {
+          const pos = layout.getNodePosition(parentId);
+          return pos ? pos.y - INITIAL_Y_OFFSET : undefined;
+        })
         .filter((v): v is number => typeof v === 'number');
       const avgY = parentYs.length > 0 ? parentYs.reduce((sum, val) => sum + val, 0) / parentYs.length : 0;
       yTargets.set(id, avgY);
     });
 
     const ordered = [...nodeIdsInCol].sort((a, b) => (yTargets.get(a) || 0) - (yTargets.get(b) || 0));
+    let prevNodeInColumn: { y: number; height: number } | undefined;
 
     ordered.forEach(id => {
       const nodeData = nodeDataMap.get(id);
@@ -74,7 +78,8 @@ function layoutGraph(graph: Graph): Map<string, PositionedNode> {
         PADDING.X,
         PADDING.Y,
         nodeData,
-        revAdj
+        revAdj,
+        prevNodeInColumn
       );
       const x = INITIAL_X_OFFSET + (colIndex * (BOX_SIZE.NODE.W + PADDING.X));
       const totalHeight = layout.getNodeHeight(id);
@@ -83,6 +88,7 @@ function layoutGraph(graph: Graph): Map<string, PositionedNode> {
 
       layout.recordNodePosition(id, x, y, width, totalHeight);
       placements.set(id, { rect: { x, y, width, height: totalHeight }, data: nodeData });
+      prevNodeInColumn = { y: yFinal, height: totalHeight };
     });
   });
 
@@ -101,7 +107,12 @@ describe('layout regression', () => {
         const rectA = nodes[i].rect;
         const rectB = nodes[j].rect;
         const overlap = CollisionDetector.rectanglesOverlap(rectA, rectB, 0).collides;
-        expect(overlap).toBe(false);
+        if (overlap) {
+          throw new Error(
+            `Overlap detected in ${filename}: ${nodes[i].data.id} (${rectA.x},${rectA.y},${rectA.width},${rectA.height}) ` +
+              `and ${nodes[j].data.id} (${rectB.x},${rectB.y},${rectB.width},${rectB.height})`
+          );
+        }
       }
     }
   });

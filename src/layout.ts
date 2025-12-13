@@ -48,96 +48,24 @@ export class LayoutEngine {
 
     if (!subsections || subsections.length === 0) return;
 
-    // Map nodes to their subsections
+    // Map nodes to their subsections (used for bounds/grouping and any future constraints).
     subsections.forEach(sub => {
       sub.nodeIds.forEach(nodeId => {
         this.nodeToSubsection.set(nodeId, sub.id);
       });
     });
 
-    // Calculate the total height needed for each subsection
-    const subsectionHeights = new Map<string, number>();
-    subsections.forEach(sub => {
-      let totalHeight = 0;
-      sub.nodeIds.forEach(nodeId => {
-        const nodeHeight = this.nodeTotalHeights.get(nodeId) || BOX_SIZE.NODE.H;
-        totalHeight += nodeHeight + PADDING.Y;
-      });
-      // Add padding for subsection header and borders
-      totalHeight += 80;
-      subsectionHeights.set(sub.id, totalHeight);
-    });
-
-    // Sort subsections by their minimum column (leftmost node position)
-    // This helps place subsections that start earlier at the top
-    const subsectionMinCol = new Map<string, number>();
-    subsections.forEach(sub => {
-      let minCol = Infinity;
-      sub.nodeIds.forEach(nodeId => {
-        const col = this.nodeColumns.get(nodeId);
-        if (col !== undefined && col < minCol) {
-          minCol = col;
-        }
-      });
-      subsectionMinCol.set(sub.id, minCol === Infinity ? 0 : minCol);
-    });
-
-    const sortedSubsections = [...subsections].sort((a, b) => {
-      const colA = subsectionMinCol.get(a.id) || 0;
-      const colB = subsectionMinCol.get(b.id) || 0;
-      return colA - colB;
-    });
-
-    // Assign vertical bands - subsections at the same column level get stacked
-    let currentY = 0;
-    const columnBands = new Map<number, number>(); // column -> next available Y
-
-    sortedSubsections.forEach((sub, index) => {
-      const minCol = subsectionMinCol.get(sub.id) || 0;
-      const height = subsectionHeights.get(sub.id) || 200;
-
-      // Find the Y position for this subsection
-      // It should start after any subsection in the same or overlapping columns
-      let startY = 0;
-      sub.nodeIds.forEach(nodeId => {
-        const col = this.nodeColumns.get(nodeId);
-        if (col !== undefined) {
-          const bandY = columnBands.get(col) || 0;
-          startY = Math.max(startY, bandY);
-        }
-      });
-
-      // Create the band
-      this.subsectionBands.set(sub.id, {
-        id: sub.id,
-        nodeIds: new Set(sub.nodeIds),
-        minY: startY,
-        maxY: startY + height,
-        bandIndex: index
-      });
-
-      // Update column bands for all columns this subsection spans
-      sub.nodeIds.forEach(nodeId => {
-        const col = this.nodeColumns.get(nodeId);
-        if (col !== undefined) {
-          const newY = startY + height + 40; // 40px gap between subsections
-          columnBands.set(col, Math.max(columnBands.get(col) || 0, newY));
-        }
-      });
-    });
+    // Subsections are laid out horizontally (via calculateColumns), so we no longer apply
+    // vertical band offsets here.
+    void allNodes;
   }
 
   /**
    * Get the Y offset for a node based on its subsection band
    */
   getSubsectionYOffset(nodeId: string): number {
-    const subsectionId = this.nodeToSubsection.get(nodeId);
-    if (!subsectionId) return 0;
-
-    const band = this.subsectionBands.get(subsectionId);
-    if (!band) return 0;
-
-    return band.minY;
+    void nodeId;
+    return 0;
   }
 
   calculateNodeHeights(nodes: (Input | Act)[]) {
@@ -178,24 +106,25 @@ export class LayoutEngine {
       }
     });
 
-    // Topological sort to determine columns
+    // Base columns via topological order (DAG depth)
+    const baseColumns = new Map<string, number>();
     const queue: string[] = [];
     allNodeIds.forEach(id => {
       if (inDegree.get(id) === 0) {
         queue.push(id);
-        this.nodeColumns.set(id, 0);
+        baseColumns.set(id, 0);
       }
     });
 
     let head = 0;
     while (head < queue.length) {
       const u = queue[head++];
-      const u_col = this.nodeColumns.get(u)!;
+      const uCol = baseColumns.get(u) ?? 0;
 
       for (const v of adj.get(u)!) {
-        const v_col = this.nodeColumns.get(v);
-        if (v_col === undefined || v_col < u_col + 1) {
-          this.nodeColumns.set(v, u_col + 1);
+        const vCol = baseColumns.get(v);
+        if (vCol === undefined || vCol < uCol + 1) {
+          baseColumns.set(v, uCol + 1);
         }
         inDegree.set(v, inDegree.get(v)! - 1);
         if (inDegree.get(v) === 0) {
@@ -203,6 +132,125 @@ export class LayoutEngine {
         }
       }
     }
+
+    // Ensure all nodes have a column (fallback to 0 for any disconnected nodes).
+    allNodeIds.forEach(id => {
+      if (!baseColumns.has(id)) baseColumns.set(id, 0);
+    });
+
+    // Encourage terminal "final_good" nodes to appear at the far right.
+    const maxBaseCol = Math.max(...Array.from(baseColumns.values()));
+    graph.nodes.forEach(node => {
+      if (node.kind === 'final_good' && baseColumns.has(node.id)) {
+        baseColumns.set(node.id, maxBaseCol + 1);
+      }
+    });
+
+    // Apply subsection-based horizontal separation (left-to-right, dependency-aware).
+    const nodeToSubsection = new Map<string, string>();
+    const subsectionOrderIndex = new Map<string, number>();
+    (graph.subsections || []).forEach((sub, index) => {
+      subsectionOrderIndex.set(sub.id, index);
+      sub.nodeIds.forEach(nodeId => nodeToSubsection.set(nodeId, sub.id));
+    });
+
+    const subsectionRanges = new Map<string, { min: number; max: number }>();
+    (graph.subsections || []).forEach(sub => {
+      let min = Infinity;
+      let max = -Infinity;
+      sub.nodeIds.forEach(nodeId => {
+        const col = baseColumns.get(nodeId);
+        if (typeof col === 'number') {
+          min = Math.min(min, col);
+          max = Math.max(max, col);
+        }
+      });
+      if (min !== Infinity && max !== -Infinity) {
+        subsectionRanges.set(sub.id, { min, max });
+      }
+    });
+
+    const subsectionIds = Array.from(subsectionRanges.keys());
+
+    const subAdj = new Map<string, Set<string>>();
+    const subInDegree = new Map<string, number>();
+    subsectionIds.forEach(id => {
+      subAdj.set(id, new Set());
+      subInDegree.set(id, 0);
+    });
+
+    graph.edges.forEach(([from, to]) => {
+      const fromSub = nodeToSubsection.get(from);
+      const toSub = nodeToSubsection.get(to);
+      if (!fromSub || !toSub || fromSub === toSub) return;
+      if (!subAdj.has(fromSub) || !subAdj.has(toSub)) return;
+      const edges = subAdj.get(fromSub)!;
+      if (!edges.has(toSub)) {
+        edges.add(toSub);
+        subInDegree.set(toSub, (subInDegree.get(toSub) || 0) + 1);
+      }
+    });
+
+    const compareSub = (a: string, b: string) => {
+      const rangeA = subsectionRanges.get(a);
+      const rangeB = subsectionRanges.get(b);
+      const minA = rangeA ? rangeA.min : 0;
+      const minB = rangeB ? rangeB.min : 0;
+      if (minA !== minB) return minA - minB;
+      const idxA = subsectionOrderIndex.get(a) ?? 0;
+      const idxB = subsectionOrderIndex.get(b) ?? 0;
+      return idxA - idxB;
+    };
+
+    const subQueue = subsectionIds.filter(id => (subInDegree.get(id) || 0) === 0).sort(compareSub);
+    const orderedSubsections: string[] = [];
+    while (subQueue.length > 0) {
+      const current = subQueue.shift()!;
+      orderedSubsections.push(current);
+      for (const next of subAdj.get(current) || []) {
+        subInDegree.set(next, (subInDegree.get(next) || 0) - 1);
+        if ((subInDegree.get(next) || 0) === 0) {
+          subQueue.push(next);
+          subQueue.sort(compareSub);
+        }
+      }
+    }
+
+    // If subsection meta-graph had a cycle due to grouping, fall back to stable ordering by min column.
+    const finalSubsectionOrder =
+      orderedSubsections.length === subsectionIds.length
+        ? orderedSubsections
+        : [...subsectionIds].sort(compareSub);
+
+    const subsectionShift = new Map<string, number>();
+    const gapCols = 1;
+    let cursorCol = -1;
+
+    finalSubsectionOrder.forEach(subId => {
+      const range = subsectionRanges.get(subId);
+      if (!range) return;
+      const shift = Math.max(0, cursorCol + gapCols - range.min);
+      subsectionShift.set(subId, shift);
+      cursorCol = Math.max(cursorCol, range.max + shift);
+    });
+
+    // Compute final columns (base + optional subsection shift), then compress to contiguous indices.
+    const finalColumns = new Map<string, number>();
+    allNodeIds.forEach(id => {
+      const base = baseColumns.get(id) ?? 0;
+      const subId = nodeToSubsection.get(id);
+      const shift = subId ? subsectionShift.get(subId) || 0 : 0;
+      finalColumns.set(id, base + shift);
+    });
+
+    const uniqueCols = Array.from(new Set(finalColumns.values())).sort((a, b) => a - b);
+    const colRemap = new Map<number, number>();
+    uniqueCols.forEach((col, index) => colRemap.set(col, index));
+
+    this.nodeColumns.clear();
+    finalColumns.forEach((col, id) => {
+      this.nodeColumns.set(id, colRemap.get(col) ?? col);
+    });
 
     // Group nodes by column
     const columns: string[][] = [];

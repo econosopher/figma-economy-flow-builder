@@ -17,107 +17,107 @@
       "id": "match_play",
       "label": "Match Play (Ranked/Unranked)",
       "sources": [
-        "renown",
-        "xp",
-        "battle_pass_points"
+        "Renown",
+        "XP",
+        "Battle Pass Points"
       ],
       "sinks": [
-        "time",
-        "effort"
+        "Time",
+        "Effort"
       ],
       "values": [
-        "ranked_rating",
-        "account_level",
-        "operator_mastery"
+        "Ranked Rating",
+        "Account Level",
+        "Operator Mastery"
       ]
     },
     {
       "id": "challenge_completion",
       "label": "Challenge Completion",
       "sources": [
-        "renown",
-        "xp",
-        "r6_credits",
-        "battle_pass_points"
+        "Renown",
+        "XP",
+        "R6 Credits",
+        "Battle Pass Points"
       ],
       "sinks": [
-        "time",
-        "effort"
+        "Time",
+        "Effort"
       ],
       "values": [
-        "account_level",
-        "operator_mastery"
+        "Account Level",
+        "Operator Mastery"
       ]
     },
     {
       "id": "r6_credit_purchase",
       "label": "R6 Credit Purchase",
       "sources": [
-        "r6_credits"
+        "R6 Credits"
       ],
       "sinks": [
-        "money"
+        "Money"
       ]
     },
     {
       "id": "battle_pass_purchase",
       "label": "Battle Pass Purchase",
       "sources": [
-        "battle_pass_points",
-        "cosmetic_items",
-        "battle_pass_xp_boost"
+        "Battle Pass Points",
+        "Cosmetic Items",
+        "Battle Pass XP Boost"
       ],
       "sinks": [
-        "r6_credits"
+        "R6 Credits"
       ]
     },
     {
       "id": "cosmetic_item_purchase",
       "label": "Cosmetic Item Purchase",
       "sources": [
-        "cosmetic_items"
+        "Cosmetic Items"
       ],
       "sinks": [
-        "r6_credits",
-        "renown"
+        "R6 Credits",
+        "Renown"
       ],
       "values": [
-        "cosmetic_collection"
+        "Cosmetic Collection"
       ]
     },
     {
       "id": "operator_leveling",
       "label": "Operator Leveling",
       "sources": [
-        "operator_mastery_levels",
-        "cosmetic_unlocks"
+        "Operator Mastery Levels",
+        "Cosmetic Unlocks"
       ],
       "sinks": [
-        "renown",
-        "time",
-        "effort"
+        "Renown",
+        "Time",
+        "Effort"
       ],
       "values": [
-        "operator_mastery_levels",
-        "cosmetic_collection"
+        "Operator Mastery Levels",
+        "Cosmetic Collection"
       ]
     },
     {
       "id": "event_participation",
       "label": "Event Participation",
       "sources": [
-        "event_specific_currency",
-        "renown",
-        "xp",
-        "cosmetic_items"
+        "Event Specific Currency",
+        "Renown",
+        "XP",
+        "Cosmetic Items"
       ],
       "sinks": [
-        "time",
-        "effort"
+        "Time",
+        "Effort"
       ],
       "values": [
-        "cosmetic_collection",
-        "account_level"
+        "Cosmetic Collection",
+        "Account Level"
       ]
     },
     {

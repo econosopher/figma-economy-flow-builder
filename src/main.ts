@@ -783,9 +783,17 @@ async function generateDiagram(
       if (legendSection) {
         // Position legend below the main section with spacing
         const sectionBounds = section.absoluteBoundingBox;
-        if (sectionBounds) {
-          legendSection.y = section.y + sectionBounds.height + 50; // 50px spacing between sections
-        }
+        let maxBottom = sectionBounds ? sectionBounds.y + sectionBounds.height : section.y + section.height;
+
+        // Connectors can extend beyond the section bounds; keep the legend below them to avoid overlap.
+        connectors.forEach(connector => {
+          const bounds = connector.absoluteBoundingBox;
+          if (bounds) {
+            maxBottom = Math.max(maxBottom, bounds.y + bounds.height);
+          }
+        });
+
+        legendSection.y = maxBottom + 50; // 50px spacing between diagram+connectors and legend
         figma.currentPage.appendChild(legendSection);
       }
 

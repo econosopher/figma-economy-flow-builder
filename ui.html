@@ -539,23 +539,24 @@
        });
      });
      
-     document.getElementById('go').onclick=()=>{
-       const colors = {
-         sink: document.getElementById('color-sink').value,
-         source: document.getElementById('color-source').value,
-         xp: document.getElementById('color-xp').value,
-         final: document.getElementById('color-final').value
-       };
+	     document.getElementById('go').onclick=()=>{
+	       const colors = {
+	         sink: document.getElementById('color-sink').value,
+	         source: document.getElementById('color-source').value,
+	         xp: document.getElementById('color-xp').value,
+	         final: document.getElementById('color-final').value
+	       };
        
-       // Try to add name from template selection or JSON
-       try {
-         const jsonData = JSON.parse(t.value);
-         if (!jsonData.name && tmpl.value) {
-           // Use template name as the economy name
-           jsonData.name = tmpl.value.charAt(0).toUpperCase() + tmpl.value.slice(1).replace(/_/g, ' ');
-         }
-         post('draw',{json:JSON.stringify(jsonData), colors});
-       } catch (e) {
+	       // Try to add name from template selection or JSON
+	       try {
+	         const jsonData = JSON.parse(t.value);
+	         if (!jsonData.name && tmpl.value) {
+	           // Use the selected template label as the economy name
+	           const opt = tmpl.options[tmpl.selectedIndex];
+	           jsonData.name = opt && opt.textContent ? opt.textContent : tmpl.value.replace(/_/g, ' ');
+	         }
+	         post('draw',{json:JSON.stringify(jsonData), colors});
+	       } catch (e) {
          // If JSON is invalid, send as-is and let the plugin handle the error
          post('draw',{json:t.value, colors});
        }
@@ -577,13 +578,33 @@
         document.getElementById('color-xp').value = m.colors.XP_ORANGE;
         document.getElementById('color-final').value = m.colors.FINAL_GOOD_YELLOW;
 
-        // Populate templates
-        for (const key in m.templates) {
-          const option = document.createElement('option');
-          option.value = key;
-          option.textContent = key.charAt(0).toUpperCase() + key.slice(1);
-          tmpl.appendChild(option);
-        }
+	        const toTitleCase = (str) =>
+	          String(str || '')
+	            .replace(/_/g, ' ')
+	            .trim()
+	            .split(/\\s+/g)
+	            .filter(Boolean)
+	            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+	            .join(' ');
+
+	        // Populate templates (use JSON `name` when available; otherwise derive from filename key).
+	        const templateKeys = Object.keys(m.templates || {});
+	        templateKeys
+	          .map(key => {
+	            const tpl = m.templates[key];
+	            const label =
+	              tpl && typeof tpl === 'object' && typeof tpl.name === 'string' && tpl.name.trim().length > 0
+	                ? tpl.name.trim()
+	                : toTitleCase(key);
+	            return { key, label };
+	          })
+	          .sort((a, b) => a.label.localeCompare(b.label))
+	          .forEach(({ key, label }) => {
+	            const option = document.createElement('option');
+	            option.value = key;
+	            option.textContent = label;
+	            tmpl.appendChild(option);
+	          });
         tmpl.onchange = () => {
           if (t.value.trim() !== '' && !confirm('This will replace your current JSON. Are you sure?')) {
             tmpl.value = '';
