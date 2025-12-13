@@ -8,7 +8,13 @@ import { validateGraphData, validateCustomColors, isValidColor } from './validat
 import { LayoutEngine } from './layout';
 import { syncFromCanvas } from './sync';
 import { extractCurrenciesByType, createLegendSection } from './legend';
-import { generateResearchCache, generateEconomyJSON, createResearchMarkdown } from './research-bridge';
+import {
+  generateResearchCache,
+  generateEconomyJSON,
+  createResearchMarkdown,
+  parseResearchOutput,
+  repairEconomyJSON
+} from './research-bridge';
 
 // Repository URL used to draft PRs for presets
 const REPO_URL = 'https://github.com/YOUR_USERNAME/economy_flow_plugin';
@@ -19,6 +25,18 @@ function sanitizeFileName(name: string): string {
     .replace(/[^a-z0-9_\-\s]/g, '')
     .trim()
     .replace(/\s+/g, '_');
+}
+
+function parsePossiblyWrappedJson(raw: string): unknown {
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return parseResearchOutput(raw);
+  }
+}
+
+function isGraphLike(value: unknown): boolean {
+  return !!value && typeof value === 'object' && ('inputs' in value || 'nodes' in value || 'edges' in value);
 }
 
 // Default config will be injected by build script
@@ -164,9 +182,28 @@ figma.ui.onmessage = async (m: PluginMessage) => {
   }
   if (m.cmd === 'validate') {
     try {
-      const data = JSON.parse(m.json);
-      const errors = validateGraphData(data);
-      if (errors.length > 0) reply(errors, false); else reply('JSON is valid.', true);
+      const parsed = parsePossiblyWrappedJson(m.json);
+      const errors = validateGraphData(parsed as any);
+
+      if (errors.length === 0) {
+        reply('JSON is valid.', true);
+        return;
+      }
+
+      if (!isGraphLike(parsed)) {
+        reply(errors, false);
+        return;
+      }
+
+      const repaired = repairEconomyJSON(parsed);
+      const repairedErrors = validateGraphData(repaired);
+      if (repairedErrors.length > 0) {
+        reply(errors, false);
+        return;
+      }
+
+      figma.ui.postMessage({ type: 'sync-json', json: JSON.stringify(repaired, null, 2) });
+      reply('JSON was normalized and is now valid.', true);
     } catch (e: any) {
       reply(['Invalid JSON:', e.message], false);
     }
@@ -319,8 +356,9 @@ figma.ui.onmessage = async (m: PluginMessage) => {
   if (m.cmd !== 'draw') return;
 
   let data: Graph;
+  let normalized = false;
   try {
-    data = JSON.parse(m.json);
+    data = parsePossiblyWrappedJson(m.json) as Graph;
   } catch (e: any) {
     const errorMsg = [
       "JSON Parsing Error:",
@@ -339,8 +377,21 @@ figma.ui.onmessage = async (m: PluginMessage) => {
 
   const errors = validateGraphData(data);
   if (errors.length > 0) {
-    reply(errors, false);
-    return;
+    if (!isGraphLike(data)) {
+      reply(errors, false);
+      return;
+    }
+
+    const repaired = repairEconomyJSON(data);
+    const repairedErrors = validateGraphData(repaired);
+    if (repairedErrors.length > 0) {
+      reply(errors, false);
+      return;
+    }
+
+    data = repaired;
+    normalized = true;
+    figma.ui.postMessage({ type: 'sync-json', json: JSON.stringify(repaired, null, 2) });
   }
 
   try {
@@ -355,10 +406,14 @@ figma.ui.onmessage = async (m: PluginMessage) => {
     await figma.clientStorage.setAsync('economyFlowState', { json: JSON.stringify(data), colors: m.colors });
   } catch { }
   clear();
-  await generateDiagram(data, m.colors);
+  await generateDiagram(data, m.colors, { normalized });
 };
 
-async function generateDiagram(data: Graph, customColorInput?: { [key: string]: string }) {
+async function generateDiagram(
+  data: Graph,
+  customColorInput?: { [key: string]: string },
+  options: { normalized?: boolean } = {}
+) {
   const nodes = new Map<string, SceneNode>();
   const mainBoxes = new Map<string, SceneNode>(); // Store main boxes for connector endpoints
   const connectors: SceneNode[] = [];
@@ -714,9 +769,9 @@ async function generateDiagram(data: Graph, customColorInput?: { [key: string]: 
         }
       });
 
-      // Note: Connectors in FigJam render behind shapes by default in most cases.
-      // We don't move them with insertChild as that breaks their endpoint connections.
-      // The visual layering is generally acceptable as connectors route around nodes.
+      // Keep connectors at page level (reparenting can break endpoint connections),
+      // but ensure the main section is above connectors in the page layer order so boxes render on top.
+      figma.currentPage.appendChild(section);
 
       if (failedEdges.length > 0) {
         console.warn('Some edges failed to render:', failedEdges);
@@ -744,6 +799,9 @@ async function generateDiagram(data: Graph, customColorInput?: { [key: string]: 
       figma.viewport.scrollAndZoomIntoView(nodesToView);
 
       const messages = ['Diagram created successfully in section'];
+      if (options.normalized) {
+        messages.push('JSON was normalized (auto-repaired).');
+      }
       if (data.subsections && data.subsections.length > 0) {
         messages.push(`Created ${data.subsections.length} subsection(s)`);
       }

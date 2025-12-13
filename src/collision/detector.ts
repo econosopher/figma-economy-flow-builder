@@ -9,26 +9,36 @@ export class CollisionDetector {
    * Check if two rectangles overlap
    */
   static rectanglesOverlap(rect1: Rectangle, rect2: Rectangle, margin: number = 0): CollisionResult {
+    const safeMargin = Number.isFinite(margin) ? Math.max(0, margin) : 0;
+    const halfMargin = safeMargin / 2;
+
+    // Treat margin as required separation between rectangles by expanding both by half the margin.
+    // This preserves existing "touching counts as collision" semantics via strict `<` comparisons.
+    const rect1Left = rect1.x - halfMargin;
+    const rect1Right = rect1.x + rect1.width + halfMargin;
+    const rect1Top = rect1.y - halfMargin;
+    const rect1Bottom = rect1.y + rect1.height + halfMargin;
+
+    const rect2Left = rect2.x - halfMargin;
+    const rect2Right = rect2.x + rect2.width + halfMargin;
+    const rect2Top = rect2.y - halfMargin;
+    const rect2Bottom = rect2.y + rect2.height + halfMargin;
+
     const overlap = !(
-      rect1.x + rect1.width + margin < rect2.x ||
-      rect2.x + rect2.width + margin < rect1.x ||
-      rect1.y + rect1.height + margin < rect2.y ||
-      rect2.y + rect2.height + margin < rect1.y
+      rect1Right < rect2Left ||
+      rect2Right < rect1Left ||
+      rect1Bottom < rect2Top ||
+      rect2Bottom < rect1Top
     );
 
     if (!overlap) {
       return { collides: false };
     }
 
-    // Calculate penetration depth
-    const xPenetration = Math.min(
-      rect1.x + rect1.width - rect2.x,
-      rect2.x + rect2.width - rect1.x
-    );
-    const yPenetration = Math.min(
-      rect1.y + rect1.height - rect2.y,
-      rect2.y + rect2.height - rect1.y
-    );
+    // Calculate overlap/penetration depth for the expanded rectangles.
+    // This stays non-negative even when the collision is caused purely by `margin`.
+    const xPenetration = Math.min(rect1Right, rect2Right) - Math.max(rect1Left, rect2Left);
+    const yPenetration = Math.min(rect1Bottom, rect2Bottom) - Math.max(rect1Top, rect2Top);
 
     return {
       collides: true,
@@ -40,12 +50,13 @@ export class CollisionDetector {
    * Check if a line intersects with a rectangle
    */
   static lineIntersectsRectangle(line: Line, rect: Rectangle, margin: number = 0): CollisionResult {
+    const safeMargin = Number.isFinite(margin) ? Math.max(0, margin) : 0;
     // Expand rectangle by margin
     const expandedRect: Rectangle = {
-      x: rect.x - margin,
-      y: rect.y - margin,
-      width: rect.width + 2 * margin,
-      height: rect.height + 2 * margin
+      x: rect.x - safeMargin,
+      y: rect.y - safeMargin,
+      width: rect.width + 2 * safeMargin,
+      height: rect.height + 2 * safeMargin
     };
 
     // Check if either endpoint is inside the rectangle

@@ -87,7 +87,8 @@ export class CollisionEngine {
 
       if (this.config.nodeToNode) {
         // Use spatial grid to query potential collisions
-        const potentialColliders = this.spatialGrid.query(nodeRect);
+        const queryRect = this.expandRect(nodeRect, this.config.margin);
+        const potentialColliders = this.spatialGrid.query(queryRect);
 
         for (const id of potentialColliders) {
           const pos = context.nodePositions.get(id);
@@ -95,9 +96,12 @@ export class CollisionEngine {
 
           const collision = this.detector.rectanglesOverlap(nodeRect, pos, this.config.margin);
           if (collision.collides) {
-            const newY = pos.y + pos.height + context.padding.y + this.config.margin;
-            if (newY > nodeRect.y) {
-              nodeRect.y = newY;
+            const safePaddingY = Number.isFinite(context.padding.y) ? context.padding.y : 0;
+            const safeMargin = Number.isFinite(this.config.margin) ? Math.max(0, this.config.margin) : 0;
+            const requiredY = pos.y + pos.height + safePaddingY + safeMargin;
+            const nextY = requiredY > nodeRect.y ? requiredY : nodeRect.y + 1;
+            if (nextY !== nodeRect.y) {
+              nodeRect.y = nextY;
               positionChanged = true;
             }
           }
@@ -185,7 +189,8 @@ export class CollisionEngine {
             height: Math.abs(segment.end.y - segment.start.y)
           };
 
-          const potentialColliders = this.spatialGrid.query(segmentRect);
+          const queryRect = this.expandRect(segmentRect, this.config.margin);
+          const potentialColliders = this.spatialGrid.query(queryRect);
 
           for (const id of potentialColliders) {
             if (id === nodeId || id === parentId) continue;
@@ -206,7 +211,8 @@ export class CollisionEngine {
         // This is a double-check because moving the node might create new node-to-node collisions
         let nodeCollision = false;
         if (this.config.nodeToNode) {
-          const potentialColliders = this.spatialGrid.query(currentRect);
+          const queryRect = this.expandRect(currentRect, this.config.margin);
+          const potentialColliders = this.spatialGrid.query(queryRect);
           for (const id of potentialColliders) {
             if (id === nodeId) continue;
             const pos = context.nodePositions.get(id);
@@ -282,6 +288,17 @@ export class CollisionEngine {
       Math.abs(seg.start.x - seg.end.x) > 0.5 ||
       Math.abs(seg.start.y - seg.end.y) > 0.5
     );
+  }
+
+  private expandRect(rect: Rectangle, amount: number): Rectangle {
+    const safeAmount = Number.isFinite(amount) ? Math.max(0, amount) : 0;
+    if (safeAmount === 0) return rect;
+    return {
+      x: rect.x - safeAmount,
+      y: rect.y - safeAmount,
+      width: rect.width + safeAmount * 2,
+      height: rect.height + safeAmount * 2
+    };
   }
 
   private pathIntersectsRectangle(segments: Line[], rect: Rectangle): boolean {
@@ -372,7 +389,7 @@ export class CollisionEngine {
 
     for (let i = 0; i < sorted.length; i++) {
       const current = sorted[i];
-      let adjustedBounds = { ...current.bounds };
+      const adjustedBounds = { ...current.bounds };
 
       // Check against all previously placed subsections
       for (let j = 0; j < i; j++) {

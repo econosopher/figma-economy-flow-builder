@@ -1,4 +1,5 @@
 {
+  "name": "Payday 3",
   "inputs": [
     {
       "id": "money",
@@ -38,13 +39,11 @@
       ],
       "sinks": [
         "Stolen Goods"
-      ],
-      "values": []
+      ]
     },
     {
       "id": "to_modify_weapons",
       "label": "To Modify Weapons",
-      "sources": [],
       "sinks": [
         "Weapon Tokens",
         "Cash"
@@ -57,7 +56,6 @@
     {
       "id": "to_upgrade_gear",
       "label": "To Upgrade Gear",
-      "sources": [],
       "sinks": [
         "Cash",
         "Cosmetic Unlock Materials"
@@ -70,7 +68,6 @@
     {
       "id": "to_unlock_skills",
       "label": "To Unlock Skills",
-      "sources": [],
       "sinks": [
         "Skill Points"
       ],
@@ -89,7 +86,6 @@
         "Skill Points",
         "Cosmetic Unlock Materials"
       ],
-      "sinks": [],
       "values": [
         "Challenge Progress",
         "Battle Pass Progress"
@@ -98,7 +94,6 @@
     {
       "id": "to_negotiate_hostage_trade",
       "label": "To Negotiate Hostage Trade",
-      "sources": [],
       "sinks": [
         "Hostages"
       ],
@@ -133,8 +128,7 @@
       ],
       "sinks": [
         "Money"
-      ],
-      "values": []
+      ]
     },
     {
       "id": "to_claim_battle_pass_rewards",
@@ -147,16 +141,11 @@
         "Cosmetic Unlock Materials",
         "Cosmetics",
         "Favors"
-      ],
-      "sinks": [],
-      "values": []
+      ]
     },
     {
       "id": "thrilling_heist_experience",
-      "label": "Thrilling Heist EXPerience",
-      "sources": [],
-      "sinks": [],
-      "values": []
+      "label": "Thrilling Heist EXPerience"
     }
   ],
   "edges": [

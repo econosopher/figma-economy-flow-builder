@@ -1,4 +1,4 @@
-import { mockFigma, MockSectionNode, MockGroupNode, MockShapeWithTextNode, MockConnectorNode, isShapeWithText } from './figma-mocks';
+import { mockFigma, MockSectionNode, MockGroupNode, MockShapeWithTextNode, MockConnectorNode } from './figma-mocks';
 import { TAG, BOX_SIZE } from '../constants';
 
 // Mock the figma global

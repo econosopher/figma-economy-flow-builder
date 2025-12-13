@@ -1,176 +1,295 @@
 {
-  "name": "Sweepstakes Slots Economy",
+  "name": "Sweepstakes Slots",
   "inputs": [
-    { "id": "time", "label": "Time", "kind": "initial_sink_node" },
-    { "id": "money", "label": "Money", "kind": "initial_sink_node" }
+    {
+      "id": "time",
+      "label": "Time",
+      "kind": "initial_sink_node"
+    },
+    {
+      "id": "money",
+      "label": "Money",
+      "kind": "initial_sink_node"
+    }
   ],
   "nodes": [
     {
       "id": "claim_starter_grant",
       "label": "Claim Starter Gold Grant",
-      "sources": ["Gold"],
-      "values": ["Onboarding Completion"]
+      "sources": [
+        "Gold"
+      ],
+      "values": [
+        "Onboarding Completion"
+      ]
     },
     {
       "id": "collect_daily_gold_bonus",
       "label": "Collect Daily Gold Bonus",
-      "sources": ["Gold"],
-      "values": ["Retention Touchpoint"]
+      "sources": [
+        "Gold"
+      ],
+      "values": [
+        "Retention Touchpoint"
+      ]
     },
     {
       "id": "complete_achievements",
       "label": "Complete Achievements",
-      "sources": ["Gold"],
-      "values": ["Progress Milestones"]
+      "sources": [
+        "Gold"
+      ],
+      "values": [
+        "Progress Milestones"
+      ]
     },
     {
       "id": "purchase_gold_iap",
       "label": "Purchase Gold via IAP",
-      "sources": ["Gold"]
+      "sources": [
+        "Gold"
+      ]
     },
     {
       "id": "attempt_level_entries",
       "label": "Attempt Level Entries",
-      "sinks": ["Gold"],
-      "values": ["Level Attempts"]
+      "sinks": [
+        "Gold"
+      ],
+      "values": [
+        "Level Attempts"
+      ]
     },
     {
       "id": "win_level_rewards",
       "label": "Win Level and Earn Ticket",
-      "sources": ["Tickets"],
-      "values": ["Level Progress"]
+      "sources": [
+        "Tickets"
+      ],
+      "values": [
+        "Level Progress"
+      ]
     },
     {
       "id": "spin_gold_mode_slots",
       "label": "Spin Gold-Mode Slots",
-      "sources": ["Tickets"],
-      "sinks": ["Gold"],
-      "values": ["Slot Engagement"]
+      "sources": [
+        "Tickets"
+      ],
+      "sinks": [
+        "Gold"
+      ],
+      "values": [
+        "Slot Engagement"
+      ]
     },
     {
       "id": "purchase_boosts",
       "label": "Purchase Session Boosts",
-      "sinks": ["Gold"],
-      "values": ["Pace Control"]
+      "sinks": [
+        "Gold"
+      ],
+      "values": [
+        "Pace Control"
+      ]
     },
     {
       "id": "participate_leaderboards",
       "label": "Participate in Leaderboards",
-      "sources": ["Tickets"],
-      "values": ["Competitive Engagement"]
+      "sources": [
+        "Tickets"
+      ],
+      "values": [
+        "Competitive Engagement"
+      ]
     },
     {
       "id": "run_event_ticket_grants",
       "label": "Run Events and Ticket Grants",
-      "sources": ["Tickets"],
-      "values": ["Event Participation"]
+      "sources": [
+        "Tickets"
+      ],
+      "values": [
+        "Event Participation"
+      ]
     },
     {
       "id": "claim_daily_sc",
       "label": "Claim Daily SC Allotment",
-      "sources": ["SC Ineligible"],
-      "values": ["Daily Claim Rate"]
+      "sources": [
+        "SC Ineligible"
+      ],
+      "values": [
+        "Daily Claim Rate"
+      ]
     },
     {
       "id": "earn_streak_sc_bonus",
       "label": "Earn Streak SC Bonuses",
-      "sources": ["SC Ineligible"],
-      "values": ["Streak Retention"]
+      "sources": [
+        "SC Ineligible"
+      ],
+      "values": [
+        "Streak Retention"
+      ]
     },
     {
       "id": "trigger_random_sc_drops",
       "label": "Trigger Random SC Drops",
-      "sources": ["SC Ineligible"],
-      "values": ["Promotional Lift"]
+      "sources": [
+        "SC Ineligible"
+      ],
+      "values": [
+        "Promotional Lift"
+      ]
     },
     {
       "id": "amoe_sc_claims",
       "label": "Process AMOE SC Claims",
-      "sources": ["SC Ineligible"],
-      "values": ["AMOE Parity"]
+      "sources": [
+        "SC Ineligible"
+      ],
+      "values": [
+        "AMOE Parity"
+      ]
     },
     {
       "id": "reveal_scratch_offs",
       "label": "Reveal Scratch-Off Tickets",
-      "sources": ["SC Ineligible"],
-      "sinks": ["Tickets"],
-      "values": ["Scratch EV Tracking"]
+      "sources": [
+        "SC Ineligible"
+      ],
+      "sinks": [
+        "Tickets"
+      ],
+      "values": [
+        "Scratch EV Tracking"
+      ]
     },
     {
       "id": "accumulate_sc_ineligible",
       "label": "Accumulate Ineligible SC Ledger",
-      "sources": ["SC Ineligible"],
-      "values": ["Ineligible SC Balance"]
+      "sources": [
+        "SC Ineligible"
+      ],
+      "values": [
+        "Ineligible SC Balance"
+      ]
     },
     {
       "id": "enforce_daily_sc_cap",
       "label": "Enforce Daily SC Cap",
-      "sources": ["SC Ineligible"],
-      "sinks": ["SC Ineligible"],
-      "values": ["Cap Utilization"]
+      "sources": [
+        "SC Ineligible"
+      ],
+      "sinks": [
+        "SC Ineligible"
+      ],
+      "values": [
+        "Cap Utilization"
+      ]
     },
     {
       "id": "geofence_sc_mode",
       "label": "Geofence SC Mode Availability",
-      "values": ["SC Mode Access Share"]
+      "values": [
+        "SC Mode Access Share"
+      ]
     },
     {
       "id": "play_sc_mode_slots",
       "label": "Play SC-Mode Slots",
-      "sources": ["SC Eligible"],
-      "sinks": ["SC Ineligible"],
-      "values": ["SC Slot Engagement"]
+      "sources": [
+        "SC Eligible"
+      ],
+      "sinks": [
+        "SC Ineligible"
+      ],
+      "values": [
+        "SC Slot Engagement"
+      ]
     },
     {
       "id": "sc_mode_rtp_burn",
       "label": "Apply SC-Mode RTP Burn",
-      "sinks": ["SC Eligible"],
-      "values": ["Expected SC Burn"]
+      "sinks": [
+        "SC Eligible"
+      ],
+      "values": [
+        "Expected SC Burn"
+      ]
     },
     {
       "id": "build_redeemable_balance",
       "label": "Build Redeemable SC Balance",
-      "sources": ["SC Eligible"],
-      "values": ["Redeemable SC Outstanding"]
+      "sources": [
+        "SC Eligible"
+      ],
+      "values": [
+        "Redeemable SC Outstanding"
+      ]
     },
     {
       "id": "monitor_budget_liability",
       "label": "Monitor Budget and Liability",
-      "values": ["Budget Utilization", "Liability Coverage"]
+      "values": [
+        "Budget Utilization",
+        "Liability Coverage"
+      ]
     },
     {
       "id": "throttle_rtp_variant",
       "label": "Throttle RTP Variant",
-      "sinks": ["SC Eligible"],
-      "values": ["Throttle State"]
+      "sinks": [
+        "SC Eligible"
+      ],
+      "values": [
+        "Throttle State"
+      ]
     },
     {
       "id": "complete_kyc",
       "label": "Complete KYC Verification",
-      "values": ["KYC Passed"]
+      "values": [
+        "KYC Passed"
+      ]
     },
     {
       "id": "queue_redemption_requests",
       "label": "Queue Redemption Requests",
-      "sinks": ["SC Eligible"],
-      "values": ["Pending Redemptions"]
+      "sinks": [
+        "SC Eligible"
+      ],
+      "values": [
+        "Pending Redemptions"
+      ]
     },
     {
       "id": "enforce_redemption_cooldown",
       "label": "Enforce 48h Redemption Cooldown",
-      "values": ["Cooldown Status"]
+      "values": [
+        "Cooldown Status"
+      ]
     },
     {
       "id": "process_gift_card_redemption",
       "label": "Process Gift Card Redemption",
-      "sinks": ["SC Eligible"],
-      "values": ["Gift Card Liability"]
+      "sinks": [
+        "SC Eligible"
+      ],
+      "values": [
+        "Gift Card Liability"
+      ]
     },
     {
       "id": "process_cash_redemption",
       "label": "Process Cash Redemption",
-      "sinks": ["SC Eligible"],
-      "values": ["Cash Liability"]
+      "sinks": [
+        "SC Eligible"
+      ],
+      "values": [
+        "Cash Liability"
+      ]
     },
     {
       "id": "receive_gift_card_reward",
@@ -184,56 +303,209 @@
     }
   ],
   "edges": [
-    ["time", "claim_starter_grant"],
-    ["time", "collect_daily_gold_bonus"],
-    ["time", "complete_achievements"],
-    ["money", "purchase_gold_iap"],
-    ["claim_starter_grant", "attempt_level_entries"],
-    ["collect_daily_gold_bonus", "attempt_level_entries"],
-    ["complete_achievements", "attempt_level_entries"],
-    ["purchase_gold_iap", "attempt_level_entries"],
-    ["claim_starter_grant", "spin_gold_mode_slots"],
-    ["collect_daily_gold_bonus", "spin_gold_mode_slots"],
-    ["purchase_gold_iap", "spin_gold_mode_slots"],
-    ["collect_daily_gold_bonus", "purchase_boosts"],
-    ["purchase_gold_iap", "purchase_boosts"],
-    ["complete_achievements", "purchase_boosts"],
-    ["purchase_boosts", "attempt_level_entries"],
-    ["attempt_level_entries", "win_level_rewards"],
-    ["win_level_rewards", "reveal_scratch_offs"],
-    ["win_level_rewards", "trigger_random_sc_drops"],
-    ["spin_gold_mode_slots", "reveal_scratch_offs"],
-    ["spin_gold_mode_slots", "trigger_random_sc_drops"],
-    ["time", "participate_leaderboards"],
-    ["participate_leaderboards", "reveal_scratch_offs"],
-    ["time", "run_event_ticket_grants"],
-    ["run_event_ticket_grants", "reveal_scratch_offs"],
-    ["time", "claim_daily_sc"],
-    ["claim_daily_sc", "earn_streak_sc_bonus"],
-    ["claim_daily_sc", "accumulate_sc_ineligible"],
-    ["earn_streak_sc_bonus", "accumulate_sc_ineligible"],
-    ["trigger_random_sc_drops", "accumulate_sc_ineligible"],
-    ["time", "amoe_sc_claims"],
-    ["amoe_sc_claims", "accumulate_sc_ineligible"],
-    ["reveal_scratch_offs", "accumulate_sc_ineligible"],
-    ["accumulate_sc_ineligible", "enforce_daily_sc_cap"],
-    ["enforce_daily_sc_cap", "play_sc_mode_slots"],
-    ["enforce_daily_sc_cap", "monitor_budget_liability"],
-    ["time", "geofence_sc_mode"],
-    ["geofence_sc_mode", "play_sc_mode_slots"],
-    ["play_sc_mode_slots", "build_redeemable_balance"],
-    ["build_redeemable_balance", "sc_mode_rtp_burn"],
-    ["sc_mode_rtp_burn", "monitor_budget_liability"],
-    ["build_redeemable_balance", "monitor_budget_liability"],
-    ["monitor_budget_liability", "throttle_rtp_variant"],
-    ["build_redeemable_balance", "queue_redemption_requests"],
-    ["time", "complete_kyc"],
-    ["complete_kyc", "queue_redemption_requests"],
-    ["queue_redemption_requests", "enforce_redemption_cooldown"],
-    ["enforce_redemption_cooldown", "process_gift_card_redemption"],
-    ["enforce_redemption_cooldown", "process_cash_redemption"],
-    ["monitor_budget_liability", "process_cash_redemption"],
-    ["process_gift_card_redemption", "receive_gift_card_reward"],
-    ["process_cash_redemption", "receive_cash_payout"]
+    [
+      "time",
+      "claim_starter_grant"
+    ],
+    [
+      "time",
+      "collect_daily_gold_bonus"
+    ],
+    [
+      "time",
+      "complete_achievements"
+    ],
+    [
+      "money",
+      "purchase_gold_iap"
+    ],
+    [
+      "claim_starter_grant",
+      "attempt_level_entries"
+    ],
+    [
+      "collect_daily_gold_bonus",
+      "attempt_level_entries"
+    ],
+    [
+      "complete_achievements",
+      "attempt_level_entries"
+    ],
+    [
+      "purchase_gold_iap",
+      "attempt_level_entries"
+    ],
+    [
+      "claim_starter_grant",
+      "spin_gold_mode_slots"
+    ],
+    [
+      "collect_daily_gold_bonus",
+      "spin_gold_mode_slots"
+    ],
+    [
+      "purchase_gold_iap",
+      "spin_gold_mode_slots"
+    ],
+    [
+      "collect_daily_gold_bonus",
+      "purchase_boosts"
+    ],
+    [
+      "purchase_gold_iap",
+      "purchase_boosts"
+    ],
+    [
+      "complete_achievements",
+      "purchase_boosts"
+    ],
+    [
+      "purchase_boosts",
+      "attempt_level_entries"
+    ],
+    [
+      "attempt_level_entries",
+      "win_level_rewards"
+    ],
+    [
+      "win_level_rewards",
+      "reveal_scratch_offs"
+    ],
+    [
+      "win_level_rewards",
+      "trigger_random_sc_drops"
+    ],
+    [
+      "spin_gold_mode_slots",
+      "reveal_scratch_offs"
+    ],
+    [
+      "spin_gold_mode_slots",
+      "trigger_random_sc_drops"
+    ],
+    [
+      "time",
+      "participate_leaderboards"
+    ],
+    [
+      "participate_leaderboards",
+      "reveal_scratch_offs"
+    ],
+    [
+      "time",
+      "run_event_ticket_grants"
+    ],
+    [
+      "run_event_ticket_grants",
+      "reveal_scratch_offs"
+    ],
+    [
+      "time",
+      "claim_daily_sc"
+    ],
+    [
+      "claim_daily_sc",
+      "earn_streak_sc_bonus"
+    ],
+    [
+      "claim_daily_sc",
+      "accumulate_sc_ineligible"
+    ],
+    [
+      "earn_streak_sc_bonus",
+      "accumulate_sc_ineligible"
+    ],
+    [
+      "trigger_random_sc_drops",
+      "accumulate_sc_ineligible"
+    ],
+    [
+      "time",
+      "amoe_sc_claims"
+    ],
+    [
+      "amoe_sc_claims",
+      "accumulate_sc_ineligible"
+    ],
+    [
+      "reveal_scratch_offs",
+      "accumulate_sc_ineligible"
+    ],
+    [
+      "accumulate_sc_ineligible",
+      "enforce_daily_sc_cap"
+    ],
+    [
+      "enforce_daily_sc_cap",
+      "play_sc_mode_slots"
+    ],
+    [
+      "enforce_daily_sc_cap",
+      "monitor_budget_liability"
+    ],
+    [
+      "time",
+      "geofence_sc_mode"
+    ],
+    [
+      "geofence_sc_mode",
+      "play_sc_mode_slots"
+    ],
+    [
+      "play_sc_mode_slots",
+      "build_redeemable_balance"
+    ],
+    [
+      "build_redeemable_balance",
+      "sc_mode_rtp_burn"
+    ],
+    [
+      "sc_mode_rtp_burn",
+      "monitor_budget_liability"
+    ],
+    [
+      "build_redeemable_balance",
+      "monitor_budget_liability"
+    ],
+    [
+      "monitor_budget_liability",
+      "throttle_rtp_variant"
+    ],
+    [
+      "build_redeemable_balance",
+      "queue_redemption_requests"
+    ],
+    [
+      "time",
+      "complete_kyc"
+    ],
+    [
+      "complete_kyc",
+      "queue_redemption_requests"
+    ],
+    [
+      "queue_redemption_requests",
+      "enforce_redemption_cooldown"
+    ],
+    [
+      "enforce_redemption_cooldown",
+      "process_gift_card_redemption"
+    ],
+    [
+      "enforce_redemption_cooldown",
+      "process_cash_redemption"
+    ],
+    [
+      "monitor_budget_liability",
+      "process_cash_redemption"
+    ],
+    [
+      "process_gift_card_redemption",
+      "receive_gift_card_reward"
+    ],
+    [
+      "process_cash_redemption",
+      "receive_cash_payout"
+    ]
   ]
 }

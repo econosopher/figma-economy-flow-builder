@@ -154,7 +154,7 @@ Resources that players **accumulate** but **cannot spend directly**. These repre
 The plugin uses a JSON object to define the flowchart. This object has the following properties:
 
 ### `name` (optional)
-A string that names the economy or game. This will be used as the section title in FigJam. If not provided, defaults to "EconomyFlowChart Section".
+A string that names the economy or game. If provided, the plugin titles the main section as `<name> Economy` (so use just the game name — don’t include the word “Economy”). If not provided, defaults to `"EconomyFlowChart Section"`.
 
 **Example:**
 ```json
@@ -260,11 +260,11 @@ The most valuable economy diagram anchors in player action, where currencies pla
 
 Goods with Green + (`sources`) or Red - (`sources`) are currencies that maintain debits and credits, while player XP (`values`) is orange, a store of value, since players can’t “spend” XP. There are other systems in games that are "tallies", and that's what we're tracking here. Eventually, this will lead to a node that triggers a level-up (usually) or a collection event (such as a milestone or quest system) that sources rewards.
 
-The output MUST be a single, complete JSON object with EXACTLY these three top-level keys: `inputs`, `nodes`, and `edges`. Optional fourth key: `subsections`.
+The output MUST be a single, complete JSON object. Required top-level keys: `inputs`, `nodes`, and `edges`. Optional keys: `name`, `subsections`.
 
 ### Critical JSON Structure Rules:
 
-1. **NO MARKDOWN FORMATTING**: Output ONLY the raw JSON object. No \`\`\`json tags, no explanations before or after.
+1. **PREFER RAW JSON**: Output ONLY the JSON object (no explanations before/after). Avoid wrapping in markdown fences if possible (the plugin will attempt to extract JSON if it happens).
 2. **NO TRAILING COMMAS**: Never put a comma after the last item in any array or object.
 3. **SIMPLIFIED NODE ARRAYS**: The `sources`, `sinks`, and `values` properties are now OPTIONAL:
 ```
@@ -396,11 +396,12 @@ Generate the complete JSON for "[Specify Game Title Here]" following these exact
 | File | Purpose |
 |------|---------|
 | `manifest.json` | Minimal manifest (`main: "code.js"`) |
-| `code.ts` | Main plugin logic (TypeScript source) |
+| `src/` | Main plugin logic (TypeScript source) |
+| `build.js` | Bundles `src/main.ts` → `code.js` with esbuild |
 | `ui.html` | UI layout, styling, and client-side script |
 | `tsconfig.json` | Compiler config with Figma typings |
 | `.gitignore` | Ignores `node_modules/` and `code.js` |
-| `/examples` | Contains example JSON files. |
+| `/examples` | Example preset JSON files (include `name`). |
 
 ---
 

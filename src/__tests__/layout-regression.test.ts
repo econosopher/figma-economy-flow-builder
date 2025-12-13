@@ -5,19 +5,24 @@ import { LayoutEngine } from '../layout';
 import { BOX_SIZE, INITIAL_X_OFFSET, INITIAL_Y_OFFSET, PADDING } from '../constants';
 import { CollisionDetector, Rectangle } from '../collision';
 import { Graph, Act, Input } from '../types';
+import { validateGraphData } from '../validation';
 
-const SAMPLE_FILES = [
-  'examples/apex_legends.json',
-  'examples/helldivers.json',
-  'examples/mecha_break.json',
-  'examples/rainbow_six_siege.json',
-  'examples/subsections_example.json'
-];
+const SAMPLE_FILES = (() => {
+  const examplesDir = path.join(__dirname, '..', '..', 'examples');
+  return fs
+    .readdirSync(examplesDir)
+    .filter(file => file.endsWith('.json'))
+    .filter(file => file !== 'economy-flow-plugin.code-workspace')
+    .map(file => `examples/${file}`);
+})();
 
 function loadGraph(filename: string): Graph {
   const filePath = path.join(__dirname, '..', '..', filename);
   const raw = fs.readFileSync(filePath, 'utf-8');
-  return JSON.parse(raw);
+  const parsed = JSON.parse(raw);
+  const errors = validateGraphData(parsed);
+  expect(errors).toEqual([]);
+  return parsed;
 }
 
 interface PositionedNode {

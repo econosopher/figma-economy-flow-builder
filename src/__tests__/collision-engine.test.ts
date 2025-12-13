@@ -1,6 +1,74 @@
-import { CollisionEngine } from '../collision';
+import { CollisionDetector, CollisionEngine, Line, Point } from '../collision';
+
+function buildSegments(start: Point, end: Point, mode: 'horizontal-first' | 'vertical-first'): Line[] {
+  if (start.x === end.x || start.y === end.y) {
+    return [{ start, end }];
+  }
+
+  if (mode === 'vertical-first') {
+    const verticalTurn: Point = { x: start.x, y: end.y };
+    const segments: Line[] = [];
+    if (start.x !== verticalTurn.x || start.y !== verticalTurn.y) {
+      segments.push({ start, end: verticalTurn });
+    }
+    if (verticalTurn.x !== end.x || verticalTurn.y !== end.y) {
+      segments.push({ start: verticalTurn, end });
+    }
+    return segments.length > 0 ? segments : [{ start, end }];
+  }
+
+  const midX = start.x + (end.x - start.x) / 2;
+  const horizontalEnd: Point = { x: midX, y: start.y };
+  const verticalEnd: Point = { x: midX, y: end.y };
+
+  const segments: Line[] = [];
+  if (start.x !== horizontalEnd.x || start.y !== horizontalEnd.y) {
+    segments.push({ start, end: horizontalEnd });
+  }
+  if (horizontalEnd.x !== verticalEnd.x || horizontalEnd.y !== verticalEnd.y) {
+    segments.push({ start: horizontalEnd, end: verticalEnd });
+  }
+  if (verticalEnd.x !== end.x || verticalEnd.y !== end.y) {
+    segments.push({ start: verticalEnd, end });
+  }
+  return segments.length > 0 ? segments : [{ start, end }];
+}
 
 describe('CollisionEngine.findConflictFreeY - edge to node avoidance', () => {
+  it('resolves node-to-node margin collisions across spatial grid cell boundaries', () => {
+    const engine = new CollisionEngine({ margin: 30, edgeToNode: false, nodeToNode: true });
+
+    // Place an existing node entirely in grid row 1 (y >= 100).
+    const existingId = 'existing';
+    const existingRect = { x: 0, y: 110, width: 10, height: 10 };
+
+    // Candidate node is in grid row 0 but within margin distance of the existing node.
+    const nodeId = 'candidate';
+    const x = 0;
+    const initialY = 79; // bottom=89 => vertical gap to existing top=110 is 21px
+    const nodeWidth = 10;
+    const nodeHeight = 10;
+
+    const context = {
+      nodePositions: new Map<string, any>([[existingId, existingRect]]),
+      edges: [],
+      padding: { x: 0, y: 0 }
+    };
+
+    const y = engine.findConflictFreeY(
+      nodeId,
+      x,
+      initialY,
+      nodeWidth,
+      nodeHeight,
+      context as any,
+      []
+    );
+
+    // Should push below existing by margin (and ensure strict-margin equality doesn't stall).
+    expect(y).toBe(existingRect.y + existingRect.height + context.padding.y + 30 + 1);
+  });
+
   it('pushes node down to avoid crossing an intermediate node', () => {
     const engine = new CollisionEngine({ margin: 10, edgeToNode: true, nodeToNode: true });
 
@@ -49,6 +117,58 @@ describe('CollisionEngine.findConflictFreeY - edge to node avoidance', () => {
     // Most importantly, verify the algorithm doesn't throw and returns a valid position
     expect(typeof y).toBe('number');
     expect(Number.isFinite(y)).toBe(true);
+  });
+
+  it('detects edge collisions across spatial grid cell boundaries (margin-aware queries)', () => {
+    const margin = 20;
+    const engine = new CollisionEngine({ margin, edgeToNode: true, nodeToNode: true });
+
+    // Choose a parent Y so the horizontal segment sits just below the 100px grid boundary.
+    const parentId = 'parent';
+    const parentRect = { x: 0, y: 54, width: 144, height: 90 }; // centerY = 99
+
+    // Place blocker entirely in the next grid row (y >= 100) but within `margin` of the segment.
+    const blockerId = 'blocker';
+    const blockerRect = { x: 200, y: 110, width: 144, height: 90 };
+
+    const context = {
+      nodePositions: new Map<string, any>([
+        [parentId, parentRect],
+        [blockerId, blockerRect]
+      ]),
+      edges: [],
+      padding: { x: 100, y: 40 }
+    };
+
+    const nodeId = 'child';
+    const x = 400;
+    const initialY = 54; // centerY = 99 (the segment that should be blocked by `blockerRect` once margin is considered)
+    const nodeWidth = 144;
+    const nodeHeight = 90;
+
+    const y = engine.findConflictFreeY(
+      nodeId,
+      x,
+      initialY,
+      nodeWidth,
+      nodeHeight,
+      context as any,
+      [parentId]
+    );
+
+    expect(y).toBeGreaterThan(initialY);
+
+    const childRect = { x, y, width: nodeWidth, height: nodeHeight };
+    const start = engine.getNodeConnectionPoint(parentId, parentRect, 'output');
+    const end = engine.getNodeConnectionPoint(nodeId, childRect, 'input');
+    const orientations: Array<'horizontal-first' | 'vertical-first'> = ['horizontal-first', 'vertical-first'];
+
+    const hasSafePath = orientations.some(mode => {
+      const segments = buildSegments(start, end, mode);
+      return segments.every(segment => !CollisionDetector.lineIntersectsRectangle(segment, blockerRect, margin).collides);
+    });
+
+    expect(hasSafePath).toBe(true);
   });
 
   it('returns initial Y when no obstacles block the path', () => {

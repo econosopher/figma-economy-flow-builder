@@ -1,156 +1,301 @@
 {
-    "name": "Mecha Break",
-    "inputs": [
-      { "id": "time", "label": "Time", "kind": "initial_sink_node" },
-      { "id": "money", "label": "Money", "kind": "initial_sink_node" }
+  "name": "Mecha Break",
+  "inputs": [
+    {
+      "id": "time",
+      "label": "Time",
+      "kind": "initial_sink_node"
+    },
+    {
+      "id": "money",
+      "label": "Money",
+      "kind": "initial_sink_node"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "play_mashmak",
+      "label": "To Play Operation Storm (Mashmak)",
+      "sources": [
+        "Mods",
+        "Weapons",
+        "Mission Tokens"
+      ]
+    },
+    {
+      "id": "mashmak_challenges",
+      "label": "To Complete Mashmak Challenges",
+      "sources": [
+        "Matrix Credits"
+      ]
+    },
+    {
+      "id": "play_pvp_modes",
+      "label": "To Play PvP Modes (Verge/Ace Arena)",
+      "sources": [
+        "Mission Tokens"
+      ]
+    },
+    {
+      "id": "pvp_challenges",
+      "label": "To Complete PvP Challenges",
+      "sources": [
+        "Mission Tokens"
+      ]
+    },
+    {
+      "id": "upgrade_gear",
+      "label": "To Upgrade Gear",
+      "sinks": [
+        "Matrix Credits"
+      ]
+    },
+    {
+      "id": "create_upgraded_mods",
+      "label": "To Create Upgraded Mods",
+      "sources": [
+        "Upgraded Mods"
+      ],
+      "sinks": [
+        "Matrix Credits",
+        "Mods"
+      ]
+    },
+    {
+      "id": "fund_research",
+      "label": "To Fund Research Projects",
+      "sinks": [
+        "Matrix Credits"
+      ]
+    },
+    {
+      "id": "buy_loadout_items",
+      "label": "To Buy Loadout Items",
+      "sinks": [
+        "Matrix Credits"
+      ]
+    },
+    {
+      "id": "sell_on_marketplace",
+      "label": "To Sell Gear on Matrix Marketplace",
+      "sources": [
+        "Corite"
+      ],
+      "sinks": [
+        "Weapons",
+        "Mods",
+        "Upgraded Mods"
+      ]
+    },
+    {
+      "id": "sell_for_credits",
+      "label": "To Sell Gear for Matrix Credits",
+      "sources": [
+        "Matrix Credits"
+      ],
+      "sinks": [
+        "Weapons",
+        "Mods",
+        "Upgraded Mods"
+      ]
+    },
+    {
+      "id": "purchase_corite",
+      "label": "To Purchase Corite (Exchange Packs)",
+      "sources": [
+        "Corite"
+      ],
+      "sinks": [
+        "Money"
+      ]
+    },
+    {
+      "id": "buy_matrix_contract",
+      "label": "To Buy Matrix Contract (Battle Pass)",
+      "sources": [
+        "Matrix Credits"
+      ],
+      "sinks": [
+        "Corite"
+      ]
+    },
+    {
+      "id": "convert_corite_to_credits",
+      "label": "To Convert Corite to Matrix Credits",
+      "sources": [
+        "Matrix Credits"
+      ],
+      "sinks": [
+        "Corite"
+      ]
+    },
+    {
+      "id": "spend_corite_cosmetics",
+      "label": "To Purchase Cosmetics (with Corite)",
+      "sinks": [
+        "Corite"
+      ]
+    },
+    {
+      "id": "spend_tokens_new_mechs",
+      "label": "To Purchase New Mechs (with Tokens)",
+      "sinks": [
+        "Mission Tokens"
+      ]
+    },
+    {
+      "id": "spend_tokens_cosmetics",
+      "label": "To Purchase Cosmetics (with Tokens)",
+      "sinks": [
+        "Mission Tokens"
+      ]
+    },
+    {
+      "id": "complete_collection",
+      "label": "To Complete Entire Collection",
+      "kind": "final_good",
+      "sources": [
+        "Collection Completion"
+      ]
+    },
+    {
+      "id": "prestige_reset",
+      "label": "To Prestige (Reset Progress)",
+      "sources": [
+        "Prestige"
+      ],
+      "sinks": [
+        "Collection Completion"
+      ]
+    },
+    {
+      "id": "unlock_prestige_pilots",
+      "label": "To Unlock Prestige Rewards/Pilots",
+      "sinks": [
+        "Prestige"
+      ]
+    }
+  ],
+  "edges": [
+    [
+      "time",
+      "play_mashmak"
     ],
-    "nodes": [
-      {
-        "id": "play_mashmak",
-        "label": "To Play Operation Storm (Mashmak)",
-        "sources": [ "Mods", "Weapons", "Mission Tokens" ],
-        "sinks": []
-      },
-      {
-        "id": "mashmak_challenges",
-        "label": "To Complete Mashmak Challenges",
-        "sources": [ "Matrix Credits" ],
-        "sinks": []
-      },
-      {
-        "id": "play_pvp_modes",
-        "label": "To Play PvP Modes (Verge/Ace Arena)",
-        "sources": [ "Mission Tokens" ],
-        "sinks": []
-      },
-      {
-        "id": "pvp_challenges",
-        "label": "To Complete PvP Challenges",
-        "sources": [ "Mission Tokens" ],
-        "sinks": []
-      },
-      {
-        "id": "upgrade_gear",
-        "label": "To Upgrade Gear",
-        "sources": [],
-        "sinks": [ "Matrix Credits" ]
-      },
-      {
-        "id": "create_upgraded_mods",
-        "label": "To Create Upgraded Mods",
-        "sources": [ "Upgraded Mods" ],
-        "sinks": [ "Matrix Credits", "Mods" ]
-      },
-      {
-        "id": "fund_research",
-        "label": "To Fund Research Projects",
-        "sources": [],
-        "sinks": [ "Matrix Credits" ]
-      },
-      {
-        "id": "buy_loadout_items",
-        "label": "To Buy Loadout Items",
-        "sources": [],
-        "sinks": [ "Matrix Credits" ]
-      },
-      {
-        "id": "sell_on_marketplace",
-        "label": "To Sell Gear on Matrix Marketplace",
-        "sources": [ "Corite" ],
-        "sinks": [ "Weapons", "Mods", "Upgraded Mods" ]
-      },
-      {
-        "id": "sell_for_credits",
-        "label": "To Sell Gear for Matrix Credits",
-        "sources": [ "Matrix Credits" ],
-        "sinks": [ "Weapons", "Mods", "Upgraded Mods" ]
-      },
-      {
-        "id": "purchase_corite",
-        "label": "To Purchase Corite (Exchange Packs)",
-        "sources": [ "Corite" ],
-        "sinks": [ "Money" ]
-      },
-      {
-        "id": "buy_matrix_contract",
-        "label": "To Buy Matrix Contract (Battle Pass)",
-        "sources": [ "Matrix Credits" ],
-        "sinks": [ "Corite" ]
-      },
-      {
-        "id": "convert_corite_to_credits",
-        "label": "To Convert Corite to Matrix Credits",
-        "sources": [ "Matrix Credits" ],
-        "sinks": [ "Corite" ]
-      },
-      {
-        "id": "spend_corite_cosmetics",
-        "label": "To Purchase Cosmetics (with Corite)",
-        "sources": [],
-        "sinks": [ "Corite" ]
-      },
-      {
-        "id": "spend_tokens_new_mechs",
-        "label": "To Purchase New Mechs (with Tokens)",
-        "sources": [],
-        "sinks": [ "Mission Tokens" ]
-      },
-      {
-        "id": "spend_tokens_cosmetics",
-        "label": "To Purchase Cosmetics (with Tokens)",
-        "sources": [],
-        "sinks": [ "Mission Tokens" ]
-      },
-      {
-        "id": "complete_collection",
-        "label": "To Complete Entire Collection",
-        "kind": "final_good",
-        "sources": [ "Collection Completion" ],
-        "sinks": []
-      },
-      {
-        "id": "prestige_reset",
-        "label": "To Prestige (Reset Progress)",
-        "sources": [ "Prestige" ],
-        "sinks": [ "Collection Completion" ]
-      },
-      {
-        "id": "unlock_prestige_pilots",
-        "label": "To Unlock Prestige Rewards/Pilots",
-        "sources": [],
-        "sinks": [ "Prestige" ]
-      }
+    [
+      "play_mashmak",
+      "mashmak_challenges"
     ],
-    "edges": [
-      [ "time", "play_mashmak" ],
-      [ "play_mashmak", "mashmak_challenges" ],
-      [ "time", "play_pvp_modes" ],
-      [ "play_pvp_modes", "pvp_challenges" ],
-      [ "play_mashmak", "upgrade_gear" ],
-      [ "play_mashmak", "create_upgraded_mods" ],
-      [ "play_mashmak", "sell_on_marketplace" ],
-      [ "play_mashmak", "sell_for_credits" ],
-      [ "create_upgraded_mods", "sell_on_marketplace" ],
-      [ "mashmak_challenges", "upgrade_gear" ],
-      [ "mashmak_challenges", "create_upgraded_mods" ],
-      [ "mashmak_challenges", "fund_research" ],
-      [ "mashmak_challenges", "buy_loadout_items" ],
-      [ "sell_for_credits", "upgrade_gear" ],
-      [ "purchase_corite", "spend_corite_cosmetics" ],
-      [ "purchase_corite", "buy_matrix_contract" ],
-      [ "sell_on_marketplace", "spend_corite_cosmetics" ],
-      [ "sell_on_marketplace", "buy_matrix_contract" ],
-      [ "sell_on_marketplace", "convert_corite_to_credits" ],
-      [ "purchase_corite", "convert_corite_to_credits" ],
-      [ "buy_matrix_contract", "upgrade_gear" ],
-      [ "convert_corite_to_credits", "upgrade_gear" ],
-      [ "money", "purchase_corite" ],
-      [ "play_pvp_modes", "spend_tokens_new_mechs" ],
-      [ "pvp_challenges", "spend_tokens_cosmetics" ],
-      [ "spend_corite_cosmetics", "complete_collection" ],
-      [ "spend_tokens_new_mechs", "complete_collection" ],
-      [ "spend_tokens_cosmetics", "complete_collection" ],
-      [ "complete_collection", "prestige_reset" ],
-      [ "prestige_reset", "unlock_prestige_pilots" ]
+    [
+      "time",
+      "play_pvp_modes"
+    ],
+    [
+      "play_pvp_modes",
+      "pvp_challenges"
+    ],
+    [
+      "play_mashmak",
+      "upgrade_gear"
+    ],
+    [
+      "play_mashmak",
+      "create_upgraded_mods"
+    ],
+    [
+      "play_mashmak",
+      "sell_on_marketplace"
+    ],
+    [
+      "play_mashmak",
+      "sell_for_credits"
+    ],
+    [
+      "create_upgraded_mods",
+      "sell_on_marketplace"
+    ],
+    [
+      "mashmak_challenges",
+      "upgrade_gear"
+    ],
+    [
+      "mashmak_challenges",
+      "create_upgraded_mods"
+    ],
+    [
+      "mashmak_challenges",
+      "fund_research"
+    ],
+    [
+      "mashmak_challenges",
+      "buy_loadout_items"
+    ],
+    [
+      "sell_for_credits",
+      "upgrade_gear"
+    ],
+    [
+      "purchase_corite",
+      "spend_corite_cosmetics"
+    ],
+    [
+      "purchase_corite",
+      "buy_matrix_contract"
+    ],
+    [
+      "sell_on_marketplace",
+      "spend_corite_cosmetics"
+    ],
+    [
+      "sell_on_marketplace",
+      "buy_matrix_contract"
+    ],
+    [
+      "sell_on_marketplace",
+      "convert_corite_to_credits"
+    ],
+    [
+      "purchase_corite",
+      "convert_corite_to_credits"
+    ],
+    [
+      "buy_matrix_contract",
+      "upgrade_gear"
+    ],
+    [
+      "convert_corite_to_credits",
+      "upgrade_gear"
+    ],
+    [
+      "money",
+      "purchase_corite"
+    ],
+    [
+      "play_pvp_modes",
+      "spend_tokens_new_mechs"
+    ],
+    [
+      "pvp_challenges",
+      "spend_tokens_cosmetics"
+    ],
+    [
+      "spend_corite_cosmetics",
+      "complete_collection"
+    ],
+    [
+      "spend_tokens_new_mechs",
+      "complete_collection"
+    ],
+    [
+      "spend_tokens_cosmetics",
+      "complete_collection"
+    ],
+    [
+      "complete_collection",
+      "prestige_reset"
+    ],
+    [
+      "prestige_reset",
+      "unlock_prestige_pilots"
     ]
-  }
+  ]
+}

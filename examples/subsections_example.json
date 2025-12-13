@@ -1,46 +1,150 @@
 {
   "name": "Subsections Example",
   "inputs": [
-    { "id": "time", "label": "Player Time", "kind": "initial_sink_node" },
-    { "id": "money", "label": "Real Money", "kind": "initial_sink_node" }
+    {
+      "id": "time",
+      "label": "Player Time",
+      "kind": "initial_sink_node"
+    },
+    {
+      "id": "money",
+      "label": "Real Money",
+      "kind": "initial_sink_node"
+    }
   ],
   "nodes": [
-    { "id": "tutorial", "label": "Complete Tutorial", "sources": ["Basic Knowledge", "10 Gems"] },
-    { "id": "first_match", "label": "Play First Match", "sources": ["50 XP", "5 Coins"], "sinks": ["Energy"] },
-    { "id": "buy_starter", "label": "Buy Starter Pack", "sources": ["Premium Items"], "sinks": ["10 Gems"] },
-    { "id": "daily_quest", "label": "Complete Daily Quest", "sources": ["100 XP", "20 Coins"], "sinks": ["Time"] },
-    { "id": "pvp_match", "label": "PvP Match", "sources": ["200 XP", "50 Coins", "Rank Points"], "sinks": ["Energy", "Time"] },
-    { "id": "buy_premium", "label": "Buy Premium Pass", "sources": ["VIP Status", "1000 Gems"], "sinks": [] },
-    { "id": "endgame", "label": "Reach Max Level", "kind": "final_good" }
+    {
+      "id": "tutorial",
+      "label": "Complete Tutorial",
+      "sources": [
+        "Basic Knowledge",
+        "10 Gems"
+      ]
+    },
+    {
+      "id": "first_match",
+      "label": "Play First Match",
+      "sources": [
+        "50 XP",
+        "5 Coins"
+      ],
+      "sinks": [
+        "Energy"
+      ]
+    },
+    {
+      "id": "buy_starter",
+      "label": "Buy Starter Pack",
+      "sources": [
+        "Premium Items"
+      ],
+      "sinks": [
+        "10 Gems"
+      ]
+    },
+    {
+      "id": "daily_quest",
+      "label": "Complete Daily Quest",
+      "sources": [
+        "100 XP",
+        "20 Coins"
+      ],
+      "sinks": [
+        "Time"
+      ]
+    },
+    {
+      "id": "pvp_match",
+      "label": "PvP Match",
+      "sources": [
+        "200 XP",
+        "50 Coins",
+        "Rank Points"
+      ],
+      "sinks": [
+        "Energy",
+        "Time"
+      ]
+    },
+    {
+      "id": "buy_premium",
+      "label": "Buy Premium Pass",
+      "sources": [
+        "VIP Status",
+        "1000 Gems"
+      ]
+    },
+    {
+      "id": "endgame",
+      "label": "Reach Max Level",
+      "kind": "final_good"
+    }
   ],
   "edges": [
-    ["time", "tutorial"],
-    ["tutorial", "first_match"],
-    ["money", "buy_starter"],
-    ["buy_starter", "first_match"],
-    ["first_match", "daily_quest"],
-    ["daily_quest", "pvp_match"],
-    ["money", "buy_premium"],
-    ["pvp_match", "endgame"],
-    ["buy_premium", "endgame"]
+    [
+      "time",
+      "tutorial"
+    ],
+    [
+      "tutorial",
+      "first_match"
+    ],
+    [
+      "money",
+      "buy_starter"
+    ],
+    [
+      "buy_starter",
+      "first_match"
+    ],
+    [
+      "first_match",
+      "daily_quest"
+    ],
+    [
+      "daily_quest",
+      "pvp_match"
+    ],
+    [
+      "money",
+      "buy_premium"
+    ],
+    [
+      "pvp_match",
+      "endgame"
+    ],
+    [
+      "buy_premium",
+      "endgame"
+    ]
   ],
   "subsections": [
     {
       "id": "onboarding",
       "label": "New Player Onboarding",
-      "nodeIds": ["tutorial", "first_match", "buy_starter"],
+      "nodeIds": [
+        "tutorial",
+        "first_match",
+        "buy_starter"
+      ],
       "color": "#E3F2FD"
     },
     {
       "id": "core_loop",
       "label": "Core Gameplay Loop",
-      "nodeIds": ["daily_quest", "pvp_match"],
+      "nodeIds": [
+        "daily_quest",
+        "pvp_match"
+      ],
       "color": "#F3E5F5"
     },
     {
       "id": "monetization",
       "label": "Monetization",
-      "nodeIds": ["buy_starter", "buy_premium"],
+      "nodeIds": [
+        "buy_starter",
+        "buy_premium"
+      ],
       "color": "#FFF3E0"
     }
   ]

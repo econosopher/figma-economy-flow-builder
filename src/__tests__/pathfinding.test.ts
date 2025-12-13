@@ -32,18 +32,6 @@ describe('Pathfinder', () => {
     });
 
     it('should return null if no path exists', () => {
-        const start: Point = { x: 0, y: 0 };
-        const end: Point = { x: 100, y: 0 };
-        // Create a wall
-        const obstacles: Rectangle[] = [
-            { x: 50, y: -100, width: 10, height: 200 }
-        ];
-
-        // Limit iterations in test by using a small grid or complex obstacle?
-        // Actually, A* should just fail if it can't reach.
-        // But with infinite space, it might go around very far.
-        // Our implementation has a max iteration limit.
-
         // Let's box it in completely
         const box: Rectangle[] = [
             { x: -10, y: -10, width: 120, height: 10 }, // Top
@@ -53,7 +41,9 @@ describe('Pathfinder', () => {
         ];
 
         // Start inside, end outside
-        const path = pathfinder.findPath({ x: 50, y: 0 }, { x: 150, y: 0 }, box);
+        const start: Point = { x: 50, y: 0 };
+        const end: Point = { x: 150, y: 0 };
+        const path = pathfinder.findPath(start, end, box);
         expect(path).toBeNull();
     });
 });

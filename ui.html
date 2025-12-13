@@ -231,7 +231,7 @@
             <img src="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3ccircle cx='12' cy='12' r='3'%3e%3c/circle%3e%3cpath d='M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z'%3e%3c/path%3e%3c/svg%3e" alt="Logo">
             <div style="flex: 1;">
                 <h1 style="margin: 0;">Economy-Flow Builder</h1>
-                <div id="version-info" style="font-size: 10px; color: #666; margin-top: 2px;">v1.2.71 • Loading...</div>
+                <div id="version-info" style="font-size: 10px; color: #666; margin-top: 2px;">v1.2.72 • Loading...</div>
             </div>
         </header>
 
@@ -361,15 +361,151 @@
     </div>
 
     <script>
-     const t=document.getElementById('json'),s=document.getElementById('status'),tmpl=document.getElementById('template-select');
-     const post=(cmd,obj={})=>parent.postMessage({pluginMessage:{cmd,...obj}},'*');
-     
-     // Update timestamp on load
-     const updateTimestamp = () => {
+	     const t=document.getElementById('json'),s=document.getElementById('status'),tmpl=document.getElementById('template-select');
+	     const post=(cmd,obj={})=>parent.postMessage({pluginMessage:{cmd,...obj}},'*');
+
+	     function parseJsonFromText(output) {
+	       const candidates = [];
+	       const fenceRegex = /```(?:json)?\s*([\s\S]*?)```/gi;
+	       let match;
+	       while ((match = fenceRegex.exec(output)) !== null) {
+	         candidates.push(match[1]);
+	       }
+	       candidates.push(output);
+
+	       let fallback;
+
+	       for (const candidate of candidates) {
+	         const trimmed = String(candidate || '').trim();
+	         if (!trimmed) continue;
+
+	         try {
+	           const parsed = unwrapJsonString(JSON.parse(trimmed));
+	           if (looksLikeEconomyGraph(parsed)) return parsed;
+	           if (fallback === undefined) fallback = parsed;
+	         } catch (e) {
+	           // continue
+	         }
+
+	         const extractedValues = extractJsonValues(trimmed);
+	         for (const extracted of extractedValues) {
+	           try {
+	             const parsed = unwrapJsonString(JSON.parse(extracted));
+	             if (looksLikeEconomyGraph(parsed)) return parsed;
+	             if (fallback === undefined) fallback = parsed;
+	           } catch (e) {
+	             // continue
+	           }
+	         }
+	       }
+
+	       if (fallback !== undefined) return fallback;
+
+	       throw new Error('Invalid JSON format.');
+	     }
+
+	     function looksLikeEconomyGraph(value) {
+	       return (
+	         value &&
+	         typeof value === 'object' &&
+	         Array.isArray(value.inputs) &&
+	         Array.isArray(value.nodes) &&
+	         Array.isArray(value.edges)
+	       );
+	     }
+
+	     function unwrapJsonString(value) {
+	       if (typeof value !== 'string') return value;
+	       const trimmed = value.trim();
+	       if (!trimmed) return value;
+	       try {
+	         return JSON.parse(trimmed);
+	       } catch (e) {
+	         return value;
+	       }
+	     }
+
+	     function extractJsonValues(text) {
+	       const results = [];
+	       let inString = false;
+	       let escape = false;
+
+	       for (let i = 0; i < text.length; i++) {
+	         const ch = text[i];
+
+	         if (inString) {
+	           if (escape) {
+	             escape = false;
+	             continue;
+	           }
+	           if (ch === '\\\\') {
+	             escape = true;
+	             continue;
+	           }
+	           if (ch === '"') inString = false;
+	           continue;
+	         }
+
+	         if (ch === '"') {
+	           inString = true;
+	           continue;
+	         }
+
+	         if (ch !== '{' && ch !== '[') continue;
+	         const end = findMatchingBracketEnd(text, i);
+	         if (end !== null) results.push(text.slice(i, end + 1));
+	       }
+
+	       return results;
+	     }
+
+	     function findMatchingBracketEnd(text, startIndex) {
+	       const open = text[startIndex];
+	       const close = open === '{' ? '}' : open === '[' ? ']' : null;
+	       if (!close) return null;
+
+	       const stack = [close];
+	       let inString = false;
+	       let escape = false;
+
+	       for (let i = startIndex + 1; i < text.length; i++) {
+	         const ch = text[i];
+
+	         if (inString) {
+	           if (escape) {
+	             escape = false;
+	             continue;
+	           }
+	           if (ch === '\\\\') {
+	             escape = true;
+	             continue;
+	           }
+	           if (ch === '"') inString = false;
+	           continue;
+	         }
+
+	         if (ch === '"') {
+	           inString = true;
+	           continue;
+	         }
+
+	         if (ch === '{') stack.push('}');
+	         else if (ch === '[') stack.push(']');
+	         else if (ch === stack[stack.length - 1]) {
+	           stack.pop();
+	           if (stack.length === 0) return i;
+	         }
+	       }
+
+	       return null;
+	     }
+	     
+	     // Update timestamp on load
+	     const updateTimestamp = () => {
        const now = new Date();
        const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
        const dateStr = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-       document.getElementById('version-info').textContent = `v1.2.71 • ${dateStr} ${timeStr}`;
+       document.getElementById('version-info').textContent = `v1.2.72 • ${dateStr} ${timeStr}`;
      };
      
      updateTimestamp();
@@ -964,32 +1100,32 @@
        }
      };
      
-     document.getElementById('use-research').onclick = () => {
-       const researchJson = researchOutput.value.trim();
-       if (!researchJson || researchJson === 'Generated cache JSON will appear here...') {
-         researchStatus.style.color = '#c62828';
-         researchStatus.textContent = 'No results to use. Generate a cache first.';
-         return;
-       }
-       
-       // Try to parse and see if it's an economy JSON (not just cache)
-       try {
-         const data = JSON.parse(researchJson);
-         if (data.inputs && data.nodes && data.edges) {
-           // It's a full economy JSON, use it
-           document.querySelector('[data-tab="main"]').click();
-           t.value = researchJson;
-           s.style.color = '#2e7d32';
-           s.textContent = 'Economy loaded into builder.';
-         } else {
-           researchStatus.style.color = '#c62828';
-           researchStatus.textContent = 'This is a cache, not an economy JSON. Generate the economy first.';
-         }
-       } catch (e) {
-         researchStatus.style.color = '#c62828';
-         researchStatus.textContent = 'Invalid JSON format.';
-       }
-     };
+	     document.getElementById('use-research').onclick = () => {
+	       const researchJson = researchOutput.value.trim();
+	       if (!researchJson || researchJson === 'Generated cache JSON will appear here...') {
+	         researchStatus.style.color = '#c62828';
+	         researchStatus.textContent = 'No results to use. Generate a cache first.';
+	         return;
+	       }
+	       
+	       // Try to parse and see if it's an economy JSON (not just cache)
+	       try {
+	         const data = parseJsonFromText(researchJson);
+	         if (Array.isArray(data.inputs) && Array.isArray(data.nodes) && Array.isArray(data.edges)) {
+	           // It's a full economy JSON, use it
+	           document.querySelector('[data-tab="main"]').click();
+	           t.value = JSON.stringify(data, null, 2);
+	           s.style.color = '#2e7d32';
+	           s.textContent = 'Economy loaded into builder.';
+	         } else {
+	           researchStatus.style.color = '#c62828';
+	           researchStatus.textContent = 'This is a cache, not an economy JSON. Generate the economy first.';
+	         }
+	       } catch (e) {
+	         researchStatus.style.color = '#c62828';
+	         researchStatus.textContent = 'Invalid JSON format.';
+	       }
+	     };
      
      const prCommentInput = document.getElementById('pr-comment');
      
@@ -1011,22 +1147,23 @@
          return;
        }
        
-       // Validate it's an economy JSON
-       try {
-         const data = JSON.parse(researchJson);
-         if (!data.inputs || !data.nodes || !data.edges) {
-           researchStatus.style.color = '#c62828';
-           researchStatus.textContent = 'Please generate a full economy JSON first, not just a cache.';
-           return;
-         }
-         
-         // Send to plugin to create PR
-         post('create-github-pr', { 
-           gameName, 
-           json: researchJson,
-           fileName: gameName.toLowerCase().replace(/\s+/g, '_') + '.json',
-           comment: prComment || null
-         });
+	       // Validate it's an economy JSON
+	       try {
+	         const data = parseJsonFromText(researchJson);
+	         if (!Array.isArray(data.inputs) || !Array.isArray(data.nodes) || !Array.isArray(data.edges)) {
+	           researchStatus.style.color = '#c62828';
+	           researchStatus.textContent = 'Please generate a full economy JSON first, not just a cache.';
+	           return;
+	         }
+	         const normalizedJson = JSON.stringify(data, null, 2);
+	         
+	         // Send to plugin to create PR
+	         post('create-github-pr', { 
+	           gameName, 
+	           json: normalizedJson,
+	           fileName: gameName.toLowerCase().replace(/\s+/g, '_') + '.json',
+	           comment: prComment || null
+	         });
          
          researchStatus.style.color = '#1976D2';
          researchStatus.textContent = 'Preparing GitHub submission...';

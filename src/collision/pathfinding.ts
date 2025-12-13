@@ -50,7 +50,7 @@ class MinHeap {
 
     private bubbleDown(index: number): void {
         const length = this.heap.length;
-        while (true) {
+        for (;;) {
             const leftChild = 2 * index + 1;
             const rightChild = 2 * index + 2;
             let smallest = index;

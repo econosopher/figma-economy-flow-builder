@@ -145,7 +145,7 @@ export const mockFigma = {
     return new MockConnectorNode();
   },
   
-  group(nodes: MockSceneNode[], parent: any): MockGroupNode {
+  group(nodes: MockSceneNode[], _parent: unknown): MockGroupNode {
     const group = new MockGroupNode();
     nodes.forEach(node => group.appendChild(node));
     return group;

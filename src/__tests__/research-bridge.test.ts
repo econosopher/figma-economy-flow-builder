@@ -246,5 +246,22 @@ describe('Research Bridge', () => {
       expect(result).toHaveProperty('nodes');
       expect(result).toHaveProperty('edges');
     });
+
+    it('should parse JSON inside markdown code fences', () => {
+      const output = [
+        'Here is the JSON:',
+        '```json',
+        '{ "inputs": [], "nodes": [], "edges": [] }',
+        '```'
+      ].join('\n');
+      const result = parseResearchOutput(output);
+      expect(result).toEqual({ inputs: [], nodes: [], edges: [] });
+    });
+
+    it('should skip non-JSON braces before the real JSON', () => {
+      const output = 'Log line {not json} ... then {"key":"value"}';
+      const result = parseResearchOutput(output);
+      expect(result).toEqual({ key: 'value' });
+    });
   });
 });

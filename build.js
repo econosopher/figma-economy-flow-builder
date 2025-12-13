@@ -123,11 +123,12 @@ if (shouldIncrement) {
   console.log(`📦 No source changes detected. Building with current version (v${newVersion})`);
 }
 
-// Determine entry point: prefer compiled JS if present, otherwise bundle TS directly
+// Determine entry point: default to TS source for correctness; opt-in to dist for debugging.
 const distDir = path.join(__dirname, 'dist');
 const entryTs = path.join(__dirname, 'src', 'main.ts');
 const entryJs = path.join(distDir, 'main.js');
-const entryPoints = fs.existsSync(entryJs) ? [entryJs] : [entryTs];
+const useDist = process.argv.includes('--use-dist');
+const entryPoints = useDist && fs.existsSync(entryJs) ? [entryJs] : [entryTs];
 console.log(`📦 Using entry: ${path.relative(__dirname, entryPoints[0])}`);
 
 // Read ui.html content
