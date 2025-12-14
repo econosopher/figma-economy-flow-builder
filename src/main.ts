@@ -769,31 +769,31 @@ async function generateDiagram(
         }
       });
 
-      // Keep connectors at page level (reparenting can break endpoint connections),
-      // but ensure the main section is above connectors in the page layer order so boxes render on top.
+      // Move all connectors to the back (bottom of z-order) so they render BEHIND the boxes
+      // In Figma, lower index = renders behind, higher index = renders in front
+      connectors.forEach(connector => {
+        // Insert at index 0 to put connectors at the very back
+        figma.currentPage.insertChild(0, connector);
+      });
+
+      // Append section AFTER connectors are moved to back - this ensures section renders on top
+      // Re-appending moves it to the end (highest z-index = renders in front)
       figma.currentPage.appendChild(section);
 
       if (failedEdges.length > 0) {
         console.warn('Some edges failed to render:', failedEdges);
       }
 
-      // Create and add legend section OUTSIDE the main section
+      // Create and add legend section OUTSIDE the main section, to the LEFT of the diagram
       const currencies = extractCurrenciesByType(data);
-      legendSection = createLegendSection(currencies, section.x); // Use main section's X position
+
+      // Create legend first to know its width
+      legendSection = createLegendSection(currencies, 0); // Temporary X position
       if (legendSection) {
-        // Position legend below the main section with spacing
-        const sectionBounds = section.absoluteBoundingBox;
-        let maxBottom = sectionBounds ? sectionBounds.y + sectionBounds.height : section.y + section.height;
-
-        // Connectors can extend beyond the section bounds; keep the legend below them to avoid overlap.
-        connectors.forEach(connector => {
-          const bounds = connector.absoluteBoundingBox;
-          if (bounds) {
-            maxBottom = Math.max(maxBottom, bounds.y + bounds.height);
-          }
-        });
-
-        legendSection.y = maxBottom + 50; // 50px spacing between diagram+connectors and legend
+        // Position legend to the left of the diagram with 50px gap
+        legendSection.x = section.x - legendSection.width - 50;
+        // Align legend vertically with the top of the main section
+        legendSection.y = section.y;
         figma.currentPage.appendChild(legendSection);
       }
 

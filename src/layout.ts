@@ -243,6 +243,77 @@ export class LayoutEngine {
       finalColumns.set(id, base + shift);
     });
 
+    // Spread independent nodes horizontally within subsections
+    // Nodes in the same subsection and same column with no inter-dependencies should spread left-to-right
+    (graph.subsections || []).forEach(sub => {
+      // Group nodes by their current column
+      const nodesByColumn = new Map<number, string[]>();
+      sub.nodeIds.forEach(nodeId => {
+        const col = finalColumns.get(nodeId);
+        if (col !== undefined) {
+          if (!nodesByColumn.has(col)) nodesByColumn.set(col, []);
+          nodesByColumn.get(col)!.push(nodeId);
+        }
+      });
+
+      // For each column with multiple nodes, check if they can be spread horizontally
+      nodesByColumn.forEach((nodesInCol, col) => {
+        if (nodesInCol.length <= 1) return;
+
+        // Check which nodes have no dependencies on each other (can be parallel)
+        const canSpread: string[] = [];
+        nodesInCol.forEach(nodeId => {
+          // A node can be spread if it has no dependencies to/from other nodes in this group
+          const hasInternalDep = nodesInCol.some(otherId => {
+            if (otherId === nodeId) return false;
+            // Check if there's an edge between these nodes
+            return graph.edges.some(([from, to]) =>
+              (from === nodeId && to === otherId) || (from === otherId && to === nodeId)
+            );
+          });
+          if (!hasInternalDep) {
+            canSpread.push(nodeId);
+          }
+        });
+
+        // Spread independent nodes across columns
+        if (canSpread.length > 1) {
+          // Find the max column shift needed to avoid collision with next subsection
+          let colOffset = 0;
+          canSpread.forEach((nodeId, index) => {
+            if (index > 0) {
+              // Assign to a new column (spreading horizontally)
+              finalColumns.set(nodeId, col + index);
+              colOffset = Math.max(colOffset, index);
+            }
+          });
+
+          // Update the subsection shift for subsequent subsections
+          if (colOffset > 0) {
+            // Update cursor position for any following subsections
+            const subIndex = finalSubsectionOrder.indexOf(sub.id);
+            if (subIndex >= 0) {
+              for (let i = subIndex + 1; i < finalSubsectionOrder.length; i++) {
+                const nextSubId = finalSubsectionOrder[i];
+                const currentShift = subsectionShift.get(nextSubId) || 0;
+                subsectionShift.set(nextSubId, currentShift + colOffset);
+                // Update all nodes in the next subsection
+                const nextSub = (graph.subsections || []).find(s => s.id === nextSubId);
+                if (nextSub) {
+                  nextSub.nodeIds.forEach(nid => {
+                    const currentCol = finalColumns.get(nid);
+                    if (currentCol !== undefined) {
+                      finalColumns.set(nid, currentCol + colOffset);
+                    }
+                  });
+                }
+              }
+            }
+          }
+        }
+      });
+    });
+
     const uniqueCols = Array.from(new Set(finalColumns.values())).sort((a, b) => a - b);
     const colRemap = new Map<number, number>();
     uniqueCols.forEach((col, index) => colRemap.set(col, index));
