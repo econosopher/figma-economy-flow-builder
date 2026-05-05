@@ -95,3 +95,14 @@
 - Verification: `npm test -- --runInBand` passed with 25/25 suites and 155/155 tests, `npm run type-check` passed, and `GEMINI_API_KEY=BUILD_VALIDATION_PLACEHOLDER npm run build:no-increment` completed successfully.
 - Commit prepared for GitHub branch push.
 - Figma publishing cannot be completed by GitHub push alone; the official flow is to publish a new version from Figma Desktop after locating the local `manifest.json`.
+
+# Version 2 Release Package
+
+- [x] Promote package/UI version from `1.2.87` to `2.0.0` for the breaking v2 renderer release
+- [x] Rebuild the Figma plugin bundle without auto-incrementing the release version
+- [x] Copy a fresh publish package to Downloads for manual Figma upload
+
+## Review
+
+- The plugin bundle now reports `v2.0.0` in the UI and `package.json`.
+- The Downloads package contains the publishable `manifest.json` and adjacent `code.js` bundle for the Figma desktop release flow.
