@@ -1,91 +1,94 @@
-# Publishing to Figma Community
+# Publishing to Figma
 
-This guide covers the steps to publish the Economy-Flow Builder plugin to the Figma Community.
+This guide covers the explicit Figma step after code has been committed and pushed. GitHub does not automatically update the published Figma plugin; Figma has to locate the local `manifest.json` and publish the new version from the desktop app.
 
 ## Pre-Publishing Checklist
 
-- [ ] All tests pass (`npm test`)
-- [ ] No linting errors (`npm run lint`)
-- [ ] Build completes successfully (`npm run build`)
-- [ ] Plugin tested in Figma desktop app
-- [ ] README.md is up to date
-- [ ] Version number updated in `package.json` and `manifest.json`
-- [ ] All example files work correctly
+- [ ] Full test suite passes: `npm test -- --runInBand`
+- [ ] Type-check passes: `npm run type-check`
+- [ ] Production bundle builds: `npm run build:no-increment` or `npm run build`
+- [ ] `code.js` exists locally and was built from the current `src/`
+- [ ] Plugin was smoke-tested in Figma desktop / FigJam
+- [ ] README, API docs, and QA notes are up to date
+- [ ] Bundled examples validate and render correctly
+- [ ] Release notes are ready for the Figma publish modal
 
 ## File Structure Required for Publishing
 
 ```
-economy_flow_plugin/
+economy-flow-plugin/
 ├── manifest.json          # Plugin manifest (required)
 ├── code.js               # Compiled plugin code (required)
-├── ui.html               # Plugin UI (embedded in code.js)
+├── ui.html               # Source UI embedded into code.js by build.js
 ├── README.md             # Documentation (required for community)
 ├── LICENSE               # MIT License
-├── cover.png             # Cover image (1920x960px recommended)
-├── icon.png              # Plugin icon (128x128px)
+├── logo.png              # Current local artwork asset
 └── examples/             # Example JSON files
 ```
 
-## Steps to Publish
+## Current Plugin Identity
 
-1. **Create Plugin Assets**
-   - Design a cover image (1920x960px) showing the plugin in action
-   - Create an icon (128x128px) representing the plugin
+The current manifest already has the Figma plugin id:
 
-2. **Update Manifest**
-   ```json
-   {
-     "name": "Economy-Flow Builder",
-     "id": "YOUR_PLUGIN_ID",
-     "api": "1.0.0",
-     "main": "code.js",
-     "ui": "ui.html",
-     "editorType": ["figjam"],
-     "permissions": [],
-     "relaunchButtons": []
-   }
-   ```
+```json
+{
+  "name": "Economy Flow Builder",
+  "id": "1529045431118674621",
+  "api": "1.0.0",
+  "main": "code.js",
+  "editorType": ["figjam"],
+  "documentAccess": "dynamic-page"
+}
+```
 
-3. **Build for Production**
-   ```bash
-   npm run build
-   ```
+Keep this id stable. Figma uses it to publish updates to the existing plugin listing.
 
-4. **Test in Figma**
-   - Open Figma Desktop
-   - Go to Plugins → Development → Import plugin from manifest
-   - Select `manifest.json`
-   - Test all features thoroughly
+## Local Build And Smoke Test
 
-5. **Prepare Community Page**
-   - Write a compelling description
-   - Create example images/GIFs
-   - List key features
-   - Add usage instructions
+```bash
+npm test -- --runInBand
+npm run type-check
+npm run build:no-increment
+```
 
-6. **Submit to Community**
-   - Go to [Figma Community](https://www.figma.com/community)
-   - Click "Publish"
-   - Select "Plugin"
-   - Fill in all required fields
-   - Upload assets
-   - Submit for review
+Then in Figma Desktop:
+
+1. Open a FigJam file.
+2. Open the Figma menu in the upper-left.
+3. Go to **Plugins > Development > Import plugin from manifest...** if this local checkout is not already connected.
+4. Select `/Users/phillip/Documents/vibe_coding_projects/economy-flow-plugin/manifest.json`.
+5. Run **Plugins > Development > Economy Flow Builder**.
+6. Render the heavier QA examples, especially Apex Legends and Rainbow Six Siege.
+7. Confirm the UI version and current behavior match the branch you built.
+
+## Publish New Version
+
+Figma updates are published from the desktop app:
+
+1. Open a file in the Figma desktop app.
+2. Go to **Plugins > Manage plugins**.
+3. Find **Economy Flow Builder**.
+4. Open the plugin menu and choose **Publish new version**.
+5. If **Publish new version** is missing, choose **Locate local version**, select this repo's `manifest.json`, then publish again.
+6. In the publish modal, update release notes and any metadata/artwork that changed.
+7. Click **Publish**.
+
+For already-approved plugins, Figma says publishing a new version updates the plugin for all users; users do not pick an older installed version.
+
+## Suggested v2 Release Notes
+
+```text
+Major v2 renderer update:
+- Adds explicit schemaVersion 2 with stages, lanes, nodes, and typed edges.
+- Replaces inferred columns with compact stage/lane layout.
+- Keeps connectors behind opaque cards and validates route/card intersections.
+- Migrates bundled examples, including Apex Legends and Rainbow Six Siege.
+- Adds Gemini/OpenAI/Claude provider selection for the local research API.
+- Improves Sync from Canvas for plugin-created v2 diagrams.
+```
 
 ## Post-Publishing
 
-1. **Monitor Feedback**
-   - Check community comments regularly
-   - Address user issues promptly
-   - Consider feature requests
-
-2. **Version Updates**
-   - Update version in `manifest.json` and `package.json`
-   - Document changes in CHANGELOG.md
-   - Test thoroughly before republishing
-
-## Marketing Tips
-
-- Share on social media with #FigmaPlugin
-- Create a demo video
-- Write a blog post about the plugin
-- Engage with the game design community
+- Smoke-test the published plugin from a clean FigJam file.
+- Confirm Apex Legends and Rainbow Six Siege render without visible connector/card overlap.
+- Save the published plugin URL and release timestamp in `tasks/todo.md` if this release is submitted.

@@ -85,6 +85,7 @@
 - [x] Update README, API setup, integration notes, LLM instructions, and usage notes for v2 compact QA
 - [x] Run full test suite, type-check, and build
 - [x] Commit and push the branch to GitHub
+- [x] Update Figma publishing instructions for the manual desktop-app release flow
 
 ## Review
 
@@ -93,3 +94,4 @@
 - Sync from Canvas now preserves the stored v2 stages/lanes for plugin-created diagrams and merges edited grouped cards/chips/connectors back into v2 JSON. It still does not infer a full economy from an arbitrary screenshot or non-plugin image.
 - Verification: `npm test -- --runInBand` passed with 25/25 suites and 155/155 tests, `npm run type-check` passed, and `GEMINI_API_KEY=BUILD_VALIDATION_PLACEHOLDER npm run build:no-increment` completed successfully.
 - Commit prepared for GitHub branch push.
+- Figma publishing cannot be completed by GitHub push alone; the official flow is to publish a new version from Figma Desktop after locating the local `manifest.json`.
