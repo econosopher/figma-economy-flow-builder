@@ -27,6 +27,10 @@ export interface CollisionResult {
 
 export interface CollisionContext {
   nodePositions: Map<string, Rectangle>;
+  // Optional metadata for more accurate connector collision modelling.
+  // When present, CollisionEngine can use real node kinds (e.g. final_good)
+  // instead of heuristics based on node id strings.
+  nodeKinds?: Map<string, string>;
   edges: Array<{from: string; to: string}>;
   padding: {x: number; y: number};
 }
@@ -37,6 +41,5 @@ export interface CollisionConfig {
   strategy: CollisionStrategy;
   nodeToNode: boolean;
   edgeToNode: boolean;
-  edgeToEdge: boolean;
   margin: number;
 }

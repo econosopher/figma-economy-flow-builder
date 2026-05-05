@@ -30,6 +30,47 @@ export interface Graph {
   subsections?: Subsection[]; // Optional subsections
 }
 
+export interface V2Stage {
+  id: string;
+  label: string;
+}
+
+export interface V2Lane {
+  id: string;
+  label: string;
+  color?: string;
+}
+
+export type V2NodeKind = 'initial_sink_node' | 'final_good' | 'action';
+
+export interface V2Node {
+  id: string;
+  label: string;
+  stageId: string;
+  laneId?: string;
+  kind?: V2NodeKind | string;
+  sources?: string[];
+  sinks?: string[];
+  values?: string[];
+}
+
+export type V2EdgeType = 'normal' | 'value' | 'final' | 'cross-lane';
+
+export interface V2Edge {
+  from: string;
+  to: string;
+  type?: V2EdgeType;
+}
+
+export interface V2Graph {
+  schemaVersion: 2;
+  name?: string;
+  stages: V2Stage[];
+  lanes?: V2Lane[];
+  nodes: V2Node[];
+  edges: V2Edge[];
+}
+
 // UI to Plugin messages
 export type DrawMessage = {
   cmd: 'draw';
@@ -44,13 +85,13 @@ export type GenerateCacheMessage = {
   cmd: 'generate-cache';
   gameName: string;
   depth: number;
-  provider?: 'gemini' | 'claude';
+  provider?: 'gemini' | 'openai' | 'claude';
   apiKey?: string;
 };
 export type GenerateEconomyMessage = { cmd: 'generate-economy'; gameName: string; depth: number; apiKey: string; provider?: string };
-export type SaveApiKeyMessage = { cmd: 'save-api-key'; apiKey: string; validated?: boolean };
+export type SaveApiKeyMessage = { cmd: 'save-api-key'; apiKey: string; provider?: string; validated?: boolean };
 export type LoadApiKeyMessage = { cmd: 'load-api-key' };
-export type ValidateApiKeyMessage = { cmd: 'validate-api-key'; apiKey: string };
+export type ValidateApiKeyMessage = { cmd: 'validate-api-key'; apiKey: string; provider?: string };
 export type SaveResearchInputsMessage = { cmd: 'save-research-inputs'; gameName: string; depth: number };
 export type LoadResearchInputsMessage = { cmd: 'load-research-inputs' };
 export type CreateGitHubPRMessage = { cmd: 'create-github-pr'; gameName: string; json: string; fileName: string };

@@ -1,6 +1,66 @@
 const esbuild = require('esbuild');
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
+
+function parseEnvFile(filePath) {
+  const values = {};
+
+  if (!fs.existsSync(filePath)) {
+    return values;
+  }
+
+  const content = fs.readFileSync(filePath, 'utf8');
+  content.split(/\r?\n/).forEach((line) => {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) return;
+
+    const match = trimmed.match(/^([A-Z0-9_]+)\s*=\s*(.*)$/);
+    if (!match) return;
+
+    const [, key, rawValue] = match;
+    const value = rawValue
+      .replace(/^['"]/, '')
+      .replace(/['"]$/, '')
+      .trim();
+    values[key] = value;
+  });
+
+  return values;
+}
+
+function loadBuildSecrets() {
+  const sources = [
+    { label: 'process.env', values: process.env || {} },
+    { label: 'project .env', values: parseEnvFile(path.join(__dirname, '.env')) },
+    { label: 'global.env', values: parseEnvFile('/Users/phillip/Documents/secrets/global.env') },
+    { label: '~/.api_keys', values: parseEnvFile(path.join(os.homedir(), '.api_keys')) }
+  ];
+
+  const providers = [
+    { provider: 'gemini', keyNames: ['GEMINI_DEEP_RESEARCH_API_KEY', 'GEMINI_API_KEY', 'GOOGLE_API_KEY'] },
+    { provider: 'openai', keyNames: ['OPENAI_DEEP_RESEARCH_API_KEY', 'OPENAI_API_KEY'] },
+    { provider: 'claude', keyNames: ['ANTHROPIC_DEEP_RESEARCH_API_KEY', 'ANTHROPIC_API_KEY', 'CLAUDE_API_KEY'] }
+  ];
+
+  for (const source of sources) {
+    for (const provider of providers) {
+      for (const keyName of provider.keyNames) {
+        const value = source.values[keyName];
+        if (typeof value === 'string' && value.trim().length > 0) {
+          return {
+            apiKey: value.trim(),
+            provider: provider.provider,
+            validated: true,
+            source: `${source.label}:${keyName}`
+          };
+        }
+      }
+    }
+  }
+
+  return null;
+}
 
 // Check if source files have changed since last build
 function hasSourceChanges() {
@@ -146,14 +206,27 @@ fs.readdirSync(examplesDir).forEach(file => {
 });
 
 // Load default config if it exists (from compiled dist)
-let defaultConfig = { apiKey: '', validated: false };
+let defaultConfig = { apiKey: '', provider: 'gemini', validated: false };
+let defaultConfigSource = 'none';
+const envSecret = loadBuildSecrets();
+if (envSecret) {
+  defaultConfig = {
+    apiKey: envSecret.apiKey,
+    provider: envSecret.provider,
+    validated: envSecret.validated
+  };
+  defaultConfigSource = envSecret.source;
+} else {
 try {
   const configModule = require('./dist/default-config');
   defaultConfig = configModule.DEFAULT_CONFIG || defaultConfig;
-  console.log(`📋 Including default config (key: ${defaultConfig.apiKey ? defaultConfig.apiKey.substring(0, 10) + '...' : 'none'})`);
+  defaultConfigSource = 'dist/default-config';
 } catch (e) {
-  console.log('📋 No default config found (production mode)');
+  defaultConfigSource = 'none';
 }
+}
+
+console.log(`Config source: ${defaultConfigSource}`);
 
 console.log('📦 Bundling plugin...');
 
@@ -169,6 +242,7 @@ esbuild.build({
     '__html__': JSON.stringify(uiHtml),
     'TEMPLATES': JSON.stringify(templates),
     'DEFAULT_API_KEY': JSON.stringify(defaultConfig.apiKey || ''),
+    'DEFAULT_PROVIDER': JSON.stringify(defaultConfig.provider || 'gemini'),
     'DEFAULT_VALIDATED': JSON.stringify(defaultConfig.validated || false),
   },
 }).then(() => {

@@ -1,21 +1,78 @@
 {
+  "schemaVersion": 2,
   "name": "Mecha Break",
-  "inputs": [
+  "stages": [
+    {
+      "id": "stage_1",
+      "label": "Inputs"
+    },
+    {
+      "id": "stage_2",
+      "label": "Play"
+    },
+    {
+      "id": "stage_3",
+      "label": "Earn"
+    },
+    {
+      "id": "stage_4",
+      "label": "Unlock"
+    },
+    {
+      "id": "stage_5",
+      "label": "Upgrade"
+    },
+    {
+      "id": "stage_6",
+      "label": "Collection"
+    },
+    {
+      "id": "stage_7",
+      "label": "Events"
+    },
+    {
+      "id": "stage_8",
+      "label": "Prestige"
+    },
+    {
+      "id": "stage_9",
+      "label": "Reset"
+    },
+    {
+      "id": "outcomes",
+      "label": "Outcomes"
+    }
+  ],
+  "lanes": [
+    {
+      "id": "inputs",
+      "label": "Inputs"
+    },
+    {
+      "id": "shared",
+      "label": "Shared"
+    }
+  ],
+  "nodes": [
     {
       "id": "time",
       "label": "Time",
+      "stageId": "stage_1",
+      "laneId": "inputs",
       "kind": "initial_sink_node"
     },
     {
       "id": "money",
       "label": "Money",
+      "stageId": "stage_1",
+      "laneId": "inputs",
       "kind": "initial_sink_node"
-    }
-  ],
-  "nodes": [
+    },
     {
       "id": "play_mashmak",
       "label": "To Play Operation Storm (Mashmak)",
+      "stageId": "stage_2",
+      "laneId": "shared",
       "sources": [
         "Mods",
         "Weapons",
@@ -25,6 +82,8 @@
     {
       "id": "mashmak_challenges",
       "label": "To Complete Mashmak Challenges",
+      "stageId": "stage_3",
+      "laneId": "shared",
       "sources": [
         "Matrix Credits"
       ]
@@ -32,6 +91,8 @@
     {
       "id": "play_pvp_modes",
       "label": "To Play PvP Modes (Verge/Ace Arena)",
+      "stageId": "stage_2",
+      "laneId": "shared",
       "sources": [
         "Mission Tokens"
       ]
@@ -39,6 +100,8 @@
     {
       "id": "pvp_challenges",
       "label": "To Complete PvP Challenges",
+      "stageId": "stage_3",
+      "laneId": "shared",
       "sources": [
         "Mission Tokens"
       ]
@@ -46,6 +109,8 @@
     {
       "id": "upgrade_gear",
       "label": "To Upgrade Gear",
+      "stageId": "stage_7",
+      "laneId": "shared",
       "sinks": [
         "Matrix Credits"
       ]
@@ -53,6 +118,8 @@
     {
       "id": "create_upgraded_mods",
       "label": "To Create Upgraded Mods",
+      "stageId": "stage_4",
+      "laneId": "shared",
       "sources": [
         "Upgraded Mods"
       ],
@@ -64,6 +131,8 @@
     {
       "id": "fund_research",
       "label": "To Fund Research Projects",
+      "stageId": "stage_4",
+      "laneId": "shared",
       "sinks": [
         "Matrix Credits"
       ]
@@ -71,6 +140,8 @@
     {
       "id": "buy_loadout_items",
       "label": "To Buy Loadout Items",
+      "stageId": "stage_4",
+      "laneId": "shared",
       "sinks": [
         "Matrix Credits"
       ]
@@ -78,6 +149,8 @@
     {
       "id": "sell_on_marketplace",
       "label": "To Sell Gear on Matrix Marketplace",
+      "stageId": "stage_5",
+      "laneId": "shared",
       "sources": [
         "Corite"
       ],
@@ -90,6 +163,8 @@
     {
       "id": "sell_for_credits",
       "label": "To Sell Gear for Matrix Credits",
+      "stageId": "stage_3",
+      "laneId": "shared",
       "sources": [
         "Matrix Credits"
       ],
@@ -102,6 +177,8 @@
     {
       "id": "purchase_corite",
       "label": "To Purchase Corite (Exchange Packs)",
+      "stageId": "stage_2",
+      "laneId": "shared",
       "sources": [
         "Corite"
       ],
@@ -112,6 +189,8 @@
     {
       "id": "buy_matrix_contract",
       "label": "To Buy Matrix Contract (Battle Pass)",
+      "stageId": "stage_6",
+      "laneId": "shared",
       "sources": [
         "Matrix Credits"
       ],
@@ -122,6 +201,8 @@
     {
       "id": "convert_corite_to_credits",
       "label": "To Convert Corite to Matrix Credits",
+      "stageId": "stage_6",
+      "laneId": "shared",
       "sources": [
         "Matrix Credits"
       ],
@@ -132,6 +213,8 @@
     {
       "id": "spend_corite_cosmetics",
       "label": "To Purchase Cosmetics (with Corite)",
+      "stageId": "stage_6",
+      "laneId": "shared",
       "sinks": [
         "Corite"
       ]
@@ -139,6 +222,8 @@
     {
       "id": "spend_tokens_new_mechs",
       "label": "To Purchase New Mechs (with Tokens)",
+      "stageId": "stage_3",
+      "laneId": "shared",
       "sinks": [
         "Mission Tokens"
       ]
@@ -146,6 +231,8 @@
     {
       "id": "spend_tokens_cosmetics",
       "label": "To Purchase Cosmetics (with Tokens)",
+      "stageId": "stage_4",
+      "laneId": "shared",
       "sinks": [
         "Mission Tokens"
       ]
@@ -153,6 +240,8 @@
     {
       "id": "complete_collection",
       "label": "To Complete Entire Collection",
+      "stageId": "outcomes",
+      "laneId": "shared",
       "kind": "final_good",
       "sources": [
         "Collection Completion"
@@ -161,6 +250,8 @@
     {
       "id": "prestige_reset",
       "label": "To Prestige (Reset Progress)",
+      "stageId": "stage_8",
+      "laneId": "shared",
       "sources": [
         "Prestige"
       ],
@@ -171,131 +262,136 @@
     {
       "id": "unlock_prestige_pilots",
       "label": "To Unlock Prestige Rewards/Pilots",
+      "stageId": "stage_9",
+      "laneId": "shared",
       "sinks": [
         "Prestige"
       ]
     }
   ],
   "edges": [
-    [
-      "time",
-      "play_mashmak"
-    ],
-    [
-      "play_mashmak",
-      "mashmak_challenges"
-    ],
-    [
-      "time",
-      "play_pvp_modes"
-    ],
-    [
-      "play_pvp_modes",
-      "pvp_challenges"
-    ],
-    [
-      "play_mashmak",
-      "upgrade_gear"
-    ],
-    [
-      "play_mashmak",
-      "create_upgraded_mods"
-    ],
-    [
-      "play_mashmak",
-      "sell_on_marketplace"
-    ],
-    [
-      "play_mashmak",
-      "sell_for_credits"
-    ],
-    [
-      "create_upgraded_mods",
-      "sell_on_marketplace"
-    ],
-    [
-      "mashmak_challenges",
-      "upgrade_gear"
-    ],
-    [
-      "mashmak_challenges",
-      "create_upgraded_mods"
-    ],
-    [
-      "mashmak_challenges",
-      "fund_research"
-    ],
-    [
-      "mashmak_challenges",
-      "buy_loadout_items"
-    ],
-    [
-      "sell_for_credits",
-      "upgrade_gear"
-    ],
-    [
-      "purchase_corite",
-      "spend_corite_cosmetics"
-    ],
-    [
-      "purchase_corite",
-      "buy_matrix_contract"
-    ],
-    [
-      "sell_on_marketplace",
-      "spend_corite_cosmetics"
-    ],
-    [
-      "sell_on_marketplace",
-      "buy_matrix_contract"
-    ],
-    [
-      "sell_on_marketplace",
-      "convert_corite_to_credits"
-    ],
-    [
-      "purchase_corite",
-      "convert_corite_to_credits"
-    ],
-    [
-      "buy_matrix_contract",
-      "upgrade_gear"
-    ],
-    [
-      "convert_corite_to_credits",
-      "upgrade_gear"
-    ],
-    [
-      "money",
-      "purchase_corite"
-    ],
-    [
-      "play_pvp_modes",
-      "spend_tokens_new_mechs"
-    ],
-    [
-      "pvp_challenges",
-      "spend_tokens_cosmetics"
-    ],
-    [
-      "spend_corite_cosmetics",
-      "complete_collection"
-    ],
-    [
-      "spend_tokens_new_mechs",
-      "complete_collection"
-    ],
-    [
-      "spend_tokens_cosmetics",
-      "complete_collection"
-    ],
-    [
-      "complete_collection",
-      "prestige_reset"
-    ],
-    [
-      "prestige_reset",
-      "unlock_prestige_pilots"
-    ]
+    {
+      "from": "time",
+      "to": "play_mashmak"
+    },
+    {
+      "from": "play_mashmak",
+      "to": "mashmak_challenges"
+    },
+    {
+      "from": "time",
+      "to": "play_pvp_modes"
+    },
+    {
+      "from": "play_pvp_modes",
+      "to": "pvp_challenges"
+    },
+    {
+      "from": "play_mashmak",
+      "to": "upgrade_gear"
+    },
+    {
+      "from": "play_mashmak",
+      "to": "create_upgraded_mods"
+    },
+    {
+      "from": "play_mashmak",
+      "to": "sell_on_marketplace"
+    },
+    {
+      "from": "play_mashmak",
+      "to": "sell_for_credits"
+    },
+    {
+      "from": "create_upgraded_mods",
+      "to": "sell_on_marketplace"
+    },
+    {
+      "from": "mashmak_challenges",
+      "to": "upgrade_gear"
+    },
+    {
+      "from": "mashmak_challenges",
+      "to": "create_upgraded_mods"
+    },
+    {
+      "from": "mashmak_challenges",
+      "to": "fund_research"
+    },
+    {
+      "from": "mashmak_challenges",
+      "to": "buy_loadout_items"
+    },
+    {
+      "from": "sell_for_credits",
+      "to": "upgrade_gear"
+    },
+    {
+      "from": "purchase_corite",
+      "to": "spend_corite_cosmetics"
+    },
+    {
+      "from": "purchase_corite",
+      "to": "buy_matrix_contract"
+    },
+    {
+      "from": "sell_on_marketplace",
+      "to": "spend_corite_cosmetics"
+    },
+    {
+      "from": "sell_on_marketplace",
+      "to": "buy_matrix_contract"
+    },
+    {
+      "from": "sell_on_marketplace",
+      "to": "convert_corite_to_credits"
+    },
+    {
+      "from": "purchase_corite",
+      "to": "convert_corite_to_credits"
+    },
+    {
+      "from": "buy_matrix_contract",
+      "to": "upgrade_gear"
+    },
+    {
+      "from": "convert_corite_to_credits",
+      "to": "upgrade_gear"
+    },
+    {
+      "from": "money",
+      "to": "purchase_corite"
+    },
+    {
+      "from": "play_pvp_modes",
+      "to": "spend_tokens_new_mechs"
+    },
+    {
+      "from": "pvp_challenges",
+      "to": "spend_tokens_cosmetics"
+    },
+    {
+      "from": "spend_corite_cosmetics",
+      "to": "complete_collection",
+      "type": "final"
+    },
+    {
+      "from": "spend_tokens_new_mechs",
+      "to": "complete_collection",
+      "type": "final"
+    },
+    {
+      "from": "spend_tokens_cosmetics",
+      "to": "complete_collection",
+      "type": "final"
+    },
+    {
+      "from": "complete_collection",
+      "to": "prestige_reset"
+    },
+    {
+      "from": "prestige_reset",
+      "to": "unlock_prestige_pilots"
+    }
   ]
 }

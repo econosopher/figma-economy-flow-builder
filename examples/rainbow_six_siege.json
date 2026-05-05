@@ -1,21 +1,74 @@
 {
+  "schemaVersion": 2,
   "name": "Rainbow Six Siege",
-  "inputs": [
+  "stages": [
     {
-      "id": "time",
-      "label": "Time",
-      "kind": "initial_sink_node"
+      "id": "stage_1",
+      "label": "Inputs"
     },
     {
-      "id": "money",
-      "label": "Money",
-      "kind": "initial_sink_node"
+      "id": "stage_2",
+      "label": "Play"
+    },
+    {
+      "id": "stage_3",
+      "label": "Earn"
+    },
+    {
+      "id": "stage_4",
+      "label": "Spend"
+    },
+    {
+      "id": "outcomes",
+      "label": "Outcomes"
+    }
+  ],
+  "lanes": [
+    {
+      "id": "inputs",
+      "label": "Inputs"
+    },
+    {
+      "id": "gameplay",
+      "label": "Gameplay"
+    },
+    {
+      "id": "progression",
+      "label": "Progression"
+    },
+    {
+      "id": "monetary_transactions",
+      "label": "Monetary Transactions"
+    },
+    {
+      "id": "limited_time_events",
+      "label": "Limited-Time Events"
+    },
+    {
+      "id": "final_goals",
+      "label": "Final Goals"
     }
   ],
   "nodes": [
     {
+      "id": "time",
+      "label": "Spend Time",
+      "stageId": "stage_1",
+      "laneId": "inputs",
+      "kind": "initial_sink_node"
+    },
+    {
+      "id": "money",
+      "label": "Spend Money",
+      "stageId": "stage_1",
+      "laneId": "inputs",
+      "kind": "initial_sink_node"
+    },
+    {
       "id": "match_play",
       "label": "Match Play (Ranked/Unranked)",
+      "stageId": "stage_2",
+      "laneId": "gameplay",
       "sources": [
         "Renown",
         "XP",
@@ -34,6 +87,8 @@
     {
       "id": "challenge_completion",
       "label": "Challenge Completion",
+      "stageId": "stage_3",
+      "laneId": "progression",
       "sources": [
         "Renown",
         "XP",
@@ -52,6 +107,8 @@
     {
       "id": "r6_credit_purchase",
       "label": "R6 Credit Purchase",
+      "stageId": "stage_2",
+      "laneId": "monetary_transactions",
       "sources": [
         "R6 Credits"
       ],
@@ -62,6 +119,8 @@
     {
       "id": "battle_pass_purchase",
       "label": "Battle Pass Purchase",
+      "stageId": "stage_3",
+      "laneId": "monetary_transactions",
       "sources": [
         "Battle Pass Points",
         "Cosmetic Items",
@@ -74,6 +133,8 @@
     {
       "id": "cosmetic_item_purchase",
       "label": "Cosmetic Item Purchase",
+      "stageId": "stage_4",
+      "laneId": "monetary_transactions",
       "sources": [
         "Cosmetic Items"
       ],
@@ -88,6 +149,8 @@
     {
       "id": "operator_leveling",
       "label": "Operator Leveling",
+      "stageId": "stage_4",
+      "laneId": "progression",
       "sources": [
         "Operator Mastery Levels",
         "Cosmetic Unlocks"
@@ -105,6 +168,8 @@
     {
       "id": "event_participation",
       "label": "Event Participation",
+      "stageId": "stage_2",
+      "laneId": "limited_time_events",
       "sources": [
         "Event Specific Currency",
         "Renown",
@@ -123,155 +188,118 @@
     {
       "id": "max_account_level",
       "label": "Maximum Account Level",
+      "stageId": "outcomes",
+      "laneId": "final_goals",
       "kind": "final_good"
     },
     {
       "id": "max_operator_mastery",
       "label": "Mastery of all Operators",
+      "stageId": "outcomes",
+      "laneId": "final_goals",
       "kind": "final_good"
     },
     {
       "id": "complete_cosmetic_collection",
       "label": "Complete Cosmetic Collection",
+      "stageId": "outcomes",
+      "laneId": "final_goals",
       "kind": "final_good"
     },
     {
       "id": "high_ranked_rating",
       "label": "High Ranked Rating",
+      "stageId": "outcomes",
+      "laneId": "final_goals",
       "kind": "final_good"
     }
   ],
   "edges": [
-    [
-      "time",
-      "match_play"
-    ],
-    [
-      "time",
-      "challenge_completion"
-    ],
-    [
-      "time",
-      "operator_leveling"
-    ],
-    [
-      "time",
-      "event_participation"
-    ],
-    [
-      "money",
-      "r6_credit_purchase"
-    ],
-    [
-      "match_play",
-      "challenge_completion"
-    ],
-    [
-      "match_play",
-      "operator_leveling"
-    ],
-    [
-      "match_play",
-      "battle_pass_purchase"
-    ],
-    [
-      "challenge_completion",
-      "operator_leveling"
-    ],
-    [
-      "r6_credit_purchase",
-      "battle_pass_purchase"
-    ],
-    [
-      "r6_credit_purchase",
-      "cosmetic_item_purchase"
-    ],
-    [
-      "battle_pass_purchase",
-      "cosmetic_item_purchase"
-    ],
-    [
-      "operator_leveling",
-      "max_operator_mastery"
-    ],
-    [
-      "event_participation",
-      "cosmetic_item_purchase"
-    ],
-    [
-      "event_participation",
-      "operator_leveling"
-    ],
-    [
-      "match_play",
-      "high_ranked_rating"
-    ],
-    [
-      "challenge_completion",
-      "max_account_level"
-    ],
-    [
-      "operator_leveling",
-      "max_account_level"
-    ],
-    [
-      "cosmetic_item_purchase",
-      "complete_cosmetic_collection"
-    ],
-    [
-      "event_participation",
-      "complete_cosmetic_collection"
-    ]
-  ],
-  "subsections": [
     {
-      "id": "inputs",
-      "label": "Inputs",
-      "nodeIds": [
-        "time",
-        "money"
-      ]
+      "from": "time",
+      "to": "match_play"
     },
     {
-      "id": "gameplay",
-      "label": "Gameplay",
-      "nodeIds": [
-        "match_play"
-      ]
+      "from": "time",
+      "to": "challenge_completion"
     },
     {
-      "id": "progression",
-      "label": "Progression",
-      "nodeIds": [
-        "challenge_completion",
-        "operator_leveling"
-      ]
+      "from": "time",
+      "to": "operator_leveling"
     },
     {
-      "id": "monetary_transactions",
-      "label": "Monetary Transactions",
-      "nodeIds": [
-        "r6_credit_purchase",
-        "battle_pass_purchase",
-        "cosmetic_item_purchase"
-      ]
+      "from": "time",
+      "to": "event_participation"
     },
     {
-      "id": "limited_time_events",
-      "label": "Limited-Time Events",
-      "nodeIds": [
-        "event_participation"
-      ]
+      "from": "money",
+      "to": "r6_credit_purchase"
     },
     {
-      "id": "final_goals",
-      "label": "Final Goals",
-      "nodeIds": [
-        "max_account_level",
-        "max_operator_mastery",
-        "complete_cosmetic_collection",
-        "high_ranked_rating"
-      ]
+      "from": "match_play",
+      "to": "challenge_completion"
+    },
+    {
+      "from": "match_play",
+      "to": "operator_leveling"
+    },
+    {
+      "from": "match_play",
+      "to": "battle_pass_purchase"
+    },
+    {
+      "from": "challenge_completion",
+      "to": "operator_leveling"
+    },
+    {
+      "from": "r6_credit_purchase",
+      "to": "battle_pass_purchase"
+    },
+    {
+      "from": "r6_credit_purchase",
+      "to": "cosmetic_item_purchase"
+    },
+    {
+      "from": "battle_pass_purchase",
+      "to": "cosmetic_item_purchase"
+    },
+    {
+      "from": "operator_leveling",
+      "to": "max_operator_mastery",
+      "type": "final"
+    },
+    {
+      "from": "event_participation",
+      "to": "cosmetic_item_purchase"
+    },
+    {
+      "from": "event_participation",
+      "to": "operator_leveling"
+    },
+    {
+      "from": "match_play",
+      "to": "high_ranked_rating",
+      "type": "final"
+    },
+    {
+      "from": "challenge_completion",
+      "to": "max_account_level",
+      "type": "final"
+    },
+    {
+      "from": "operator_leveling",
+      "to": "max_account_level",
+      "type": "final"
+    },
+    {
+      "from": "cosmetic_item_purchase",
+      "to": "complete_cosmetic_collection",
+      "type": "final"
+    },
+    {
+      "from": "event_participation",
+      "to": "complete_cosmetic_collection",
+      "type": "final"
     }
   ]
 }

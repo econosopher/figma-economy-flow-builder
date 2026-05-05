@@ -1,33 +1,56 @@
-# Setting Up Your Gemini API Key
+# Setting Up Research API Keys
 
-The Economy Flow Plugin can use Google's Gemini AI to automatically generate complete economy JSON structures for any game. This requires a free API key from Google.
+The Economy Flow Plugin can use a local research API backed by Gemini, OpenAI, or Claude/Anthropic to generate complete v2 economy JSON structures for any game.
 
 ## Quick Start
 
-1. **Get Your Free API Key**
+1. **Get an API Key**
    - Go to [Google AI Studio](https://aistudio.google.com/app/apikey)
-   - Sign in with your Google account
-   - Click "Create API Key"
+   - Or use an OpenAI / Anthropic key supported by the local research API
    - Copy the generated key
 
 2. **Add to Plugin**
    - Open the Figma plugin
    - Go to the "Research (Beta)" tab
-   - Paste your API key in the "Gemini API Key" field
+   - Select Gemini, OpenAI, or Claude / Anthropic
+   - Paste your API key in the API Key field
    - The key is automatically saved securely
+
+### Optional: Make a Provider a Build-Time Default
+
+The plugin can auto-load a default provider key during build from any of these local secret stores:
+- `/Users/phillip/Documents/vibe_coding_projects/.env`
+- `/Users/phillip/Documents/secrets/global.env`
+- `~/.api_keys`
+
+Supported Gemini variable names:
+- `GEMINI_DEEP_RESEARCH_API_KEY`
+- `GEMINI_API_KEY`
+- `GOOGLE_API_KEY`
+
+Supported OpenAI variable names:
+- `OPENAI_DEEP_RESEARCH_API_KEY`
+- `OPENAI_API_KEY`
+
+Supported Claude / Anthropic variable names:
+- `ANTHROPIC_DEEP_RESEARCH_API_KEY`
+- `ANTHROPIC_API_KEY`
+- `CLAUDE_API_KEY`
+
+This keeps the key out of the repo while making the selected provider available by default.
 
 3. **Generate Economy JSON**
    - Enter a game name (e.g., "Clash Royale")
    - Select research depth (1-3)
    - Click "Generate Economy JSON"
    - Wait 30-60 seconds for AI analysis
-   - Use the generated JSON in the Builder tab
+   - Use the generated `schemaVersion: 2` JSON in the Builder tab
 
 ## Features
 
 ### Secure Storage
 - Your API key is stored locally in Figma's secure storage
-- Never transmitted except to Google's API
+- Never transmitted except to the configured local research API and that provider's API
 - Persists between plugin sessions
 - Never visible to other users or plugins
 
@@ -72,7 +95,7 @@ The Economy Flow Plugin can use Google's Gemini AI to automatically generate com
 ## Troubleshooting
 
 ### "API key is required"
-- Make sure you've entered your Gemini API key
+- Make sure you've selected the correct provider and entered the matching API key
 - Check that the key was copied completely
 - Get a new key if yours was revoked
 
@@ -89,17 +112,17 @@ The Economy Flow Plugin can use Google's Gemini AI to automatically generate com
 
 ## API Limits
 
-Google's free tier includes:
+Limits vary by provider. Google's Gemini free tier includes:
 - 1,500 requests per day
 - 60 requests per minute
 - No credit card required
 
-This is more than enough for regular plugin usage.
+OpenAI and Anthropic limits depend on your account, model, and billing setup.
 
 ## Privacy & Security
 
 - API keys are stored using Figma's secure clientStorage
-- Keys are only sent to Google's official API endpoints
+- Keys are only sent to the local research API and then to the selected provider
 - No data is collected or stored by the plugin authors
 - Each user needs their own API key
 
@@ -115,8 +138,12 @@ PORT=5001 python3 api_server.py
 
 2. The plugin will automatically connect to localhost:5001
 
+The plugin sends a structured conversion prompt and JSON schema alongside the generation request. If your research backend uses Gemini, OpenAI, or Claude Deep Research, the recommended implementation is:
+1. Run Deep Research to gather the report
+2. Run a structured JSON conversion step using the plugin v2 schema
+
 ## Support
 
-- Plugin issues: [GitHub Issues](https://github.com/YOUR_USERNAME/economy_flow_plugin/issues)
+- Plugin issues: [GitHub Issues](https://github.com/econosopher/figma-economy-flow-builder/issues)
 - API key help: [Google AI Studio Documentation](https://ai.google.dev/tutorials/setup)
 - Game economy questions: Check the examples folder for templates

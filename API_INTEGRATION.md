@@ -1,6 +1,6 @@
 # Research API Integration
 
-The Figma plugin integrates with the deep research economy Python API for advanced game economy analysis.
+The Figma plugin integrates with a local deep research economy API for advanced game economy analysis and v2 JSON conversion.
 
 ## Quick Start
 
@@ -46,8 +46,43 @@ To use a different port:
 
 ## API Keys
 
-For economy generation, provide API keys either:
-- In the UI when generating
-- As environment variables:
-  - `GEMINI_API_KEY` 
-  - `ANTHROPIC_API_KEY`
+For economy generation, the plugin now prefers environment-backed defaults at build time and still supports manual UI entry. The Research tab can send `provider: "gemini"`, `"openai"`, or `"claude"` to the local API.
+
+Supported Gemini key variable names:
+- `GEMINI_DEEP_RESEARCH_API_KEY`
+- `GEMINI_API_KEY`
+- `GOOGLE_API_KEY`
+
+Supported OpenAI key variable names:
+- `OPENAI_DEEP_RESEARCH_API_KEY`
+- `OPENAI_API_KEY`
+
+Supported Claude / Anthropic key variable names:
+- `ANTHROPIC_DEEP_RESEARCH_API_KEY`
+- `ANTHROPIC_API_KEY`
+- `CLAUDE_API_KEY`
+
+Default lookup order:
+1. `process.env`
+2. `/Users/phillip/Documents/vibe_coding_projects/.env`
+3. `/Users/phillip/Documents/secrets/global.env`
+4. `~/.api_keys`
+5. `src/default-config.ts` as a local fallback only
+
+## Structured Output Contract
+
+Gemini/OpenAI/Claude deep research is best treated as the report-generation step, not the final JSON emitter. The plugin now sends:
+- A research brief
+- A structured conversion prompt for the plugin JSON format
+- A JSON schema describing the required output shape
+
+The API should prefer a two-step flow when possible:
+1. Gather/report findings with Deep Research
+2. Convert those findings into the plugin `schemaVersion: 2` format with structured JSON output enabled
+
+## Current QA Notes
+
+- Compact v2 layout was validated in FigJam against Apex Legends and Rainbow Six Siege.
+- Apex Legends: 30 cards, 34 connectors, 0 route/card intersections, 12 fan-out junction routes, 25.9% width reduction.
+- Rainbow Six Siege: 13 cards, 20 connectors, 0 route/card intersections, 11 fan-out junction routes, 25.2% width reduction.
+- Screenshot evidence: `/tmp/economy-flow-plugin-qa/v2-apex-compact.png` and `/tmp/economy-flow-plugin-qa/v2-rainbow-six-compact.png`.

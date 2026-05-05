@@ -1,0 +1,412 @@
+{
+  "schemaVersion": 2,
+  "name": "Dice Throne Digital",
+  "stages": [
+    {
+      "id": "stage_1",
+      "label": "Inputs"
+    },
+    {
+      "id": "stage_2",
+      "label": "Daily Claims"
+    },
+    {
+      "id": "stage_3",
+      "label": "Progression"
+    },
+    {
+      "id": "stage_4",
+      "label": "Play & Rewards"
+    },
+    {
+      "id": "stage_5",
+      "label": "Upgrades"
+    },
+    {
+      "id": "outcomes",
+      "label": "Outcomes"
+    }
+  ],
+  "lanes": [
+    {
+      "id": "inputs",
+      "label": "Inputs"
+    },
+    {
+      "id": "core_modes",
+      "label": "Core Modes"
+    },
+    {
+      "id": "progression_and_retention",
+      "label": "Progression and Retention"
+    },
+    {
+      "id": "premium_spend",
+      "label": "Premium Spend"
+    },
+    {
+      "id": "platform_value_preservation",
+      "label": "Platform Value Preservation"
+    },
+    {
+      "id": "shared",
+      "label": "Shared"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "spend_time",
+      "label": "Spend Time",
+      "stageId": "stage_1",
+      "laneId": "inputs",
+      "kind": "initial_sink_node"
+    },
+    {
+      "id": "spend_money",
+      "label": "Spend Money",
+      "stageId": "stage_1",
+      "laneId": "inputs",
+      "kind": "initial_sink_node"
+    },
+    {
+      "id": "play_classic_and_unlimited_matches",
+      "label": "To Play Classic and Unlimited Matches",
+      "stageId": "stage_4",
+      "laneId": "core_modes",
+      "sources": [
+        "Hero Tokens"
+      ],
+      "values": [
+        "Hero XP"
+      ]
+    },
+    {
+      "id": "play_campaign_runs",
+      "label": "To Play Campaign Runs",
+      "stageId": "stage_4",
+      "laneId": "core_modes",
+      "sources": [
+        "Gold",
+        "Hero Tokens"
+      ],
+      "values": [
+        "Campaign Progress",
+        "Hero XP"
+      ]
+    },
+    {
+      "id": "play_thronebound",
+      "label": "To Play Thronebound",
+      "stageId": "stage_4",
+      "laneId": "core_modes",
+      "sources": [
+        "Season Tokens",
+        "Hero Tokens"
+      ],
+      "values": [
+        "Ranked Standing",
+        "Hero XP"
+      ]
+    },
+    {
+      "id": "claim_daily_bonus_rolls_and_complete_quests",
+      "label": "To Claim Daily Bonus Rolls and Complete Quests",
+      "stageId": "stage_2",
+      "laneId": "core_modes",
+      "sources": [
+        "Quest Points",
+        "Crown Coins",
+        "Wild Tokens"
+      ],
+      "values": [
+        "Retention Touchpoint"
+      ]
+    },
+    {
+      "id": "progress_daily_and_battle_pass_tracks",
+      "label": "To Progress Daily and Battle Pass Tracks",
+      "stageId": "stage_3",
+      "laneId": "progression_and_retention",
+      "sinks": [
+        "Quest Points"
+      ],
+      "values": [
+        "Battle Pass Progress"
+      ]
+    },
+    {
+      "id": "claim_reward_track_items",
+      "label": "To Claim Reward Track Items",
+      "stageId": "stage_4",
+      "laneId": "progression_and_retention",
+      "sources": [
+        "Wild Tokens",
+        "Crown Coins",
+        "Cosmetics"
+      ]
+    },
+    {
+      "id": "upgrade_heroes_and_unlock_perks",
+      "label": "To Upgrade Heroes and Unlock Perks",
+      "stageId": "stage_5",
+      "laneId": "progression_and_retention",
+      "sinks": [
+        "Hero Tokens",
+        "Wild Tokens",
+        "Season Tokens"
+      ],
+      "values": [
+        "Hero Level",
+        "Overall Level",
+        "Hero Perks"
+      ]
+    },
+    {
+      "id": "buy_campaign_run_upgrades",
+      "label": "To Buy Campaign Run Upgrades at Rosellas Cart",
+      "stageId": "stage_5",
+      "laneId": "progression_and_retention",
+      "sources": [
+        "Relics",
+        "Card Upgrades",
+        "Status Tools"
+      ],
+      "sinks": [
+        "Gold"
+      ],
+      "values": [
+        "Run Power"
+      ]
+    },
+    {
+      "id": "purchase_crown_coin_packs",
+      "label": "To Purchase Crown Coin Packs",
+      "stageId": "stage_2",
+      "laneId": "premium_spend",
+      "sources": [
+        "Crown Coins"
+      ]
+    },
+    {
+      "id": "unlock_heroes",
+      "label": "To Unlock Heroes and Base Hero Packages",
+      "stageId": "stage_3",
+      "laneId": "premium_spend",
+      "sources": [
+        "Playable Heroes",
+        "Hero Dice",
+        "Hero Avatars",
+        "Hero Backgrounds",
+        "Basic Banners"
+      ],
+      "sinks": [
+        "Crown Coins"
+      ],
+      "values": [
+        "Roster Breadth"
+      ]
+    },
+    {
+      "id": "buy_season_pass_premium",
+      "label": "To Buy the Season Pass",
+      "stageId": "stage_3",
+      "laneId": "premium_spend",
+      "sinks": [
+        "Crown Coins"
+      ],
+      "values": [
+        "Premium Reward Access"
+      ]
+    },
+    {
+      "id": "buy_rotating_store_items",
+      "label": "To Buy Backpack Cards and Daily Roll Vouchers",
+      "stageId": "stage_3",
+      "laneId": "premium_spend",
+      "sources": [
+        "Backpack Cards",
+        "Roll Vouchers"
+      ],
+      "sinks": [
+        "Crown Coins"
+      ]
+    },
+    {
+      "id": "buy_cosmetics_and_bundles",
+      "label": "To Buy Cosmetics and Bundles",
+      "stageId": "stage_3",
+      "laneId": "premium_spend",
+      "sources": [
+        "Hero Skins",
+        "Dice Skins",
+        "Emotes",
+        "Avatars",
+        "Cardbacks",
+        "Backgrounds",
+        "Banners",
+        "VFX Packs"
+      ],
+      "sinks": [
+        "Crown Coins",
+        "Hero Tokens"
+      ],
+      "values": [
+        "Collection Prestige"
+      ]
+    },
+    {
+      "id": "link_platform_accounts",
+      "label": "To Link Platform Accounts",
+      "stageId": "stage_1",
+      "laneId": "platform_value_preservation",
+      "values": [
+        "Account Continuity"
+      ]
+    },
+    {
+      "id": "master_favorite_heroes",
+      "label": "To Master Favorite Heroes",
+      "stageId": "outcomes",
+      "laneId": "shared",
+      "kind": "final_good"
+    },
+    {
+      "id": "push_deeper_campaign_runs",
+      "label": "To Push Deeper Campaign Runs",
+      "stageId": "outcomes",
+      "laneId": "shared",
+      "kind": "final_good"
+    },
+    {
+      "id": "express_identity_through_cosmetics",
+      "label": "To Express Identity Through Cosmetics",
+      "stageId": "outcomes",
+      "laneId": "shared",
+      "kind": "final_good"
+    },
+    {
+      "id": "grow_cross_platform_collection",
+      "label": "To Grow a Cross-Platform Collection",
+      "stageId": "outcomes",
+      "laneId": "platform_value_preservation",
+      "kind": "final_good"
+    },
+    {
+      "id": "stay_engaged_with_seasons",
+      "label": "To Stay Engaged With Seasons and Resets",
+      "stageId": "outcomes",
+      "laneId": "shared",
+      "kind": "final_good"
+    }
+  ],
+  "edges": [
+    {
+      "from": "spend_time",
+      "to": "play_classic_and_unlimited_matches"
+    },
+    {
+      "from": "spend_time",
+      "to": "play_campaign_runs"
+    },
+    {
+      "from": "spend_time",
+      "to": "play_thronebound"
+    },
+    {
+      "from": "spend_time",
+      "to": "claim_daily_bonus_rolls_and_complete_quests"
+    },
+    {
+      "from": "claim_daily_bonus_rolls_and_complete_quests",
+      "to": "progress_daily_and_battle_pass_tracks"
+    },
+    {
+      "from": "progress_daily_and_battle_pass_tracks",
+      "to": "claim_reward_track_items"
+    },
+    {
+      "from": "play_classic_and_unlimited_matches",
+      "to": "upgrade_heroes_and_unlock_perks"
+    },
+    {
+      "from": "play_campaign_runs",
+      "to": "buy_campaign_run_upgrades"
+    },
+    {
+      "from": "play_thronebound",
+      "to": "upgrade_heroes_and_unlock_perks"
+    },
+    {
+      "from": "spend_money",
+      "to": "purchase_crown_coin_packs"
+    },
+    {
+      "from": "purchase_crown_coin_packs",
+      "to": "unlock_heroes"
+    },
+    {
+      "from": "purchase_crown_coin_packs",
+      "to": "buy_season_pass_premium"
+    },
+    {
+      "from": "purchase_crown_coin_packs",
+      "to": "buy_rotating_store_items"
+    },
+    {
+      "from": "purchase_crown_coin_packs",
+      "to": "buy_cosmetics_and_bundles"
+    },
+    {
+      "from": "unlock_heroes",
+      "to": "play_classic_and_unlimited_matches"
+    },
+    {
+      "from": "unlock_heroes",
+      "to": "play_campaign_runs"
+    },
+    {
+      "from": "unlock_heroes",
+      "to": "play_thronebound"
+    },
+    {
+      "from": "upgrade_heroes_and_unlock_perks",
+      "to": "master_favorite_heroes",
+      "type": "final"
+    },
+    {
+      "from": "buy_campaign_run_upgrades",
+      "to": "push_deeper_campaign_runs",
+      "type": "final"
+    },
+    {
+      "from": "buy_cosmetics_and_bundles",
+      "to": "express_identity_through_cosmetics",
+      "type": "final"
+    },
+    {
+      "from": "unlock_heroes",
+      "to": "grow_cross_platform_collection",
+      "type": "final"
+    },
+    {
+      "from": "link_platform_accounts",
+      "to": "grow_cross_platform_collection",
+      "type": "final"
+    },
+    {
+      "from": "buy_season_pass_premium",
+      "to": "stay_engaged_with_seasons",
+      "type": "final"
+    },
+    {
+      "from": "progress_daily_and_battle_pass_tracks",
+      "to": "stay_engaged_with_seasons",
+      "type": "final"
+    },
+    {
+      "from": "play_thronebound",
+      "to": "stay_engaged_with_seasons",
+      "type": "final"
+    }
+  ]
+}

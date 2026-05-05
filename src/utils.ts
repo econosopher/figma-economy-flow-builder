@@ -28,49 +28,23 @@ export async function loadFonts() {
 
 export function clear() {
   try {
-    // First try to find and remove sections with our plugin data
-    const sectionsToRemove = figma.currentPage.findAll(n =>
-      n.type === 'SECTION' && n.getPluginData("economyFlowSection") === "true"
+    const nodesWithPluginTags = figma.currentPage.findAll(n =>
+      n.getPluginData('economyFlowSection') === 'true' ||
+      n.getPluginData('economyFlowContainer') === 'true' ||
+      n.getPluginData('economyFlowLegend') === 'true' ||
+      n.getPluginData('economyFlowSubsection') === 'true' ||
+      !!n.getPluginData('subsectionId')
     );
 
-    // Also find and remove legend sections
-    const legendSections = figma.currentPage.findAll(n =>
-      n.type === 'SECTION' && n.name === 'Legend'
+    // Legacy: older versions used SECTION named Legend without plugin data.
+    const legacyLegendNodes = figma.currentPage.findAll(n =>
+      (n.type === 'SECTION' || n.type === 'GROUP') && n.name === 'Legend'
     );
 
     // Find connectors with our plugin data
     const connectorsToRemove = figma.currentPage.findAll(n =>
       n.type === 'CONNECTOR' && n.getPluginData('economyFlowConnector') === 'true'
     );
-
-    // Find sections that match our naming pattern (e.g., "Game Name Economy")
-    const economySections = figma.currentPage.findAll(n =>
-      n.type === 'SECTION' && n.name.endsWith(' Economy')
-    );
-
-    sectionsToRemove.forEach(section => {
-      try {
-        section.remove();
-      } catch (error) {
-        console.error('Failed to remove section:', error);
-      }
-    });
-
-    legendSections.forEach(section => {
-      try {
-        section.remove();
-      } catch (error) {
-        console.error('Failed to remove legend section:', error);
-      }
-    });
-
-    economySections.forEach(section => {
-      try {
-        section.remove();
-      } catch (error) {
-        console.error('Failed to remove economy section:', error);
-      }
-    });
 
     connectorsToRemove.forEach(connector => {
       try {
@@ -80,9 +54,18 @@ export function clear() {
       }
     });
 
+    // Remove tagged groups/rectangles/sections and legacy legend containers.
+    [...nodesWithPluginTags, ...legacyLegendNodes].forEach(n => {
+      try {
+        n.remove();
+      } catch (error) {
+        console.error('Failed to remove node:', error);
+      }
+    });
+
     // Then remove any remaining nodes with our TAG (legacy support)
     const nodesToRemove = figma.currentPage.findAll(n => n.name.includes(TAG));
-    console.log(`Clearing ${sectionsToRemove.length + economySections.length} sections, ${legendSections.length} legend sections, ${connectorsToRemove.length} connectors, and ${nodesToRemove.length} nodes`);
+    console.log(`Clearing ${nodesWithPluginTags.length} tagged nodes, ${legacyLegendNodes.length} legacy legend nodes, ${connectorsToRemove.length} connectors, and ${nodesToRemove.length} legacy-tag nodes`);
 
     nodesToRemove.forEach(n => {
       try {

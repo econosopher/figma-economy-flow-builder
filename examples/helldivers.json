@@ -1,25 +1,72 @@
 {
+  "schemaVersion": 2,
   "name": "Helldivers",
-  "inputs": [
+  "stages": [
+    {
+      "id": "stage_1",
+      "label": "Inputs"
+    },
+    {
+      "id": "stage_2",
+      "label": "Missions"
+    },
+    {
+      "id": "stage_3",
+      "label": "Samples"
+    },
+    {
+      "id": "stage_4",
+      "label": "Requisition"
+    },
+    {
+      "id": "stage_5",
+      "label": "Warbonds"
+    },
+    {
+      "id": "stage_6",
+      "label": "Loadouts"
+    },
+    {
+      "id": "outcomes",
+      "label": "Outcomes"
+    }
+  ],
+  "lanes": [
+    {
+      "id": "inputs",
+      "label": "Inputs"
+    },
+    {
+      "id": "shared",
+      "label": "Shared"
+    }
+  ],
+  "nodes": [
     {
       "id": "time",
       "label": "Time",
+      "stageId": "stage_1",
+      "laneId": "inputs",
       "kind": "initial_sink_node"
     },
     {
       "id": "money",
       "label": "Money",
+      "stageId": "stage_1",
+      "laneId": "inputs",
       "kind": "initial_sink_node"
-    }
-  ],
-  "nodes": [
+    },
     {
       "id": "start_missions",
-      "label": "To Start Missions"
+      "label": "To Start Missions",
+      "stageId": "stage_2",
+      "laneId": "shared"
     },
     {
       "id": "mission_objectives",
       "label": "To Complete Mission Objectives",
+      "stageId": "stage_3",
+      "laneId": "shared",
       "sources": [
         "Stratagem Slips",
         "Warbond Credits"
@@ -31,6 +78,8 @@
     {
       "id": "increase_level",
       "label": "To Increase Player Level",
+      "stageId": "stage_4",
+      "laneId": "shared",
       "sources": [
         "Weapons",
         "Armor"
@@ -39,6 +88,8 @@
     {
       "id": "higher_difficulty",
       "label": "To Defeat Higher Difficulty Missions",
+      "stageId": "stage_5",
+      "laneId": "shared",
       "sources": [
         "Stratagems"
       ]
@@ -46,21 +97,29 @@
     {
       "id": "major_orders",
       "label": "To Complete Major Orders",
+      "stageId": "stage_3",
+      "laneId": "shared",
       "sources": [
         "Metals"
       ]
     },
     {
       "id": "liberate_planets",
-      "label": "To Liberate Planets"
+      "label": "To Liberate Planets",
+      "stageId": "stage_4",
+      "laneId": "shared"
     },
     {
       "id": "galactic_power",
-      "label": "To Increase Galactic Power"
+      "label": "To Increase Galactic Power",
+      "stageId": "stage_5",
+      "laneId": "shared"
     },
     {
       "id": "super_win",
       "label": "To Achieve a Super Win",
+      "stageId": "stage_6",
+      "laneId": "shared",
       "sources": [
         "Metals"
       ]
@@ -68,6 +127,8 @@
     {
       "id": "warbond_tiers",
       "label": "To Unlock Warbond Tiers",
+      "stageId": "stage_4",
+      "laneId": "shared",
       "sources": [
         "Metals",
         "Stratagems",
@@ -78,6 +139,8 @@
     {
       "id": "premium_lane",
       "label": "To Unlock Warbond Premium Lane",
+      "stageId": "stage_2",
+      "laneId": "shared",
       "sources": [
         "Super Credits"
       ],
@@ -88,66 +151,72 @@
     {
       "id": "final_good_1",
       "label": "Experience More Role Playing Moment",
+      "stageId": "outcomes",
+      "laneId": "shared",
       "kind": "final_good"
     },
     {
       "id": "final_good_2",
       "label": "To earn Unlock New Narrative",
+      "stageId": "outcomes",
+      "laneId": "shared",
       "kind": "final_good"
     }
   ],
   "edges": [
-    [
-      "time",
-      "start_missions"
-    ],
-    [
-      "start_missions",
-      "mission_objectives"
-    ],
-    [
-      "start_missions",
-      "major_orders"
-    ],
-    [
-      "mission_objectives",
-      "increase_level"
-    ],
-    [
-      "increase_level",
-      "higher_difficulty"
-    ],
-    [
-      "higher_difficulty",
-      "final_good_1"
-    ],
-    [
-      "major_orders",
-      "liberate_planets"
-    ],
-    [
-      "major_orders",
-      "warbond_tiers"
-    ],
-    [
-      "liberate_planets",
-      "galactic_power"
-    ],
-    [
-      "galactic_power",
-      "super_win"
-    ],
-    [
-      "super_win",
-      "final_good_2"
-    ],
-    [
-      "money",
-      "premium_lane"
-    ],
-    [
-      "premium_lane",
-      "warbond_tiers"
-    ]
+    {
+      "from": "time",
+      "to": "start_missions"
+    },
+    {
+      "from": "start_missions",
+      "to": "mission_objectives"
+    },
+    {
+      "from": "start_missions",
+      "to": "major_orders"
+    },
+    {
+      "from": "mission_objectives",
+      "to": "increase_level"
+    },
+    {
+      "from": "increase_level",
+      "to": "higher_difficulty"
+    },
+    {
+      "from": "higher_difficulty",
+      "to": "final_good_1",
+      "type": "final"
+    },
+    {
+      "from": "major_orders",
+      "to": "liberate_planets"
+    },
+    {
+      "from": "major_orders",
+      "to": "warbond_tiers"
+    },
+    {
+      "from": "liberate_planets",
+      "to": "galactic_power"
+    },
+    {
+      "from": "galactic_power",
+      "to": "super_win"
+    },
+    {
+      "from": "super_win",
+      "to": "final_good_2",
+      "type": "final"
+    },
+    {
+      "from": "money",
+      "to": "premium_lane"
+    },
+    {
+      "from": "premium_lane",
+      "to": "warbond_tiers"
+    }
   ]
 }

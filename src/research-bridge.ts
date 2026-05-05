@@ -3,6 +3,15 @@
  * This module handles the communication with the external research system
  */
 
+import {
+  buildEconomyGraphJsonSchema,
+  createEconomyJsonPrompt,
+  createResearchBrief,
+  RESEARCH_PROMPT_VERSION
+} from './research-contract';
+import { V2Edge, V2Graph, V2Lane, V2Node, V2Stage } from './types';
+import { validateGraphData } from './validation';
+
 // Declare fetch to satisfy TypeScript in Node test environment (ts-jest)
 // Figma provides fetch at runtime, and tests mock it on global
 declare const fetch: any;
@@ -39,7 +48,7 @@ export interface ResearchRequest {
   gameName: string;
   depth: number;
   apiKey?: string;
-  provider?: 'gemini' | 'claude';
+  provider?: 'gemini' | 'openai' | 'claude';
 }
 
 interface ResearchCache {
@@ -48,6 +57,8 @@ interface ResearchCache {
   timestamp: string;
   prompt_version: string;
   instructions: string;
+  conversion_prompt?: string;
+  json_schema?: unknown;
   research_phases?: {
     phase1?: string;
     phase2?: string;
@@ -77,23 +88,12 @@ export async function generateResearchCache(request: ResearchRequest): Promise<R
       game: request.gameName,
       depth: request.depth,
       timestamp: new Date().toISOString(),
-      prompt_version: "1.0",
-      instructions: `Research the economy of ${request.gameName} at depth level ${request.depth}`,
+      prompt_version: RESEARCH_PROMPT_VERSION,
+      instructions: createResearchBrief(request.gameName, request.depth),
+      conversion_prompt: createEconomyJsonPrompt(request.gameName, request.depth),
+      json_schema: buildEconomyGraphJsonSchema(),
       research_phases: {}
     };
-
-    // Add depth-specific instructions
-    switch (request.depth) {
-      case 1:
-        cache.instructions += " - Focus on core loops and basic economy structure";
-        break;
-      case 2:
-        cache.instructions += " - Include detailed resource flows and progression systems";
-        break;
-      case 3:
-        cache.instructions += " - Comprehensive analysis with optimization paths and monetization";
-        break;
-    }
 
     return cache;
   }
@@ -115,14 +115,24 @@ export async function generateEconomyJSON(request: ResearchRequest): Promise<any
           gameName: request.gameName,
           depth: request.depth,
           provider: request.provider || 'gemini',
-          apiKey: request.apiKey
+          apiKey: request.apiKey,
+          promptVersion: RESEARCH_PROMPT_VERSION,
+          researchBrief: createResearchBrief(request.gameName, request.depth),
+          conversionPrompt: createEconomyJsonPrompt(request.gameName, request.depth),
+          responseMimeType: 'application/json',
+          responseJsonSchema: buildEconomyGraphJsonSchema()
         })
       },
       60000,
       1
     );
     if (data.success && data.json) {
-      return repairEconomyJSON(data.json);
+      const repaired = repairEconomyJSON(data.json);
+      const validationErrors = validateGraphData(repaired);
+      if (validationErrors.length > 0) {
+        throw new Error(`Returned JSON did not validate after repair: ${validationErrors.slice(0, 10).join(' | ')}`);
+      }
+      return repaired;
     }
     throw new Error(data.error || 'Failed to generate economy JSON');
   } catch (error) {
@@ -142,80 +152,73 @@ export function repairEconomyJSON(json: any): any {
     try {
       json = parseResearchOutput(json, { quiet: true });
     } catch {
-      return { inputs: [], nodes: [], edges: [] };
+      return emptyV2Graph();
     }
   }
 
   if (!json || typeof json !== 'object') {
-    return { inputs: [], nodes: [], edges: [] };
+    return emptyV2Graph();
   }
 
-  // Ensure arrays exist
-  const inputs = Array.isArray(json.inputs) ? json.inputs : [];
-  const nodes = Array.isArray(json.nodes) ? json.nodes : [];
-  let edges = Array.isArray(json.edges) ? json.edges : [];
-
-  // Helper to snake_case IDs
-  const toSnakeCase = (str: string) => {
-    return str
-      .toLowerCase()
-      .replace(/[^a-z0-9_]/g, '_')
-      .replace(/_+/g, '_')
-      .replace(/^_|_$/g, '');
-  };
-
-  // Track valid IDs
+  const sourceNodes = Array.isArray(json.nodes) ? json.nodes : [];
+  const sourceInputs = Array.isArray(json.inputs) ? json.inputs : [];
+  const allSourceNodes = json.schemaVersion === 2 ? sourceNodes : [...sourceInputs, ...sourceNodes];
   const validIds = new Set<string>();
   const idMapping = new Map<string, string>();
 
-  // Repair inputs
-  const repairedInputs = inputs.map((input: any) => {
-    const originalId = input.id || `input_${Math.random().toString(36).substring(2, 11)}`;
-    const newId = toSnakeCase(originalId);
+  const stageSource = Array.isArray(json.stages) && json.stages.length > 0
+    ? json.stages
+    : inferLegacyStages(json);
+  const repairedStages = repairStages(stageSource);
+  const terminalStageId = repairedStages[repairedStages.length - 1].id;
+
+  const laneSource = Array.isArray(json.lanes) && json.lanes.length > 0
+    ? json.lanes
+    : inferLegacyLanes(json);
+  const repairedLanes = repairLanes(laneSource);
+  const laneIds = new Set(repairedLanes.map(lane => lane.id));
+  const stageIds = new Set(repairedStages.map(stage => stage.id));
+
+  const repairedNodes: V2Node[] = allSourceNodes.map((node: any, index: number) => {
+    const originalId = node.id || `node_${index + 1}`;
+    const newId = toSnakeCase(String(originalId));
     idMapping.set(originalId, newId);
     validIds.add(newId);
 
-    return {
-      id: newId,
-      label: input.label || originalId,
-      kind: 'initial_sink_node' // Enforce kind
-    };
-  });
-
-  // Repair nodes
-  const repairedNodes = nodes.map((node: any) => {
-    const originalId = node.id || `node_${Math.random().toString(36).substring(2, 11)}`;
-    const newId = toSnakeCase(originalId);
-    idMapping.set(originalId, newId);
-    validIds.add(newId);
+    const kind = repairNodeKind(node.kind, sourceInputs.some((input: any) => input === node || input.id === node.id));
+    const requestedStageId = typeof node.stageId === 'string' ? toSnakeCase(node.stageId) : undefined;
+    const stageId = kind === 'final_good'
+      ? terminalStageId
+      : (requestedStageId && stageIds.has(requestedStageId) ? requestedStageId : inferLegacyStageId(json, node, repairedStages));
+    const requestedLaneId = typeof node.laneId === 'string' ? toSnakeCase(node.laneId) : undefined;
+    const laneId = requestedLaneId && laneIds.has(requestedLaneId)
+      ? requestedLaneId
+      : inferLegacyLaneId(json, node, repairedLanes);
 
     return {
       id: newId,
       label: node.label || originalId,
+      stageId,
+      laneId,
       sources: Array.isArray(node.sources) ? node.sources.filter((v: unknown) => typeof v === 'string') : [],
       sinks: Array.isArray(node.sinks) ? node.sinks.filter((v: unknown) => typeof v === 'string') : [],
       values: Array.isArray(node.values) ? node.values.filter((v: unknown) => typeof v === 'string') : [],
-      kind:
-        node.kind === 'finalGood' || node.kind === 'final-good'
-          ? 'final_good'
-          : (node.kind || 'node')
+      kind
     };
   });
 
-  // Repair edges
-  const repairedEdges: [string, string][] = [];
-
+  const repairedEdges: V2Edge[] = [];
+  const edges = Array.isArray(json.edges) ? json.edges : [];
   edges.forEach((edge: any) => {
     let from: string | undefined;
     let to: string | undefined;
+    let edgeType: string | undefined;
 
-    // Handle object style { from: 'a', to: 'b' }
     if (!Array.isArray(edge) && typeof edge === 'object') {
       from = edge.from || edge.source;
       to = edge.to || edge.target || edge.sink;
-    }
-    // Handle tuple style ['a', 'b']
-    else if (Array.isArray(edge) && edge.length >= 2) {
+      edgeType = edge.type;
+    } else if (Array.isArray(edge) && edge.length >= 2) {
       from = edge[0];
       to = edge[1];
     }
@@ -225,39 +228,152 @@ export function repairEconomyJSON(json: any): any {
       const fromId = idMapping.get(from) || toSnakeCase(from);
       const toId = idMapping.get(to) || toSnakeCase(to);
 
-      // Only add if both ends exist in our nodes/inputs
       if (validIds.has(fromId) && validIds.has(toId)) {
-        repairedEdges.push([fromId, toId]);
+        const targetNode = repairedNodes.find(node => node.id === toId);
+        const repairedType = repairEdgeType(edgeType, targetNode?.kind === 'final_good');
+        repairedEdges.push(repairedType ? { from: fromId, to: toId, type: repairedType } : { from: fromId, to: toId });
       }
     }
   });
 
-  // Repair subsections (optional)
-  const subsections = Array.isArray(json.subsections) ? json.subsections : [];
-  const repairedSubsections = subsections
-    .filter((sub: any) => sub && typeof sub === 'object')
-    .map((sub: any) => {
-      const originalId = sub.id || `subsection_${Math.random().toString(36).substring(2, 11)}`;
-      const id = toSnakeCase(originalId);
-      const label = typeof sub.label === 'string' && sub.label.trim().length > 0 ? sub.label : originalId;
-      const nodeIds = Array.isArray(sub.nodeIds)
-        ? sub.nodeIds
-            .filter((v: unknown) => typeof v === 'string')
-            .map((v: string) => idMapping.get(v) || toSnakeCase(v))
-            .filter((v: string) => validIds.has(v))
-        : [];
-      const color = typeof sub.color === 'string' && /^#[0-9A-Fa-f]{6}$/.test(sub.color) ? sub.color : undefined;
-      return color ? { id, label, nodeIds, color } : { id, label, nodeIds };
-    })
-    .filter((sub: any) => sub.nodeIds.length > 0);
-
   return {
+    schemaVersion: 2,
     name: json.name || 'Economy Graph',
-    inputs: repairedInputs,
+    stages: repairedStages,
+    lanes: repairedLanes,
     nodes: repairedNodes,
-    edges: repairedEdges,
-    subsections: repairedSubsections
+    edges: repairedEdges
+  } as V2Graph;
+}
+
+function emptyV2Graph(): V2Graph {
+  return {
+    schemaVersion: 2,
+    name: 'Economy Graph',
+    stages: [{ id: 'inputs', label: 'Inputs' }, { id: 'outcomes', label: 'Outcomes' }],
+    lanes: [{ id: 'main', label: 'Main' }],
+    nodes: [],
+    edges: []
   };
+}
+
+function toSnakeCase(str: string) {
+  return str
+    .toLowerCase()
+    .replace(/[^a-z0-9_]/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_|_$/g, '') || 'item';
+}
+
+function repairStages(stages: any[]): V2Stage[] {
+  const seen = new Set<string>();
+  const repaired = stages.map((stage, index) => {
+    const base = toSnakeCase(stage?.id || stage?.label || `stage_${index + 1}`);
+    const id = uniqueId(base, seen);
+    return { id, label: typeof stage?.label === 'string' ? stage.label : id };
+  });
+  return repaired.length > 0 ? repaired : emptyV2Graph().stages;
+}
+
+function repairLanes(lanes: any[]): V2Lane[] {
+  const seen = new Set<string>();
+  const repaired = lanes.map((lane, index) => {
+    const base = toSnakeCase(lane?.id || lane?.label || `lane_${index + 1}`);
+    const id = uniqueId(base, seen);
+    const out: V2Lane = { id, label: typeof lane?.label === 'string' ? lane.label : id };
+    if (typeof lane?.color === 'string' && /^#[0-9A-Fa-f]{6}$/.test(lane.color)) {
+      out.color = lane.color;
+    }
+    return out;
+  });
+  return repaired.length > 0 ? repaired : [{ id: 'main', label: 'Main' }];
+}
+
+function uniqueId(base: string, seen: Set<string>): string {
+  let id = base;
+  let index = 2;
+  while (seen.has(id)) {
+    id = `${base}_${index++}`;
+  }
+  seen.add(id);
+  return id;
+}
+
+function repairNodeKind(kind: unknown, isInput: boolean): string {
+  if (isInput || kind === 'initial_sink_node') return 'initial_sink_node';
+  if (kind === 'finalGood' || kind === 'final-good' || kind === 'final_good') return 'final_good';
+  return 'action';
+}
+
+function repairEdgeType(type: unknown, isFinal: boolean): V2Edge['type'] | undefined {
+  if (isFinal) return 'final';
+  return type === 'normal' || type === 'value' || type === 'cross-lane' ? type : undefined;
+}
+
+function inferLegacyStages(json: any): V2Stage[] {
+  const allNodes = [...(Array.isArray(json.inputs) ? json.inputs : []), ...(Array.isArray(json.nodes) ? json.nodes : [])];
+  if (allNodes.length === 0) return emptyV2Graph().stages;
+  const ids = allNodes.map((node: any, index: number) => node.id || `node_${index + 1}`);
+  const columns = new Map(ids.map((id: string) => [id, 0]));
+  const edges = Array.isArray(json.edges) ? json.edges : [];
+  let changed = true;
+  let guard = 0;
+  while (changed && guard++ < ids.length * ids.length) {
+    changed = false;
+    edges.forEach((edge: any) => {
+      const from = Array.isArray(edge) ? edge[0] : edge?.from;
+      const to = Array.isArray(edge) ? edge[1] : edge?.to;
+      if (columns.has(from) && columns.has(to) && (columns.get(to) || 0) <= (columns.get(from) || 0)) {
+        columns.set(to, (columns.get(from) || 0) + 1);
+        changed = true;
+      }
+    });
+  }
+  const maxNonFinal = Math.max(...allNodes.filter((node: any) => repairNodeKind(node.kind, false) !== 'final_good').map((node: any) => columns.get(node.id) || 0), 0);
+  const terminal = maxNonFinal + 1;
+  const uniqueColumns = Array.from(new Set(allNodes.map((node: any) => repairNodeKind(node.kind, false) === 'final_good' ? terminal : columns.get(node.id) || 0))).sort((a, b) => a - b);
+  return uniqueColumns.map((_, index) => ({
+    id: index === uniqueColumns.length - 1 ? 'outcomes' : `stage_${index + 1}`,
+    label: index === 0 ? 'Inputs' : (index === uniqueColumns.length - 1 ? 'Outcomes' : `Stage ${index + 1}`)
+  }));
+}
+
+function inferLegacyLanes(json: any): V2Lane[] {
+  if (Array.isArray(json.subsections) && json.subsections.length > 0) {
+    return json.subsections.map((sub: any) => ({
+      id: sub.id || sub.label,
+      label: sub.label || sub.id,
+      color: sub.color
+    }));
+  }
+  return [{ id: 'main', label: 'Main' }];
+}
+
+function inferLegacyStageId(json: any, node: any, stages: V2Stage[]): string {
+  if (json.schemaVersion === 2 && typeof node.stageId === 'string') {
+    const requested = toSnakeCase(node.stageId);
+    if (stages.some(stage => stage.id === requested)) return requested;
+  }
+
+  const inputIds = new Set((Array.isArray(json.inputs) ? json.inputs : []).map((input: any) => input.id));
+  if (inputIds.has(node.id)) return stages[0].id;
+  return stages[Math.min(1, stages.length - 1)].id;
+}
+
+function inferLegacyLaneId(json: any, node: any, lanes: V2Lane[]): string {
+  if (json.schemaVersion === 2 && typeof node.laneId === 'string') {
+    const requested = toSnakeCase(node.laneId);
+    if (lanes.some(lane => lane.id === requested)) return requested;
+  }
+
+  for (const sub of Array.isArray(json.subsections) ? json.subsections : []) {
+    if (Array.isArray(sub.nodeIds) && sub.nodeIds.includes(node.id)) {
+      const id = toSnakeCase(sub.id || sub.label || '');
+      if (lanes.some(lane => lane.id === id)) return id;
+    }
+  }
+
+  return lanes[0].id;
 }
 
 /**
@@ -266,53 +382,24 @@ export function repairEconomyJSON(json: any): any {
  */
 export function createResearchMarkdown(gameName: string, depth: number): string {
   const sections = [];
+  const schema = JSON.stringify(buildEconomyGraphJsonSchema(), null, 2);
 
   sections.push(`# ${gameName} Economy Research`);
   sections.push(`\n## Overview`);
   sections.push(`Research depth: Level ${depth}`);
   sections.push(`Generated: ${new Date().toISOString()}`);
+  sections.push(`Prompt version: ${RESEARCH_PROMPT_VERSION}`);
 
-  sections.push(`\n## Research Requirements`);
+  sections.push(`\n## Research Brief`);
+  sections.push(createResearchBrief(gameName, depth));
 
-  if (depth >= 1) {
-    sections.push(`### Core Systems`);
-    sections.push(`- Primary currencies and resources`);
-    sections.push(`- Core gameplay loops`);
-    sections.push(`- Basic progression systems`);
-  }
+  sections.push(`\n## Structured Conversion Prompt`);
+  sections.push(createEconomyJsonPrompt(gameName, depth));
 
-  if (depth >= 2) {
-    sections.push(`\n### Detailed Flows`);
-    sections.push(`- Resource conversion mechanics`);
-    sections.push(`- Time gates and energy systems`);
-    sections.push(`- Secondary activities (crafting, trading)`);
-    sections.push(`- Event and seasonal content`);
-  }
-
-  if (depth >= 3) {
-    sections.push(`\n### Comprehensive Analysis`);
-    sections.push(`- Player segmentation (F2P, dolphins, whales)`);
-    sections.push(`- Optimization paths`);
-    sections.push(`- Monetization drivers`);
-    sections.push(`- Social and competitive elements`);
-    sections.push(`- End-game content and retention`);
-  }
-
-  sections.push(`\n## Categories to Include`);
-  const categories = [
-    "Core Gameplay Loop",
-    "Resource Management",
-    "Progression Systems",
-    "Monetization",
-    "Social Features",
-    "Time-Limited Events",
-    "Competitive Elements",
-    "Collection/Completion"
-  ];
-
-  // Include more categories for higher depth
-  const categoriesToInclude = categories.slice(0, Math.min(categories.length, 3 + depth * 2));
-  categoriesToInclude.forEach(cat => sections.push(`- ${cat}`));
+  sections.push(`\n## Output JSON Schema`);
+  sections.push('```json');
+  sections.push(schema);
+  sections.push('```');
 
   return sections.join('\n');
 }
@@ -377,7 +464,11 @@ export function parseResearchOutput(output: string, options: { quiet?: boolean }
 export function looksLikeEconomyGraph(value: unknown): boolean {
   if (!value || typeof value !== 'object') return false;
   const obj = value as any;
-  return Array.isArray(obj.inputs) && Array.isArray(obj.nodes) && Array.isArray(obj.edges);
+  return (
+    Array.isArray(obj.stages) && Array.isArray(obj.nodes) && Array.isArray(obj.edges)
+  ) || (
+    Array.isArray(obj.inputs) && Array.isArray(obj.nodes) && Array.isArray(obj.edges)
+  );
 }
 
 function unwrapJsonString(value: unknown): unknown {

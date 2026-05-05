@@ -1,106 +1,102 @@
 /// <reference types="@figma/plugin-typings" />
 
-import { Graph, Input, Act } from './types';
+import { V2Edge, V2Graph, V2Node } from './types';
 import { COLOR } from './constants';
 
-export function validateGraphData(data: Partial<Graph>): string[] {
+export function validateGraphData(data: Partial<V2Graph> | any): string[] {
   const errors: string[] = [];
   if (!data) {
     errors.push("Data is null or undefined.");
     return errors;
   }
 
-  const ids = new Set<string>();
+  if (data.schemaVersion !== 2) {
+    errors.push("'schemaVersion' must be 2.");
+  }
 
-  if (!Array.isArray(data.inputs)) {
-    errors.push("'inputs' property must be an array.");
+  const stageIds = new Set<string>();
+  const laneIds = new Set<string>();
+  const nodeIds = new Set<string>();
+
+  if (!Array.isArray(data.stages)) {
+    errors.push("'stages' property must be an array.");
   } else {
-    data.inputs.forEach((input: Input, i: number) => {
-      if (typeof input.id !== 'string') errors.push(`Input ${i}: 'id' is missing or not a string.`);
-      else {
-        if (!/^[a-z0-9_]+$/.test(input.id)) {
-          errors.push(`Input ${i}: 'id' must be snake_case (lowercase, digits, underscores).`);
-        }
-        ids.add(input.id);
-      }
-      if (typeof input.label !== 'string') errors.push(`Input ${i}: 'label' is missing or not a string.`);
-      if (typeof input.kind !== 'string') errors.push(`Input ${i}: 'kind' is missing or not a string.`);
+    data.stages.forEach((stage: any, i: number) => {
+      validateId(stage?.id, `Stage ${i}`, errors, stageIds);
+      if (typeof stage?.label !== 'string') errors.push(`Stage ${i}: 'label' is missing or not a string.`);
     });
+  }
+
+  if (data.lanes !== undefined) {
+    if (!Array.isArray(data.lanes)) {
+      errors.push("'lanes' property must be an array.");
+    } else {
+      data.lanes.forEach((lane: any, i: number) => {
+        validateId(lane?.id, `Lane ${i}`, errors, laneIds);
+        if (typeof lane?.label !== 'string') errors.push(`Lane ${i}: 'label' is missing or not a string.`);
+        if (lane?.color && !isValidColor(lane.color)) {
+          errors.push(`Lane ${i}: Invalid color format '${lane.color}'.`);
+        }
+      });
+    }
   }
 
   if (!Array.isArray(data.nodes)) {
     errors.push("'nodes' property must be an array.");
   } else {
-    data.nodes.forEach((node: Act, i: number) => {
-      if (typeof node.id !== 'string') errors.push(`Node ${i}: 'id' is missing or not a string.`);
-      else {
-        if (!/^[a-z0-9_]+$/.test(node.id)) {
-          errors.push(`Node ${i}: 'id' must be snake_case (lowercase, digits, underscores).`);
-        }
-        ids.add(node.id);
+    const terminalStageId = Array.isArray(data.stages) && data.stages.length > 0
+      ? data.stages[data.stages.length - 1]?.id
+      : undefined;
+
+    data.nodes.forEach((node: V2Node, i: number) => {
+      validateId(node?.id, `Node ${i}`, errors, nodeIds);
+      if (typeof node?.label !== 'string') errors.push(`Node ${i}: 'label' is missing or not a string.`);
+      if (typeof node?.stageId !== 'string') {
+        errors.push(`Node ${i}: 'stageId' is missing or not a string.`);
+      } else if (!stageIds.has(node.stageId)) {
+        errors.push(`Node ${i}: stageId '${node.stageId}' not found in stages.`);
       }
-      if (typeof node.label !== 'string') errors.push(`Node ${i}: 'label' is missing or not a string.`);
       if (node.sources && !Array.isArray(node.sources)) errors.push(`Node ${i}: 'sources' must be an array of strings.`);
       if (node.sinks && !Array.isArray(node.sinks)) errors.push(`Node ${i}: 'sinks' must be an array of strings.`);
       if (node.values && !Array.isArray(node.values)) errors.push(`Node ${i}: 'values' must be an array of strings.`);
+
+      if (node.laneId !== undefined && typeof node.laneId !== 'string') {
+        errors.push(`Node ${i}: 'laneId' must be a string when provided.`);
+      } else if (node.laneId && Array.isArray(data.lanes) && data.lanes.length > 0 && !laneIds.has(node.laneId)) {
+        errors.push(`Node ${i}: laneId '${node.laneId}' not found in lanes.`);
+      }
+
+      if (node.kind === 'final_good' && terminalStageId && node.stageId !== terminalStageId) {
+        errors.push(`Node ${i}: final_good nodes must use terminal stage '${terminalStageId}'.`);
+      }
     });
   }
 
   if (!Array.isArray(data.edges)) {
     errors.push("'edges' property must be an array.");
   } else {
-    data.edges.forEach((edge: any, i: number) => {
-      if (!Array.isArray(edge) || edge.length !== 2 || typeof edge[0] !== 'string' || typeof edge[1] !== 'string') {
-        errors.push(`Edge ${i}: must be a pair of strings [from, to].`);
+    data.edges.forEach((edge: V2Edge, i: number) => {
+      if (!edge || typeof edge !== 'object' || Array.isArray(edge)) {
+        errors.push(`Edge ${i}: must be an object with 'from' and 'to'.`);
         return;
       }
-      if (!ids.has(edge[0])) errors.push(`Edge ${i}: 'from' id '${edge[0]}' not found in inputs or nodes.`);
-      if (!ids.has(edge[1])) errors.push(`Edge ${i}: 'to' id '${edge[1]}' not found in inputs or nodes.`);
+      if (typeof edge.from !== 'string') errors.push(`Edge ${i}: 'from' is missing or not a string.`);
+      else if (!nodeIds.has(edge.from)) errors.push(`Edge ${i}: 'from' id '${edge.from}' not found in nodes.`);
+      if (typeof edge.to !== 'string') errors.push(`Edge ${i}: 'to' is missing or not a string.`);
+      else if (!nodeIds.has(edge.to)) errors.push(`Edge ${i}: 'to' id '${edge.to}' not found in nodes.`);
+      if (edge.type && !['normal', 'value', 'final', 'cross-lane'].includes(edge.type)) {
+        errors.push(`Edge ${i}: type '${edge.type}' is not supported.`);
+      }
     });
   }
 
-  // Validate subsections if present
-  if (data.subsections !== undefined) {
-    if (!Array.isArray(data.subsections)) {
-      errors.push("'subsections' property must be an array.");
-    } else {
-      const subsectionIds = new Set<string>();
-      data.subsections.forEach((subsection: any, i: number) => {
-        if (typeof subsection.id !== 'string') {
-          errors.push(`Subsection ${i}: 'id' is missing or not a string.`);
-        } else {
-          if (subsectionIds.has(subsection.id)) {
-            errors.push(`Subsection ${i}: Duplicate subsection id '${subsection.id}'.`);
-          }
-          subsectionIds.add(subsection.id);
-        }
-        if (typeof subsection.label !== 'string') {
-          errors.push(`Subsection ${i}: 'label' is missing or not a string.`);
-        }
-        if (!Array.isArray(subsection.nodeIds)) {
-          errors.push(`Subsection ${i}: 'nodeIds' must be an array of strings.`);
-        } else {
-          subsection.nodeIds.forEach((nodeId: any, j: number) => {
-            if (typeof nodeId !== 'string') {
-              errors.push(`Subsection ${i}, nodeId ${j}: Must be a string.`);
-            } else if (!ids.has(nodeId)) {
-              errors.push(`Subsection ${i}: Node id '${nodeId}' not found in inputs or nodes.`);
-            }
-          });
-        }
-        if (subsection.color && !isValidColor(subsection.color)) {
-          errors.push(`Subsection ${i}: Invalid color format '${subsection.color}'.`);
-        }
-      });
-    }
-  }
-
-  // Cycle detection (treat as an error)
   if (Array.isArray(data.edges)) {
-    const allIds = Array.from(ids);
+    const allIds = Array.from(nodeIds);
     const adj = new Map<string, string[]>(allIds.map(id => [id, []]));
-    data.edges.forEach(([from, to]) => {
-      if (adj.has(from)) adj.get(from)!.push(to);
+    data.edges.forEach((edge: any) => {
+      if (edge && typeof edge.from === 'string' && typeof edge.to === 'string' && adj.has(edge.from)) {
+        adj.get(edge.from)!.push(edge.to);
+      }
     });
 
     const visited = new Set<string>();
@@ -151,6 +147,20 @@ export function validateGraphData(data: Partial<Graph>): string[] {
   }
 
   return errors;
+}
+
+function validateId(id: unknown, label: string, errors: string[], ids: Set<string>) {
+  if (typeof id !== 'string') {
+    errors.push(`${label}: 'id' is missing or not a string.`);
+    return;
+  }
+  if (!/^[a-z0-9_]+$/.test(id)) {
+    errors.push(`${label}: 'id' must be snake_case (lowercase, digits, underscores).`);
+  }
+  if (ids.has(id)) {
+    errors.push(`${label}: Duplicate id '${id}'.`);
+  }
+  ids.add(id);
 }
 
 export function isValidColor(color: string): boolean {

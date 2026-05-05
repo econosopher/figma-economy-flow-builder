@@ -1,8 +1,9 @@
 /// <reference types="@figma/plugin-typings" />
 
 import { Graph, Act, Input, Subsection } from './types';
+import { buildConnectorSegments } from './connector-routing';
 import { BOX_SIZE, INITIAL_X_OFFSET, PADDING } from './constants';
-import { CollisionEngine, Rectangle, CollisionContext } from './collision';
+import { CollisionEngine, CollisionDetector, Rectangle, CollisionContext } from './collision';
 
 interface NodePosition {
   x: number;
@@ -11,20 +12,12 @@ interface NodePosition {
   width: number;
 }
 
-interface SubsectionBand {
-  id: string;
-  nodeIds: Set<string>;
-  minY: number;
-  maxY: number;
-  bandIndex: number;
-}
-
 export class LayoutEngine {
   private nodeTotalHeights = new Map<string, number>();
   private nodeColumns = new Map<string, number>();
   private placedNodePositions = new Map<string, NodePosition>();
+  private nodeKinds = new Map<string, string>();
   private collisionEngine: CollisionEngine;
-  private subsectionBands = new Map<string, SubsectionBand>();
   private nodeToSubsection = new Map<string, string>();
 
   constructor() {
@@ -33,17 +26,14 @@ export class LayoutEngine {
       strategy: 'avoid',
       nodeToNode: true,
       edgeToNode: true,
-      edgeToEdge: false,
       margin: 14 // Further reduced margin by 30% for tighter vertical spacing
     });
   }
 
   /**
-   * Initialize subsection bands for vertical layout grouping.
-   * This assigns each subsection a vertical "band" to prevent overlap.
+   * Index subsection membership so layout constraints can respect group boundaries.
    */
-  initializeSubsectionBands(subsections: Subsection[] | undefined, allNodes: (Input | Act)[]): void {
-    this.subsectionBands.clear();
+  setSubsections(subsections: Subsection[] | undefined): void {
     this.nodeToSubsection.clear();
 
     if (!subsections || subsections.length === 0) return;
@@ -55,22 +45,12 @@ export class LayoutEngine {
       });
     });
 
-    // Subsections are laid out horizontally (via calculateColumns), so we no longer apply
-    // vertical band offsets here.
-    void allNodes;
-  }
-
-  /**
-   * Get the Y offset for a node based on its subsection band
-   */
-  getSubsectionYOffset(nodeId: string): number {
-    void nodeId;
-    return 0;
   }
 
   calculateNodeHeights(nodes: (Input | Act)[]) {
     nodes.forEach(node => {
       let totalHeight = 0;
+      const nodeKind = ('kind' in node && typeof node.kind === 'string') ? node.kind : 'node';
       if ('kind' in node && node.kind === 'initial_sink_node') {
         totalHeight = BOX_SIZE.INPUT.H;
       } else if ('kind' in node && node.kind === 'final_good') {
@@ -84,6 +64,7 @@ export class LayoutEngine {
         }
       }
       this.nodeTotalHeights.set(node.id, totalHeight);
+      this.nodeKinds.set(node.id, nodeKind);
     });
   }
 
@@ -314,6 +295,28 @@ export class LayoutEngine {
       });
     });
 
+    // Subsection spreading can push regular nodes to the right after the initial
+    // terminal placement pass. Re-anchor final goods after every horizontal shift
+    // so terminal outcome connectors do not run backward across the chart.
+    const finalGoodIds = graph.nodes
+      .filter(node => node.kind === 'final_good' && finalColumns.has(node.id))
+      .map(node => node.id);
+
+    if (finalGoodIds.length > 0) {
+      const finalGoodIdSet = new Set(finalGoodIds);
+      const furthestNonFinalColumn = Math.max(
+        ...Array.from(finalColumns.entries())
+          .filter(([id]) => !finalGoodIdSet.has(id))
+          .map(([, col]) => col)
+      );
+
+      if (Number.isFinite(furthestNonFinalColumn)) {
+        finalGoodIds.forEach(id => {
+          finalColumns.set(id, Math.max(finalColumns.get(id) || 0, furthestNonFinalColumn + 1));
+        });
+      }
+    }
+
     const uniqueCols = Array.from(new Set(finalColumns.values())).sort((a, b) => a - b);
     const colRemap = new Map<number, number>();
     uniqueCols.forEach((col, index) => colRemap.set(col, index));
@@ -341,7 +344,7 @@ export class LayoutEngine {
     paddingY: number,
     nodeData: Input | Act,
     revAdj: Map<string, string[]>,
-    prevNodeInColumn?: { y: number, height: number }
+    prevNodeInColumn?: { id: string, y: number, height: number }
   ): number {
     let totalHeight = this.nodeTotalHeights.get(id) || 0;
     if (totalHeight === 0) {
@@ -356,23 +359,25 @@ export class LayoutEngine {
     const boxWidth = ('kind' in nodeData && nodeData.kind === 'initial_sink_node') ? BOX_SIZE.INPUT.W : BOX_SIZE.NODE.W;
     const x = INITIAL_X_OFFSET + (colIndex * (BOX_SIZE.NODE.W + paddingX));
 
-    // Apply subsection band offset to ensure nodes stay within their subsection's vertical space
-    const subsectionOffset = this.getSubsectionYOffset(id);
-    let startY = Math.max(y_initial, subsectionOffset);
+    let startY = y_initial;
 
-    // Enforce minimum distance from previous node in same subsection
+    // Enforce minimum distance from the previous node only when both nodes belong
+    // to the same subsection grouping context.
     if (prevNodeInColumn) {
-      // Only apply previous node constraint if in the same subsection
-      const prevSubsection = this.nodeToSubsection.get(id);
-      const minY = prevNodeInColumn.y + prevNodeInColumn.height + paddingY;
-      if (startY < minY) {
-        startY = minY;
+      const currentSubsection = this.nodeToSubsection.get(id);
+      const previousSubsection = this.nodeToSubsection.get(prevNodeInColumn.id);
+      if (currentSubsection === previousSubsection) {
+        const minY = prevNodeInColumn.y + prevNodeInColumn.height + paddingY;
+        if (startY < minY) {
+          startY = minY;
+        }
       }
     }
 
     // Create collision context
     const context: CollisionContext = {
       nodePositions: new Map(this.placedNodePositions.entries()),
+      nodeKinds: new Map(this.nodeKinds.entries()),
       edges: [],
       padding: { x: paddingX, y: paddingY }
     };
@@ -415,7 +420,8 @@ export class LayoutEngine {
     const pos = this.placedNodePositions.get(nodeId);
     if (!pos) return null;
 
-    return this.collisionEngine.getNodeConnectionPoint(nodeId, pos, type);
+    const kind = this.nodeKinds.get(nodeId);
+    return this.collisionEngine.getNodeConnectionPoint(nodeId, pos, type, kind);
   }
 
   /**
@@ -472,10 +478,12 @@ export class LayoutEngine {
           const posB = this.placedNodePositions.get(nodeB);
           if (!posA || !posB) continue;
 
+          const originalAY = posA.y;
+          const originalBY = posB.y;
+
           // Swap Y positions
-          const tempY = posA.y;
-          posA.y = posB.y;
-          posB.y = tempY;
+          posA.y = originalBY;
+          posB.y = originalAY;
 
           // Adjust to maintain proper spacing
           if (posA.y > posB.y) {
@@ -492,15 +500,9 @@ export class LayoutEngine {
             sortedNodes[i] = nodeB;
             sortedNodes[i + 1] = nodeA;
           } else {
-            // Revert the swap
-            const revertY = posA.y;
-            posA.y = posB.y;
-            posB.y = revertY;
-            if (posA.y > posB.y) {
-              posA.y = posB.y + posB.height + paddingY;
-            } else {
-              posB.y = posA.y + posA.height + paddingY;
-            }
+            // Revert exactly (the spacing "adjust" above can drift otherwise).
+            posA.y = originalAY;
+            posB.y = originalBY;
           }
         }
       });
@@ -531,6 +533,10 @@ export class LayoutEngine {
     const [from1, to1] = edge1;
     const [from2, to2] = edge2;
 
+    if (from1 === from2 || from1 === to2 || to1 === from2 || to1 === to2) {
+      return false;
+    }
+
     const pos1From = this.placedNodePositions.get(from1);
     const pos1To = this.placedNodePositions.get(to1);
     const pos2From = this.placedNodePositions.get(from2);
@@ -552,27 +558,38 @@ export class LayoutEngine {
 
     if (maxCol1 <= minCol2 || maxCol2 <= minCol1) return false;
 
-    // Check if the edges actually cross in Y space
-    const y1From = pos1From.y + pos1From.height / 2;
-    const y1To = pos1To.y + pos1To.height / 2;
-    const y2From = pos2From.y + pos2From.height / 2;
-    const y2To = pos2To.y + pos2To.height / 2;
+    const start1 = this.getNodeConnectionPoint(from1, null, 'output');
+    const end1 = this.getNodeConnectionPoint(to1, null, 'input');
+    const start2 = this.getNodeConnectionPoint(from2, null, 'output');
+    const end2 = this.getNodeConnectionPoint(to2, null, 'input');
 
-    // Edges cross if one starts above and ends below the other
-    const edge1GoesDown = y1To > y1From;
-    const edge2GoesDown = y2To > y2From;
+    if (!start1 || !end1 || !start2 || !end2) return false;
 
-    if (edge1GoesDown === edge2GoesDown) {
-      // Both going same direction - check if they cross
-      if (edge1GoesDown) {
-        return (y1From < y2From && y1To > y2To) || (y2From < y1From && y2To > y1To);
-      } else {
-        return (y1From > y2From && y1To < y2To) || (y2From > y1From && y2To < y1To);
-      }
-    } else {
-      // Going opposite directions - likely to cross
-      return true;
+    const segments1 = buildConnectorSegments(start1, end1, 'horizontal-first');
+    const segments2 = buildConnectorSegments(start2, end2, 'horizontal-first');
+
+    return segments1.some(segment1 =>
+      segments2.some(segment2 => this.segmentsIntersectMeaningfully(segment1, segment2))
+    );
+  }
+
+  private segmentsIntersectMeaningfully(segment1: { start: { x: number; y: number }; end: { x: number; y: number } }, segment2: { start: { x: number; y: number }; end: { x: number; y: number } }): boolean {
+    if (!CollisionDetector.linesIntersect(segment1, segment2)) {
+      return false;
     }
+
+    return !this.linesShareEndpoint(segment1, segment2);
+  }
+
+  private linesShareEndpoint(segment1: { start: { x: number; y: number }; end: { x: number; y: number } }, segment2: { start: { x: number; y: number }; end: { x: number; y: number } }): boolean {
+    return this.pointsEqual(segment1.start, segment2.start) ||
+      this.pointsEqual(segment1.start, segment2.end) ||
+      this.pointsEqual(segment1.end, segment2.start) ||
+      this.pointsEqual(segment1.end, segment2.end);
+  }
+
+  private pointsEqual(a: { x: number; y: number }, b: { x: number; y: number }): boolean {
+    return Math.abs(a.x - b.x) < 0.5 && Math.abs(a.y - b.y) < 0.5;
   }
 
   /**

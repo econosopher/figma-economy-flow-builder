@@ -5,6 +5,8 @@
 import { Rectangle, Point, Line, CollisionResult } from './types';
 
 export class CollisionDetector {
+  private static readonly EPS = 1e-9;
+
   /**
    * Check if two rectangles overlap
    */
@@ -100,17 +102,40 @@ export class CollisionDetector {
    * Check if two lines intersect
    */
   static linesIntersect(line1: Line, line2: Line): boolean {
-    const det = (line1.end.x - line1.start.x) * (line2.end.y - line2.start.y) - 
-                (line2.end.x - line2.start.x) * (line1.end.y - line1.start.y);
-    
-    if (det === 0) return false; // Lines are parallel
+    // Inclusive segment intersection (handles collinear + endpoint touches).
+    const a = line1.start;
+    const b = line1.end;
+    const c = line2.start;
+    const d = line2.end;
 
-    const lambda = ((line2.end.y - line2.start.y) * (line2.end.x - line1.start.x) + 
-                   (line2.start.x - line2.end.x) * (line2.end.y - line1.start.y)) / det;
-    const gamma = ((line1.start.y - line1.end.y) * (line2.end.x - line1.start.x) + 
-                  (line1.end.x - line1.start.x) * (line2.end.y - line1.start.y)) / det;
+    const o1 = this.orient(a, b, c);
+    const o2 = this.orient(a, b, d);
+    const o3 = this.orient(c, d, a);
+    const o4 = this.orient(c, d, b);
 
-    return (0 < lambda && lambda < 1) && (0 < gamma && gamma < 1);
+    // General case
+    if (o1 * o2 < 0 && o3 * o4 < 0) return true;
+
+    // Collinear / touching cases
+    if (Math.abs(o1) <= this.EPS && this.onSegment(a, b, c)) return true;
+    if (Math.abs(o2) <= this.EPS && this.onSegment(a, b, d)) return true;
+    if (Math.abs(o3) <= this.EPS && this.onSegment(c, d, a)) return true;
+    if (Math.abs(o4) <= this.EPS && this.onSegment(c, d, b)) return true;
+
+    return false;
+  }
+
+  private static orient(a: Point, b: Point, c: Point): number {
+    return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+  }
+
+  private static onSegment(a: Point, b: Point, p: Point): boolean {
+    return (
+      p.x >= Math.min(a.x, b.x) - this.EPS &&
+      p.x <= Math.max(a.x, b.x) + this.EPS &&
+      p.y >= Math.min(a.y, b.y) - this.EPS &&
+      p.y <= Math.max(a.y, b.y) + this.EPS
+    );
   }
 
   /**

@@ -63,7 +63,10 @@ describe('Research Bridge', () => {
       // Should return fallback cache
       expect(result.game).toBe('Test Game');
       expect(result.depth).toBe(1);
-      expect(result.prompt_version).toBe('1.0');
+      expect(result.prompt_version).toBe('2.0');
+      expect(result.instructions).toContain('Research the economy and progression systems');
+      expect(result.conversion_prompt).toContain('Output requirements:');
+      expect(result.json_schema).toBeDefined();
     });
 
     it('should handle network errors', async () => {
@@ -77,7 +80,7 @@ describe('Research Bridge', () => {
       // Should return fallback cache
       expect(result.game).toBe('Test Game');
       expect(result.depth).toBe(3);
-      expect(result.instructions).toContain('Comprehensive analysis');
+      expect(result.instructions).toContain('monetization');
     });
   });
 
@@ -85,19 +88,37 @@ describe('Research Bridge', () => {
     it('should generate economy JSON from API and repair it', async () => {
       const mockEconomy = {
         name: 'Test Game',
-        inputs: [
-          { id: 'time', label: 'Time', kind: 'initial_sink_node' }
+        stages: [
+          { id: 'inputs', label: 'Inputs' },
+          { id: 'actions', label: 'Actions' },
+          { id: 'outcomes', label: 'Outcomes' }
+        ],
+        lanes: [
+          { id: 'core', label: 'Core' }
         ],
         nodes: [
+          { id: 'time', label: 'Time', kind: 'initial_sink_node', stageId: 'inputs', laneId: 'core', sources: [], sinks: [], values: [] },
           {
             id: 'play',
             label: 'To Play',
+            stageId: 'actions',
+            laneId: 'core',
             sources: ['XP'],
             sinks: ['Energy'],
             values: []
+          },
+          {
+            id: 'win',
+            label: 'Win',
+            kind: 'final_good',
+            stageId: 'outcomes',
+            laneId: 'core',
+            sources: [],
+            sinks: [],
+            values: []
           }
         ],
-        edges: [['time', 'play']]
+        edges: [{ from: 'time', to: 'play' }, { from: 'play', to: 'win', type: 'final' }]
       };
 
       mockFetch.mockResolvedValueOnce({
@@ -112,37 +133,58 @@ describe('Research Bridge', () => {
         apiKey: 'test-key'
       });
 
-      // repairEconomyJSON adds 'kind' to nodes and 'subsections' array
       expect(result).toEqual({
+        schemaVersion: 2,
         name: 'Test Game',
-        inputs: [
-          { id: 'time', label: 'Time', kind: 'initial_sink_node' }
+        stages: [
+          { id: 'inputs', label: 'Inputs' },
+          { id: 'actions', label: 'Actions' },
+          { id: 'outcomes', label: 'Outcomes' }
+        ],
+        lanes: [
+          { id: 'core', label: 'Core' }
         ],
         nodes: [
+          { id: 'time', label: 'Time', kind: 'initial_sink_node', stageId: 'inputs', laneId: 'core', sources: [], sinks: [], values: [] },
           {
             id: 'play',
             label: 'To Play',
+            stageId: 'actions',
+            laneId: 'core',
             sources: ['XP'],
             sinks: ['Energy'],
             values: [],
-            kind: 'node'
+            kind: 'action'
+          },
+          {
+            id: 'win',
+            label: 'Win',
+            stageId: 'outcomes',
+            laneId: 'core',
+            sources: [],
+            sinks: [],
+            values: [],
+            kind: 'final_good'
           }
         ],
-        edges: [['time', 'play']],
-        subsections: []
+        edges: [{ from: 'time', to: 'play' }, { from: 'play', to: 'win', type: 'final' }]
       });
       expect(mockFetch).toHaveBeenCalledWith(
         'http://localhost:5001/api/research/generate',
         expect.objectContaining({
           method: 'POST',
-          body: JSON.stringify({
-            gameName: 'Test Game',
-            depth: 2,
-            provider: 'gemini',
-            apiKey: 'test-key'
-          })
+          body: expect.any(String)
         })
       );
+      const [, request] = mockFetch.mock.calls[0];
+      const parsedBody = JSON.parse(request.body);
+      expect(parsedBody.gameName).toBe('Test Game');
+      expect(parsedBody.depth).toBe(2);
+      expect(parsedBody.provider).toBe('gemini');
+      expect(parsedBody.apiKey).toBe('test-key');
+      expect(parsedBody.promptVersion).toBe('2.0');
+      expect(parsedBody.conversionPrompt).toContain('Always set "schemaVersion": 2');
+      expect(parsedBody.responseJsonSchema).toBeDefined();
     });
 
     it('should throw an error on API failure', async () => {
@@ -164,29 +206,23 @@ describe('Research Bridge', () => {
       
       expect(markdown).toContain('# Test Game Economy Research');
       expect(markdown).toContain('Research depth: Level 1');
-      expect(markdown).toContain('### Core Systems');
-      expect(markdown).toContain('Primary currencies and resources');
-      expect(markdown).not.toContain('### Detailed Flows');
-      expect(markdown).not.toContain('### Comprehensive Analysis');
+      expect(markdown).toContain('## Research Brief');
+      expect(markdown).toContain('## Structured Conversion Prompt');
+      expect(markdown).toContain('## Output JSON Schema');
     });
 
     it('should create markdown for depth 2', () => {
       const markdown = createResearchMarkdown('Test Game', 2);
       
-      expect(markdown).toContain('### Core Systems');
-      expect(markdown).toContain('### Detailed Flows');
-      expect(markdown).toContain('Resource conversion mechanics');
-      expect(markdown).not.toContain('### Comprehensive Analysis');
+      expect(markdown).toContain('crafting, trading, events');
+      expect(markdown).toContain('Output requirements:');
     });
 
     it('should create markdown for depth 3', () => {
       const markdown = createResearchMarkdown('Test Game', 3);
       
-      expect(markdown).toContain('### Core Systems');
-      expect(markdown).toContain('### Detailed Flows');
-      expect(markdown).toContain('### Comprehensive Analysis');
-      expect(markdown).toContain('Player segmentation');
-      expect(markdown).toContain('Monetization drivers');
+      expect(markdown).toContain('monetization');
+      expect(markdown).toContain('If your research workflow used Gemini Deep Research');
     });
 
     it('should include appropriate categories based on depth', () => {
@@ -194,15 +230,8 @@ describe('Research Bridge', () => {
       const markdown2 = createResearchMarkdown('Game', 2);
       const markdown3 = createResearchMarkdown('Game', 3);
       
-      // Depth 1 has fewer categories
-      expect(markdown1.match(/- /g)?.length).toBeLessThan(
-        markdown2.match(/- /g)?.length || 0
-      );
-      
-      // Depth 3 has most categories
-      expect(markdown3.match(/- /g)?.length).toBeGreaterThan(
-        markdown2.match(/- /g)?.length || 0
-      );
+      expect(markdown1.length).toBeLessThan(markdown2.length);
+      expect(markdown3.length).toBeGreaterThan(markdown2.length);
     });
   });
 
@@ -234,7 +263,7 @@ describe('Research Bridge', () => {
         Log output here
         Processing...
         {
-          "inputs": [],
+          "stages": [],
           "nodes": [],
           "edges": []
         }
@@ -242,7 +271,7 @@ describe('Research Bridge', () => {
       `;
       const result = parseResearchOutput(output);
       
-      expect(result).toHaveProperty('inputs');
+      expect(result).toHaveProperty('stages');
       expect(result).toHaveProperty('nodes');
       expect(result).toHaveProperty('edges');
     });
@@ -251,11 +280,11 @@ describe('Research Bridge', () => {
       const output = [
         'Here is the JSON:',
         '```json',
-        '{ "inputs": [], "nodes": [], "edges": [] }',
+        '{ "stages": [], "nodes": [], "edges": [] }',
         '```'
       ].join('\n');
       const result = parseResearchOutput(output);
-      expect(result).toEqual({ inputs: [], nodes: [], edges: [] });
+      expect(result).toEqual({ stages: [], nodes: [], edges: [] });
     });
 
     it('should skip non-JSON braces before the real JSON', () => {

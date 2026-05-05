@@ -1,15 +1,16 @@
 # Economy-Flow Builder (FigJam)
 
-Generate economy flow-charts in FigJam from a simple JSON spec. This plugin intelligently lays out nodes and their connections, creating clear and readable diagrams. It offers features like two-way JSON syncing, customizable colors, pre-built templates, and detailed validation to streamline your workflow.
+Generate compact economy flow charts in FigJam from a structured JSON spec. The v2 renderer uses explicit left-to-right stages and vertical lanes, keeps connectors behind opaque cards, and validates route geometry so dense game-economy diagrams remain readable.
 
 ## Features
-*   **JSON-Powered:** Define your entire flowchart structure using a simple and editable JSON format.
-*   **Two-Way Sync:** Modify the diagram on the canvas and sync it back to JSON, or generate the diagram from your JSON spec.
-*   **Subsections:** Organize complex flows by grouping related nodes into visual sections with custom colors.
+*   **v2 JSON Schema:** Define stages, lanes, nodes, and typed edges directly instead of relying on inferred columns.
+*   **Two-Way Sync:** Regenerate from JSON, then edit plugin-created cards and sync labels/resources/edges back into the stored v2 schema.
+*   **Compact Stage/Lane Layout:** Render only the active lane regions needed for readability, with terminal outcomes kept in the final stage.
 *   **Customizable Colors:** Use the UI color pickers to customize the colors for inputs, sinks, sources, and other node types to match your theme.
-*   **Pre-built Templates:** Get started instantly with "basic" and "complex" example templates.
+*   **Pre-built Templates:** Load migrated v2 examples such as Apex Legends, Rainbow Six Siege, Helldivers, and Dice Throne Digital.
 *   **In-depth Validation:** Receive clear, specific error messages for invalid JSON structure, ensuring your data is correct before generation.
-*   **Auto-Layout:** Automatically arranges nodes and connections for a clean and readable layout.
+*   **Routed Connectors:** Typed connector styles, deterministic port slots, and shared junction routes reduce line/card overlap and fan-out clutter.
+*   **Provider-Aware Research:** The Research tab can call a local API backed by Gemini, OpenAI, or Claude/Anthropic and request v2 JSON output.
 *   **FigJam-Optimized:** Designed and built exclusively for FigJam.
 
 An example `helldivers.json` can be found in the `/examples` directory.
@@ -17,6 +18,27 @@ An example `helldivers.json` can be found in the `/examples` directory.
 ---
 
 ## Update Log
+
+### Current - v2 Compact Renderer
+
+#### Breaking Schema
+- The primary renderer now expects `schemaVersion: 2`.
+- Diagrams are modeled with ordered `stages`, ordered `lanes`, `nodes` assigned to stage/lane cells, and object-form `edges`.
+- Old `inputs`/inferred-column diagrams should be migrated to v2 examples rather than adapted at runtime.
+
+#### Compact Rendering
+- Cards are smaller, lane bands are subtle active-region guides, and final-good outcomes stay in the terminal stage while aligning near their incoming sources.
+- Connectors are built in a dedicated connector layer, then card groups are forced back above connectors so lines run behind opaque cards.
+- High fan-out sources can use shared junction routes to keep repeated relationships visually tighter.
+
+#### QA Evidence
+- Apex Legends and Rainbow Six Siege were validated in a disposable FigJam file with 0 non-endpoint route/card intersections and connector children behind cards.
+- Screenshot evidence is saved at `/tmp/economy-flow-plugin-qa/v2-apex-compact.png` and `/tmp/economy-flow-plugin-qa/v2-rainbow-six-compact.png`.
+
+#### Adjacent Features
+- Research generation now passes `provider: "gemini" | "openai" | "claude"` to the local API and can load provider-specific keys from local secret stores at build time.
+- GitHub submission opens a draft file page for the configured repository: `https://github.com/econosopher/figma-economy-flow-builder`.
+- Sync from Canvas preserves the stored v2 stage/lane schema for plugin-created diagrams; it is not an OCR/import-from-screenshot feature.
 
 ### Version 1.2.50 - AI-Powered Economy Generation
 
@@ -106,12 +128,12 @@ Note: Source of truth is `src/` TypeScript; `code.js` is the build output.
 ## 3  Usage
 
 1.  **Open the plugin:** In any FigJam file, run **Plugins → Development → Economy‑Flow Builder**.
-2.  **Choose a Template (Optional):** Select a "Basic" or "Complex" example from the "Start with a template" dropdown to pre-fill the JSON. A confirmation will appear if you have existing JSON.
+2.  **Choose a Template (Optional):** Select a migrated v2 example from the template dropdown to pre-fill the JSON. A confirmation will appear if you have existing JSON.
 3.  **Customize Colors (Optional):** Use the color pickers to change the default colors for different node types.
 4.  **Provide JSON:** Write or paste your flowchart definition into the main text area.
 5.  **Validate JSON (Optional):** Click "Validate JSON" to check formatting and references without drawing.
 6.  **Generate from JSON:** Click the "Generate from JSON" button. The plugin will validate your JSON and render the diagram on the canvas.
-7.  **Sync from Canvas:** Modify the diagram, then click "Sync from Canvas" to update the JSON spec.
+7.  **Sync from Canvas:** Modify plugin-created cards/connectors, then click "Sync from Canvas" to update labels, resources, and edges while preserving the stored v2 stages/lanes.
 8.  **Copy JSON:** Click "Copy JSON" to copy the current JSON to your clipboard.
 9.  **Clear:** Click "Clear Canvas" to remove all elements created by the plugin.
 
@@ -151,245 +173,123 @@ Resources that players **accumulate** but **cannot spend directly**. These repre
 
 ## JSON Data Structure
 
-The plugin uses a JSON object to define the flowchart. This object has the following properties:
+The primary renderer uses a breaking v2 schema. The required top-level keys are `schemaVersion`, `stages`, `lanes`, `nodes`, and `edges`.
 
-### `name` (optional)
-A string that names the economy or game. If provided, the plugin titles the main section as `<name> Economy` (so use just the game name — don’t include the word “Economy”). If not provided, defaults to `"EconomyFlowChart Section"`.
+### `schemaVersion`
 
-**Example:**
+Must be exactly `2`.
+
+### `stages`
+
+Ordered left-to-right columns. Use semantic labels rather than generic names such as "Stage 2".
+
 ```json
-"name": "Apex Legends"
+"stages": [
+  { "id": "entry", "label": "Player Investment" },
+  { "id": "play", "label": "Core Play" },
+  { "id": "terminal", "label": "Final Goods", "terminal": true }
+]
 ```
 
-### `inputs`
-An array of objects representing the starting points of your economy, like "Time" or "Money". These are typically rendered as red boxes on the far left.
+### `lanes`
 
-*   `id` (string, required): A unique identifier for this input.
-*   `label` (string, required): The text displayed inside the box.
-*   `kind` (string, required): Must be set to `"initial_sink_node"`.
+Ordered vertical swimlanes. Lanes organize related loops without forcing every stage/lane cell to render as a large box.
 
-**Example:**
 ```json
-"inputs": [
-  { "id": "time", "label": "Time", "kind": "initial_sink_node" },
-  { "id": "money", "label": "Money", "kind": "initial_sink_node" }
+"lanes": [
+  { "id": "free_play", "label": "Free Play" },
+  { "id": "monetization", "label": "Monetization" },
+  { "id": "identity", "label": "Identity" }
 ]
 ```
 
 ### `nodes`
-An array of objects representing the actions, activities, or states in your flow.
 
-*   `id` (string, required): A unique identifier for this node.
-*   `label` (string, required): The text for the node's main box.
-*   `kind` (string, optional): Set to `"final_good"` to render a special "Final Good" box. Otherwise, it's a standard white action box.
-*   `sources` (array of strings, optional): Resources *gained* that can be spent elsewhere (e.g., Gold, Gems). Rendered as green attribute boxes. **Can be omitted if empty.**
-*   `sinks` (array of strings, optional): Resources *consumed* from elsewhere (e.g., Energy, Gold). Rendered as red attribute boxes. **Can be omitted if empty.**
-*   `values` (array of strings, optional): **Stores of Value** - Resources that accumulate but CANNOT be spent directly (e.g., XP, Level, Achievement Points). Rendered as orange attribute boxes. **Can be omitted if empty.**
+Nodes must reference an existing `stageId`. Non-terminal nodes normally reference a `laneId`; terminal final-good nodes can omit `laneId` and the compact renderer will align them near their incoming sources inside the terminal stage.
 
-**Examples:**
 ```json
-// With resources
-"nodes": [
-  {
-    "id": "complete_mission",
-    "label": "To Complete Mission Objectives",
-    "sources": ["Player XP", "Stratagem Slips", "Warbond Credits"]
-  }
-]
-
-// Without resources - much cleaner!
-"nodes": [
-  {
-    "id": "unlock_feature",
-    "label": "To Unlock Feature"
-  }
-]
+{
+  "id": "play_ranked_matches",
+  "label": "To Play Ranked Matches",
+  "stageId": "play",
+  "laneId": "free_play",
+  "values": ["Ranked XP"],
+  "sources": ["Match Rewards"]
+}
 ```
+
+Supported node fields:
+- `id`: unique snake_case id.
+- `label`: card label, usually an action phrase beginning with "To".
+- `stageId`: required stage id.
+- `laneId`: optional lane id.
+- `kind`: set to `"final_good"` for terminal outcomes.
+- `sources`: optional spendable resources gained, rendered as green chips.
+- `sinks`: optional resources consumed, rendered as red chips.
+- `values`: optional stores of value/progress, rendered as orange chips.
 
 ### `edges`
-An array that defines the connections between your `inputs` and `nodes`. Each edge is a pair `[from_id, to_id]` (exactly two strings). The graph must be acyclic (no cycles).
 
-*   `from_id` (string): The `id` of the starting node for the connection.
-*   `to_id` (string): The `id` of the ending node for the connection.
+Edges are objects with `from`, `to`, and optional `type`.
 
-**Example:**
 ```json
 "edges": [
-  ["time", "start_missions"],
-  ["start_missions", "complete_mission"]
+  { "from": "spend_time", "to": "play_ranked_matches", "type": "normal" },
+  { "from": "play_ranked_matches", "to": "increase_rank", "type": "value" },
+  { "from": "increase_rank", "to": "prove_skill", "type": "final" }
 ]
 ```
 
-### `subsections` (optional)
-An array of objects that group related nodes into visual sections within the diagram. This helps organize complex flows into logical areas.
+Supported edge types:
+- `normal`: default flow.
+- `value`: progress/store-of-value flow.
+- `final`: route into a final-good outcome.
+- `cross-lane`: route between lanes.
 
-*   `id` (string, required): A unique identifier for this subsection.
-*   `label` (string, required): The name displayed for the subsection.
-*   `nodeIds` (array of strings, required): IDs of nodes that belong in this subsection.
-*   `color` (string, optional): Hex color for the subsection background (e.g., "#E3F2FD").
+### Minimal Example
 
-**Important**: Do NOT create a subsection for "Final Goods". Nodes with `kind: "final_good"` should remain at their natural positions as terminal nodes in their respective flows.
-
-**Example:**
 ```json
-"subsections": [
-  {
-    "id": "onboarding",
-    "label": "New Player Experience",
-    "nodeIds": ["tutorial", "first_match"],
-    "color": "#E3F2FD"
-  },
-  {
-    "id": "core_loop",
-    "label": "Core Gameplay",
-    "nodeIds": ["daily_quest", "pvp_match"]
-  }
-]
+{
+  "schemaVersion": 2,
+  "name": "Example Game",
+  "stages": [
+    { "id": "entry", "label": "Player Investment" },
+    { "id": "play", "label": "Core Play" },
+    { "id": "terminal", "label": "Final Goods", "terminal": true }
+  ],
+  "lanes": [
+    { "id": "core", "label": "Core Loop" },
+    { "id": "monetization", "label": "Monetization" }
+  ],
+  "nodes": [
+    { "id": "spend_time", "label": "Spend Time", "stageId": "entry", "laneId": "core", "kind": "initial_sink_node" },
+    { "id": "spend_money", "label": "Spend Money", "stageId": "entry", "laneId": "monetization", "kind": "initial_sink_node" },
+    { "id": "play_matches", "label": "To Play Matches", "stageId": "play", "laneId": "core", "sources": ["Soft Currency"], "values": ["Account XP"] },
+    { "id": "buy_cosmetics", "label": "To Buy Cosmetics", "stageId": "play", "laneId": "monetization", "sinks": ["Premium Currency"] },
+    { "id": "show_identity", "label": "To Show Identity", "stageId": "terminal", "kind": "final_good" }
+  ],
+  "edges": [
+    { "from": "spend_time", "to": "play_matches" },
+    { "from": "spend_money", "to": "buy_cosmetics" },
+    { "from": "play_matches", "to": "show_identity", "type": "final" },
+    { "from": "buy_cosmetics", "to": "show_identity", "type": "final" }
+  ]
+}
 ```
-
----
 
 ### AI Prompt for JSON Generation
 
-To quickly generate a new flowchart, you can use the following prompt with a capable AI assistant (like Google's Gemini or OpenAI's GPT-4). This prompt instructs the AI to research a game's economy and format the findings into the specific JSON structure required by this plugin.
-
-```text
-You are an expert video game economist and analyst. Your task is to research the economy and player progression systems of the game "[Specify Game Title Here]". Based on your research, generate a JSON object that models the core gameplay loops, resource flows, and progression paths.
-
-The most valuable economy diagram anchors in player action, where currencies play a secondary role. All diagrams start with either spending time or money (**`inputs`**), the two raw ingredients that all output derives from in games. Each further step is an action-driven refinement of the last stage (**`nodes`**). Along the way, usually deriving from the final production step, is a “final” good (`kind`=`"final_good"`). This is ultimately what entertainment produces, or the “bedrock”, akin to appealing to a Bartle-type or higher emotional need, for example, the need to collect, win, or dominate others.
-
-Goods with Green + (`sources`) or Red - (`sources`) are currencies that maintain debits and credits, while player XP (`values`) is orange, a store of value, since players can’t “spend” XP. There are other systems in games that are "tallies", and that's what we're tracking here. Eventually, this will lead to a node that triggers a level-up (usually) or a collection event (such as a milestone or quest system) that sources rewards.
-
-The output MUST be a single, complete JSON object. Required top-level keys: `inputs`, `nodes`, and `edges`. Optional keys: `name`, `subsections`.
-
-### Critical JSON Structure Rules:
-
-1. **PREFER RAW JSON**: Output ONLY the JSON object (no explanations before/after). Avoid wrapping in markdown fences if possible (the plugin will attempt to extract JSON if it happens).
-2. **NO TRAILING COMMAS**: Never put a comma after the last item in any array or object.
-3. **SIMPLIFIED NODE ARRAYS**: The `sources`, `sinks`, and `values` properties are now OPTIONAL:
-```
-   ```json
-   // Preferred - omit empty arrays
-   {
-     "id": "example_node",
-     "label": "Example Node"
-   }
-   
-   // Also valid - explicit empty arrays
-   {
-     "id": "example_node",
-     "label": "Example Node",
-     "sources": [],
-     "sinks": [],
-     "values": []
-   }
-   ```
-4. **NEVER LEAVE EMPTY VALUES**: If you DO include a property, it MUST have a value:
-   - WRONG: `"sources":,` or `"sinks":,` or `"values":,`
-   - CORRECT: Omit the property entirely OR use `"sources": []`
-5. **PROPERTY INITIALIZATION**: When including `sources`, `sinks`, or `values`:
-   - With items: `"sources": ["Gold", "XP"]`
-   - Empty array: `"sources": []`
-   - Omitted entirely: (no property at all)
-   - NEVER just a comma: `"sources":,` ← THIS WILL CAUSE JSON PARSING ERRORS
-6. **CONSISTENT ID FORMAT**: All `id` values must be lowercase with underscores (snake_case). Example: `daily_quest`, not `dailyQuest` or `DailyQuest`.
-7. **VALID EDGES**: Every edge must connect existing nodes. Each edge is a two-element array: `["from_id", "to_id"]`.
-
-### JSON Structure Specification:
-
-1. **`inputs`** (required array): These are how every game economy starts, players invest time and/or money.
-   - `id` (string): Unique snake_case identifier
-   - `label` (string): Display name (e.g., "Time", "Money")
-   - `kind` (string): MUST be exactly `"initial_sink_node"`
-
-2. **`nodes`** (required array): These are the actions that derive from the last box. For example, a series of connected strings might have this sequence (Spend Time -> To Play Matches (Player XP) -> To Level Up (+Currency) -> To Spend on Cosmetics (-Currency) -> Final Good: "To Peacock in Front of Other Players")
-   - `id` (string): Unique snake_case identifier
-   - `label` (string): Descriptive name that starts with "To" (e.g., "To Complete Daily Quests")
-   - `sources` (array of strings, optional): Resources GAINED that can be spent elsewhere (e.g., ["Gold", "Crafting Materials"]) - OMIT IF NONE
-   - `sinks` (array of strings, optional): Resources CONSUMED from elsewhere (e.g., ["Energy", "Gold"]) - OMIT IF NONE
-   - `values` (array of strings, optional): Stores of value that accumulate but CANNOT be spent (e.g., ["Player XP", "Achievement Points"]) - OMIT IF NONE
-   - `kind` (string, optional): Set to `"final_good"` for ultimate goals/win conditions
-
-3. **`edges`** (required array): Connections showing flow between nodes.
-   - Each edge is an array: `["from_id", "to_id"]`
-   - `from_id` and `to_id` must match existing node/input ids
-
-4. **`subsections`** (optional array): Visual groupings of related nodes.
-   - `id` (string): Unique identifier for the subsection
-   - `label` (string): Display name for the group
-   - `nodeIds` (array): List of node ids to include in this subsection
-   - `color` (string, optional): Hex color like "#FF5733"
-   - **IMPORTANT**: Do NOT create a subsection for final goods. Final goods (`kind: "final_good"`) are terminal nodes that should be distributed throughout the diagram where they naturally conclude their respective flows
-
-### Key Distinctions:
-
-**Sources vs Sinks vs Values:**
-- **Sources**: Resources gained that CAN be spent elsewhere (currencies, materials)
-- **Sinks**: Resources consumed that come from elsewhere (but NOT Time/Money if they come directly from initial inputs via edges)
-- **Values**: Metrics that accumulate but CANNOT be spent (player XP, achievement scores)
-
-**Currency Type Consistency:**
-- Once you define a currency as a source, sink, or value, it MUST remain that type throughout the entire economy
-- A currency cannot be both a source in one node and a value in another
-- Choose the type based on the currency's primary function in the game economy
-
-**Examples:**
-- Completing a quest might have:
-  - sources: ["100 Gold", "5 Gems"] (can spend these elsewhere)
-  - sinks: ["10 Energy"] (consumed from your energy pool)
-  - values: ["500 XP", "1 Achievement Point"] (accumulate but can't spend)
-- WRONG: "To Purchase Premium Currency" with edge from "Spend Money" and sinks: ["Money"]
-- CORRECT: "To Purchase Premium Currency" with edge from "Spend Money" and sinks: []
-- WRONG: Using "Free Cosmetics" and "Premium Cosmetics" as different currencies
-- CORRECT: Using "Cosmetics" in both free and premium paths
-- WRONG: "Victory Points" as a source in one node and a value in another
-- CORRECT: "Victory Points" consistently as either a source OR a value throughout
-
-### Example of a Properly Formatted Node
-
-```json
-{
-  "id": "play_matches",
-  "label": "To Play Matches",
-  "sources": ["Gold", "XP"],    // Has sources
-  "sinks": ["Energy"],          // Has sinks
-  "values": ["Battle Pass XP"]  // Has values
-}
-```
-
-### Example of a Node with No Resources (SIMPLIFIED)
-
-```json
-{
-  "id": "unlock_feature",
-  "label": "To Unlock Feature"
-  // No sources, sinks, or values - much cleaner!
-}
-```
-
-### Research Focus
-
-1. Start with primary player  **`inputs`** (time and/or money)
-2. Map out how **`nodes`** lead to additional "To" actions leading to more "To" **`nodes`**, all the way to a final good you define (`kind`=`"final_good"`)
-3. For each **`node`** that is NOT `kind`=`"final_good"`, determine:
-   * What it consumes (sinks) - use empty array `[]` if nothing
-   * What spendable resources it produces (sources) - use empty array `[]` if nothing
-   * What progress it accumulates (values) - use empty array `[]` if nothing
-   * **CRITICAL RULE**: If a node receives Time or Money directly via an edge from the initial inputs, do NOT list "Time" or "Money" as a sink. The edge connection already represents this consumption. Only list resources as sinks if they come from other nodes' sources
-4. Trace flow connections between activities
-5. REMEMBER: The `sources`, `sinks`, and `values` properties are OPTIONAL - omit them if empty
-6. **Currency Consistency Rules**:
-   * Each currency/resource must be ONE type only throughout the entire economy: either a source (green), sink (red), or value (orange)
-   * NEVER use the same currency as different types in different nodes
-   * Standardize currency names - avoid prefixes like "Free", "Premium", "Basic" in currency names. The path/node already indicates if it's free or paid
-   * Example: Use "Cosmetics" not "Free Cosmetics" or "Premium Cosmetics"
-   * Example: If "XP" is a value (orange) in one node, it must be a value in ALL nodes
-7. **Final Goods Placement**: Final goods should be the terminal nodes in their respective flows. Do NOT group them into a separate "Final Goods" subsection. They should naturally conclude different paths throughout the economy (e.g., "To Dominate PvP" at the end of competitive flow, "To Show Off Rare Skins" at the end of cosmetic flow)
+Use `LLM_INSTRUCTIONS.md` or the Research tab for the current v2 prompt. The important constraints are:
+- Output a single raw JSON object with `schemaVersion: 2`.
+- Preserve explicit `stages` and `lanes`; do not use legacy `inputs` or `subsections`.
+- Assign every node to a real `stageId`, and use semantic stage/lane labels.
+- Keep final-good nodes in a terminal stage.
+- Use object-form edges and choose `normal`, `value`, `final`, or `cross-lane` when the relationship is clear.
+- Keep currency names consistent across `sources`, `sinks`, and `values`.
 
 ### Persistence
-The plugin remembers your most recent JSON and chosen colors between runs on the same file using Figma client storage.
 
-Generate the complete JSON for "[Specify Game Title Here]" following these exact specifications.
+The plugin stores the most recent rendered v2 JSON and chosen colors in Figma client storage. Sync from Canvas uses that stored graph to preserve stages and lanes while reading edited plugin-created cards/connectors back from FigJam.
 
 ## 4  Files
 
@@ -427,10 +327,10 @@ Happy diagramming!
   - `npm run test:watch`: Watch mode
 
 ### Covered Areas
-- Validation: structure, snake_case IDs, currency type consistency, cycle detection
-- Layout basics: heights/columns, conflict-free Y
-- Collision: rectangle/line intersection fundamentals, edge avoidance behavior
-- Sync: canvas → JSON reconstruction using Figma API mocks
+- Validation: v2 stages/lanes/nodes/edges, snake_case IDs, references, terminal final-good placement, cycle detection
+- Layout: compact stage/lane placement, final-stage alignment, high fan-out junctions, route/card intersection avoidance
+- Rendering: connector layer ordering, opaque cards above lines, edge-type styling
+- Sync: plugin-created FigJam cards/connectors back into the stored v2 schema using Figma API mocks
 - Legend: currency extraction and section building
 
 If you see failures due to environment (older Node), upgrade Node to 18 LTS.

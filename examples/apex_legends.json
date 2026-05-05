@@ -1,21 +1,74 @@
 {
+  "schemaVersion": 2,
   "name": "Apex Legends",
-  "inputs": [
+  "stages": [
+    {
+      "id": "stage_1",
+      "label": "Inputs"
+    },
+    {
+      "id": "stage_2",
+      "label": "Queue"
+    },
+    {
+      "id": "stage_3",
+      "label": "Play"
+    },
+    {
+      "id": "stage_4",
+      "label": "Earn XP"
+    },
+    {
+      "id": "stage_5",
+      "label": "Challenges"
+    },
+    {
+      "id": "stage_6",
+      "label": "Craft"
+    },
+    {
+      "id": "stage_7",
+      "label": "Shop"
+    },
+    {
+      "id": "stage_8",
+      "label": "Collection"
+    },
+    {
+      "id": "outcomes",
+      "label": "Outcomes"
+    }
+  ],
+  "lanes": [
+    {
+      "id": "inputs",
+      "label": "Inputs"
+    },
+    {
+      "id": "shared",
+      "label": "Shared"
+    }
+  ],
+  "nodes": [
     {
       "id": "player_time",
       "label": "Spend Time",
+      "stageId": "stage_1",
+      "laneId": "inputs",
       "kind": "initial_sink_node"
     },
     {
       "id": "real_world_money",
       "label": "Spend Money",
+      "stageId": "stage_1",
+      "laneId": "inputs",
       "kind": "initial_sink_node"
-    }
-  ],
-  "nodes": [
+    },
     {
       "id": "play_match",
       "label": "To Play Match",
+      "stageId": "stage_2",
+      "laneId": "shared",
       "values": [
         "Player XP"
       ]
@@ -23,6 +76,8 @@
     {
       "id": "level_up_account",
       "label": "To Level Up Account",
+      "stageId": "stage_3",
+      "laneId": "shared",
       "sources": [
         "Legend Tokens",
         "Apex Pack"
@@ -34,6 +89,8 @@
     {
       "id": "purchase_apex_coins",
       "label": "To Purchase Apex Coins",
+      "stageId": "stage_2",
+      "laneId": "shared",
       "sources": [
         "Apex Coins"
       ]
@@ -41,6 +98,8 @@
     {
       "id": "purchase_exotic_shards",
       "label": "To Purchase Exotic Shards",
+      "stageId": "stage_2",
+      "laneId": "shared",
       "sources": [
         "Exotic Shards"
       ],
@@ -51,6 +110,8 @@
     {
       "id": "unlock_legend_with_tokens",
       "label": "To Unlock Legend (with Tokens)",
+      "stageId": "stage_4",
+      "laneId": "shared",
       "sources": [
         "Playable Legend"
       ],
@@ -61,6 +122,8 @@
     {
       "id": "unlock_legend_with_coins",
       "label": "To Unlock Legend (with Coins)",
+      "stageId": "stage_3",
+      "laneId": "shared",
       "sources": [
         "Playable Legend"
       ],
@@ -71,6 +134,8 @@
     {
       "id": "reroll_daily_challenge",
       "label": "To Reroll Daily Challenge",
+      "stageId": "stage_4",
+      "laneId": "shared",
       "sinks": [
         "Legend Tokens"
       ]
@@ -78,6 +143,8 @@
     {
       "id": "purchase_recolored_skin",
       "label": "To Purchase Recolored Legendary Skin",
+      "stageId": "stage_1",
+      "laneId": "shared",
       "sources": [
         "Recolored Skin"
       ],
@@ -88,6 +155,8 @@
     {
       "id": "open_apex_pack",
       "label": "To Open Apex Pack",
+      "stageId": "stage_7",
+      "laneId": "shared",
       "sources": [
         "Cosmetic Item",
         "Crafting Metals"
@@ -99,6 +168,8 @@
     {
       "id": "craft_cosmetic_item",
       "label": "To Craft Cosmetic Item",
+      "stageId": "stage_8",
+      "laneId": "shared",
       "sources": [
         "Cosmetic Item"
       ],
@@ -109,6 +180,8 @@
     {
       "id": "purchase_store_item",
       "label": "To Purchase Cosmetic from Store",
+      "stageId": "stage_3",
+      "laneId": "shared",
       "sources": [
         "Cosmetic Item"
       ],
@@ -119,6 +192,8 @@
     {
       "id": "craft_heirloom_item",
       "label": "To Craft Heirloom / Prestige Skin",
+      "stageId": "stage_8",
+      "laneId": "shared",
       "sources": [
         "Mythic Cosmetic Item"
       ],
@@ -129,6 +204,8 @@
     {
       "id": "complete_daily_challenge",
       "label": "To Complete Daily Challenge",
+      "stageId": "stage_5",
+      "laneId": "shared",
       "sources": [
         "Battle Pass Stars"
       ]
@@ -136,6 +213,8 @@
     {
       "id": "complete_weekly_challenge",
       "label": "To Complete Weekly Challenge",
+      "stageId": "stage_3",
+      "laneId": "shared",
       "sources": [
         "Battle Pass Stars"
       ]
@@ -143,6 +222,8 @@
     {
       "id": "purchase_premium_battle_pass",
       "label": "To Purchase Premium Battle Pass",
+      "stageId": "stage_3",
+      "laneId": "shared",
       "sinks": [
         "Apex Coins"
       ]
@@ -150,6 +231,8 @@
     {
       "id": "level_up_battle_pass",
       "label": "To Level Up Battle Pass",
+      "stageId": "stage_6",
+      "laneId": "shared",
       "sources": [
         "Apex Pack",
         "Crafting Metals",
@@ -162,6 +245,8 @@
     {
       "id": "play_ranked_match",
       "label": "To Play Ranked Match",
+      "stageId": "stage_3",
+      "laneId": "shared",
       "sources": [
         "Ranked Points"
       ]
@@ -169,6 +254,8 @@
     {
       "id": "advance_rank_tier",
       "label": "To Advance Rank Tier",
+      "stageId": "stage_4",
+      "laneId": "shared",
       "sinks": [
         "Ranked Points"
       ]
@@ -176,6 +263,8 @@
     {
       "id": "receive_ranked_rewards",
       "label": "To Receive End-of-Season Ranked Rewards",
+      "stageId": "stage_5",
+      "laneId": "shared",
       "sources": [
         "Cosmetic Item"
       ]
@@ -183,6 +272,8 @@
     {
       "id": "level_up_weapon",
       "label": "To Level Up Weapon",
+      "stageId": "stage_3",
+      "laneId": "shared",
       "values": [
         "Weapon XP"
       ]
@@ -190,6 +281,8 @@
     {
       "id": "complete_weapon_trial",
       "label": "To Complete Weapon Trial",
+      "stageId": "stage_4",
+      "laneId": "shared",
       "sources": [
         "Weapon Badge"
       ]
@@ -197,6 +290,8 @@
     {
       "id": "achieve_weapon_mastery",
       "label": "To Achieve Weapon Mastery (Lvl 100)",
+      "stageId": "stage_5",
+      "laneId": "shared",
       "sources": [
         "Weapon-Specific Cosmetic"
       ]
@@ -204,6 +299,8 @@
     {
       "id": "participate_in_collection_event",
       "label": "To Participate in Collection Event",
+      "stageId": "stage_3",
+      "laneId": "shared",
       "sources": [
         "Event Cosmetic Item"
       ],
@@ -214,6 +311,8 @@
     {
       "id": "upgrade_mythic_artifact",
       "label": "To Upgrade Mythic Artifact",
+      "stageId": "stage_3",
+      "laneId": "shared",
       "sources": [
         "Mythic Artifact Customization"
       ],
@@ -224,160 +323,175 @@
     {
       "id": "achieve_apex_predator_rank",
       "label": "To Achieve Apex Predator Rank",
+      "stageId": "outcomes",
+      "laneId": "shared",
       "kind": "final_good"
     },
     {
       "id": "collect_all_heirlooms_and_prestige_skins",
       "label": "To Collect All Heirlooms & Prestige Skins",
+      "stageId": "outcomes",
+      "laneId": "shared",
       "kind": "final_good"
     },
     {
       "id": "complete_weapon_mastery_for_all_weapons",
       "label": "To Complete Weapon Mastery for All Weapons",
+      "stageId": "outcomes",
+      "laneId": "shared",
       "kind": "final_good"
     },
     {
       "id": "complete_cosmetic_collection",
       "label": "To Complete Cosmetic Collection",
+      "stageId": "outcomes",
+      "laneId": "shared",
       "kind": "final_good"
     }
   ],
   "edges": [
-    [
-      "player_time",
-      "play_match"
-    ],
-    [
-      "real_world_money",
-      "purchase_apex_coins"
-    ],
-    [
-      "real_world_money",
-      "purchase_exotic_shards"
-    ],
-    [
-      "play_match",
-      "level_up_account"
-    ],
-    [
-      "play_match",
-      "level_up_weapon"
-    ],
-    [
-      "play_match",
-      "complete_daily_challenge"
-    ],
-    [
-      "play_match",
-      "complete_weekly_challenge"
-    ],
-    [
-      "play_match",
-      "play_ranked_match"
-    ],
-    [
-      "level_up_account",
-      "unlock_legend_with_tokens"
-    ],
-    [
-      "level_up_account",
-      "open_apex_pack"
-    ],
-    [
-      "level_up_account",
-      "reroll_daily_challenge"
-    ],
-    [
-      "purchase_apex_coins",
-      "unlock_legend_with_coins"
-    ],
-    [
-      "purchase_apex_coins",
-      "purchase_store_item"
-    ],
-    [
-      "purchase_apex_coins",
-      "purchase_premium_battle_pass"
-    ],
-    [
-      "purchase_apex_coins",
-      "participate_in_collection_event"
-    ],
-    [
-      "open_apex_pack",
-      "craft_cosmetic_item"
-    ],
-    [
-      "open_apex_pack",
-      "craft_heirloom_item"
-    ],
-    [
-      "craft_cosmetic_item",
-      "complete_cosmetic_collection"
-    ],
-    [
-      "purchase_store_item",
-      "complete_cosmetic_collection"
-    ],
-    [
-      "craft_heirloom_item",
-      "collect_all_heirlooms_and_prestige_skins"
-    ],
-    [
-      "reroll_daily_challenge",
-      "complete_daily_challenge"
-    ],
-    [
-      "complete_daily_challenge",
-      "level_up_battle_pass"
-    ],
-    [
-      "complete_weekly_challenge",
-      "level_up_battle_pass"
-    ],
-    [
-      "purchase_premium_battle_pass",
-      "level_up_battle_pass"
-    ],
-    [
-      "level_up_battle_pass",
-      "open_apex_pack"
-    ],
-    [
-      "level_up_battle_pass",
-      "complete_cosmetic_collection"
-    ],
-    [
-      "play_ranked_match",
-      "advance_rank_tier"
-    ],
-    [
-      "advance_rank_tier",
-      "receive_ranked_rewards"
-    ],
-    [
-      "advance_rank_tier",
-      "achieve_apex_predator_rank"
-    ],
-    [
-      "level_up_weapon",
-      "complete_weapon_trial"
-    ],
-    [
-      "complete_weapon_trial",
-      "achieve_weapon_mastery"
-    ],
-    [
-      "achieve_weapon_mastery",
-      "complete_weapon_mastery_for_all_weapons"
-    ],
-    [
-      "participate_in_collection_event",
-      "collect_all_heirlooms_and_prestige_skins"
-    ],
-    [
-      "purchase_exotic_shards",
-      "upgrade_mythic_artifact"
-    ]
+    {
+      "from": "player_time",
+      "to": "play_match"
+    },
+    {
+      "from": "real_world_money",
+      "to": "purchase_apex_coins"
+    },
+    {
+      "from": "real_world_money",
+      "to": "purchase_exotic_shards"
+    },
+    {
+      "from": "play_match",
+      "to": "level_up_account"
+    },
+    {
+      "from": "play_match",
+      "to": "level_up_weapon"
+    },
+    {
+      "from": "play_match",
+      "to": "complete_daily_challenge"
+    },
+    {
+      "from": "play_match",
+      "to": "complete_weekly_challenge"
+    },
+    {
+      "from": "play_match",
+      "to": "play_ranked_match"
+    },
+    {
+      "from": "level_up_account",
+      "to": "unlock_legend_with_tokens"
+    },
+    {
+      "from": "level_up_account",
+      "to": "open_apex_pack"
+    },
+    {
+      "from": "level_up_account",
+      "to": "reroll_daily_challenge"
+    },
+    {
+      "from": "purchase_apex_coins",
+      "to": "unlock_legend_with_coins"
+    },
+    {
+      "from": "purchase_apex_coins",
+      "to": "purchase_store_item"
+    },
+    {
+      "from": "purchase_apex_coins",
+      "to": "purchase_premium_battle_pass"
+    },
+    {
+      "from": "purchase_apex_coins",
+      "to": "participate_in_collection_event"
+    },
+    {
+      "from": "open_apex_pack",
+      "to": "craft_cosmetic_item"
+    },
+    {
+      "from": "open_apex_pack",
+      "to": "craft_heirloom_item"
+    },
+    {
+      "from": "craft_cosmetic_item",
+      "to": "complete_cosmetic_collection",
+      "type": "final"
+    },
+    {
+      "from": "purchase_store_item",
+      "to": "complete_cosmetic_collection",
+      "type": "final"
+    },
+    {
+      "from": "craft_heirloom_item",
+      "to": "collect_all_heirlooms_and_prestige_skins",
+      "type": "final"
+    },
+    {
+      "from": "reroll_daily_challenge",
+      "to": "complete_daily_challenge"
+    },
+    {
+      "from": "complete_daily_challenge",
+      "to": "level_up_battle_pass"
+    },
+    {
+      "from": "complete_weekly_challenge",
+      "to": "level_up_battle_pass"
+    },
+    {
+      "from": "purchase_premium_battle_pass",
+      "to": "level_up_battle_pass"
+    },
+    {
+      "from": "level_up_battle_pass",
+      "to": "open_apex_pack"
+    },
+    {
+      "from": "level_up_battle_pass",
+      "to": "complete_cosmetic_collection",
+      "type": "final"
+    },
+    {
+      "from": "play_ranked_match",
+      "to": "advance_rank_tier"
+    },
+    {
+      "from": "advance_rank_tier",
+      "to": "receive_ranked_rewards"
+    },
+    {
+      "from": "advance_rank_tier",
+      "to": "achieve_apex_predator_rank",
+      "type": "final"
+    },
+    {
+      "from": "level_up_weapon",
+      "to": "complete_weapon_trial"
+    },
+    {
+      "from": "complete_weapon_trial",
+      "to": "achieve_weapon_mastery"
+    },
+    {
+      "from": "achieve_weapon_mastery",
+      "to": "complete_weapon_mastery_for_all_weapons",
+      "type": "final"
+    },
+    {
+      "from": "participate_in_collection_event",
+      "to": "collect_all_heirlooms_and_prestige_skins",
+      "type": "final"
+    },
+    {
+      "from": "purchase_exotic_shards",
+      "to": "upgrade_mythic_artifact"
+    }
   ]
 }

@@ -6,6 +6,7 @@ export * from './types';
 export * from './detector';
 export * from './resolver';
 
+import { buildConnectorSegments, ConnectorOrientation } from '../connector-routing';
 import { CollisionConfig, CollisionContext, Rectangle, Point, Line } from './types';
 import { CollisionDetector } from './detector';
 import { CollisionResolver } from './resolver';
@@ -22,7 +23,6 @@ export class CollisionEngine {
       strategy: 'avoid',
       nodeToNode: true,
       edgeToNode: true,
-      edgeToEdge: false,
       margin: 20, // Default margin for collision detection
       ...config
     };
@@ -149,7 +149,7 @@ export class CollisionEngine {
     parentIds: string[],
     testRect: Rectangle,
     context: CollisionContext,
-    orientation: 'horizontal-first' | 'vertical-first'
+    orientation: ConnectorOrientation
   ): number | null {
     let currentY = testRect.y;
     const maxPushDown = 500; // Maximum pixels to push down to find a path
@@ -164,8 +164,10 @@ export class CollisionEngine {
         const parentPos = context.nodePositions.get(parentId);
         if (!parentPos) continue;
 
-        const edgeStart = this.getNodeConnectionPoint(parentId, parentPos, 'output');
-        const edgeEnd = this.getNodeConnectionPoint(nodeId, currentRect, 'input');
+        const parentKind = context.nodeKinds?.get(parentId);
+        const nodeKind = context.nodeKinds?.get(nodeId);
+        const edgeStart = this.getNodeConnectionPoint(parentId, parentPos, 'output', parentKind);
+        const edgeEnd = this.getNodeConnectionPoint(nodeId, currentRect, 'input', nodeKind);
 
         // Use A* pathfinding to check if a valid path exists
         // We use a simplified check: if A* finds a path, we assume the elbow connector *might* work
@@ -175,7 +177,7 @@ export class CollisionEngine {
         // Actually, let's stick to the segment check for strict visual compliance with Figma's default connectors,
         // BUT use the spatial grid for performance.
 
-        const segments = this.buildElbowSegments(edgeStart, edgeEnd, orientation);
+        const segments = buildConnectorSegments(edgeStart, edgeEnd, orientation);
 
         // Check segments against obstacles using spatial grid would be ideal, 
         // but segments are lines, not rects. We can approximate segments as rects.
@@ -236,60 +238,6 @@ export class CollisionEngine {
     return null;
   }
 
-  /**
-   * Build elbow connector segments that better match Figma's actual routing.
-   * Figma typically uses a 3-segment elbow: horizontal -> vertical -> horizontal
-   * when connecting nodes left-to-right.
-   */
-  private buildElbowSegments(
-    start: Point,
-    end: Point,
-    orientation: 'horizontal-first' | 'vertical-first'
-  ): Line[] {
-    // Handle degenerate cases
-    if (Math.abs(start.x - end.x) < 1 && Math.abs(start.y - end.y) < 1) {
-      return [];
-    }
-
-    // Straight horizontal line
-    if (Math.abs(start.y - end.y) < 1) {
-      return [{ start, end }];
-    }
-
-    // Straight vertical line
-    if (Math.abs(start.x - end.x) < 1) {
-      return [{ start, end }];
-    }
-
-    if (orientation === 'vertical-first') {
-      // Two-segment L-shape: vertical then horizontal
-      const turn: Point = { x: start.x, y: end.y };
-      return [
-        { start, end: turn },
-        { start: turn, end }
-      ];
-    }
-
-    // Default: 3-segment S-shape (Figma's typical left-to-right connector)
-    // horizontal -> vertical -> horizontal
-    const midX = start.x + (end.x - start.x) / 2;
-
-    const segments: Line[] = [
-      // First horizontal segment from start to midpoint X
-      { start, end: { x: midX, y: start.y } },
-      // Vertical segment at midpoint
-      { start: { x: midX, y: start.y }, end: { x: midX, y: end.y } },
-      // Final horizontal segment to end
-      { start: { x: midX, y: end.y }, end }
-    ];
-
-    // Filter out zero-length segments
-    return segments.filter(seg =>
-      Math.abs(seg.start.x - seg.end.x) > 0.5 ||
-      Math.abs(seg.start.y - seg.end.y) > 0.5
-    );
-  }
-
   private expandRect(rect: Rectangle, amount: number): Rectangle {
     const safeAmount = Number.isFinite(amount) ? Math.max(0, amount) : 0;
     if (safeAmount === 0) return rect;
@@ -310,13 +258,14 @@ export class CollisionEngine {
   /**
    * Get the connection point for a node (handles special cases like final goods)
    */
-  getNodeConnectionPoint(nodeId: string, rect: Rectangle, type: 'input' | 'output'): Point {
+  getNodeConnectionPoint(nodeId: string, rect: Rectangle, type: 'input' | 'output', kind?: string): Point {
     // Special handling for final goods nodes
-    if (nodeId.includes('final_good')) {
+    const isFinalGood = kind === 'final_good' || nodeId.includes('final_good');
+    if (isFinalGood) {
       if (type === 'input') {
         // For final goods, connect to the middle of the orange box, not the header
-        // Assuming header is ~30px, connect to middle of remaining height
-        const headerHeight = 30;
+        // Match the actual final-good header height.
+        const headerHeight = 24;
         const boxHeight = rect.height - headerHeight;
         return {
           x: rect.x,

@@ -6,6 +6,7 @@ export const COLOR = {
   XP_ORANGE: '#EC9F53',
   FINAL_GOOD_YELLOW: '#F5C95C',
   SOURCE_GREEN: '#4CAF50',
+  CROSS_LANE_BLUE: '#4E79A7',
 
   // Default/Neutral colors
   MAIN_WHITE: '#FFFFFF',

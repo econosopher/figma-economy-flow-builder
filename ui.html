@@ -231,7 +231,7 @@
             <img src="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3ccircle cx='12' cy='12' r='3'%3e%3c/circle%3e%3cpath d='M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z'%3e%3c/path%3e%3c/svg%3e" alt="Logo">
             <div style="flex: 1;">
                 <h1 style="margin: 0;">Economy-Flow Builder</h1>
-                <div id="version-info" style="font-size: 10px; color: #666; margin-top: 2px;">v1.2.76 • Loading...</div>
+                <div id="version-info" style="font-size: 10px; color: #666; margin-top: 2px;">v1.2.87 • Loading...</div>
             </div>
         </header>
 
@@ -279,22 +279,33 @@
             <section>
                 <h2>Economy Research Settings</h2>
                 <div class="research-section">
+                    <label for="provider-selector" style="display: block; margin-bottom: 8px; font-size: 12px; font-weight: 600;">Research Provider</label>
+                    <select id="provider-selector" style="width: 100%; padding: 8px; border: 1px solid #999; border-radius: 4px; font-size: 14px;">
+                        <option value="gemini" selected>Gemini</option>
+                        <option value="openai">OpenAI</option>
+                        <option value="claude">Claude / Anthropic</option>
+                    </select>
+                    <div class="research-info" style="margin-top: 4px; font-size: 11px; color: #666;">
+                        The local research API receives this provider value with the key and structured v2 schema.
+                    </div>
+                </div>
+                <div class="research-section">
                     <label for="api-key" style="display: block; margin-bottom: 8px; font-size: 12px; font-weight: 600;">
-                        Gemini API Key
+                        API Key
                         <a href="https://aistudio.google.com/app/apikey" target="_blank" title="Get your API key from Google AI Studio" style="text-decoration: none; margin-left: 4px;">
                             <span style="background: #e3f2fd; color: #1976d2; padding: 2px 6px; border-radius: 3px; font-size: 11px; cursor: pointer;">?</span>
                         </a>
                         <button id="validate-key" class="validate-btn" style="float: right;">Test Connection</button>
                     </label>
                     <div class="api-key-container" style="position: relative;">
-                        <input type="password" id="api-key" class="api-key-input" placeholder="Enter your Gemini API key" style="font-family: Inter, sans-serif; padding-right: 40px;">
+                        <input type="password" id="api-key" class="api-key-input" placeholder="Enter your provider API key" style="font-family: Inter, sans-serif; padding-right: 40px;">
                         <span id="api-key-status" class="api-key-status"></span>
                     </div>
                     <div class="research-info" style="margin-top: 4px; font-size: 11px; color: #666;">
-                        Your API key is stored locally and never shared. <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color: #1976d2;">Get a free API key →</a>
+                        Your API key is stored locally and sent only to the local research API for the selected provider.
                     </div>
                     <div id="api-key-warning" class="api-key-warning">
-                        ⚠️ API key required: Enter your Gemini API key above to generate economy JSONs. The key will be saved securely for future sessions.
+                        ⚠️ API key required: Enter a provider API key above to generate economy JSONs. The key will be saved securely for future sessions.
                     </div>
                 </div>
                 <div class="research-section">
@@ -505,7 +516,7 @@
        const now = new Date();
        const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
        const dateStr = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-       document.getElementById('version-info').textContent = `v1.2.76 • ${dateStr} ${timeStr}`;
+       document.getElementById('version-info').textContent = `v1.2.87 • ${dateStr} ${timeStr}`;
      };
      
      updateTimestamp();
@@ -709,6 +720,7 @@
      const depthSelector = document.getElementById('depth-selector');
      const researchOutput = document.getElementById('research-output');
      const researchStatus = document.getElementById('research-status');
+     const providerSelector = document.getElementById('provider-selector');
      const apiKeyInput = document.getElementById('api-key');
      const apiKeyStatus = document.getElementById('api-key-status');
      const apiKeyWarning = document.getElementById('api-key-warning');
@@ -795,7 +807,14 @@
          refreshEconomyBtn.title = canRefresh
            ? 'Regenerate the last economy JSON request'
            : 'Generate an economy JSON first';
-       }
+      }
+     }
+
+     function looksLikeProviderKey(apiKey, provider) {
+       if (provider === 'gemini') return apiKey.startsWith('AIza') && apiKey.length > 30;
+       if (provider === 'openai') return /^sk-(proj-|svcacct-)?[A-Za-z0-9_-]{20,}$/.test(apiKey);
+       if (provider === 'claude') return /^sk-ant-[A-Za-z0-9_-]{20,}$/.test(apiKey) || apiKey.length >= 32;
+       return apiKey.length >= 20;
      }
      
      // Load saved API key and init UI
@@ -806,6 +825,7 @@
      // API key input handler
      apiKeyInput.addEventListener('input', () => {
        const apiKey = apiKeyInput.value.trim();
+       const provider = providerSelector.value;
        clearLastEconomyRequest();
        apiKeyValidated = false;
        apiKeyInput.classList.remove('valid', 'invalid', 'validating');
@@ -813,7 +833,7 @@
        
        if (apiKey.length > 0) {
          validateBtn.disabled = false;
-         if (apiKey.startsWith('AIza') && apiKey.length > 30) {
+         if (looksLikeProviderKey(apiKey, provider)) {
            apiKeyStatus.textContent = '🔑';
            apiKeyStatus.title = 'Key format looks valid';
          }
@@ -828,8 +848,17 @@
      apiKeyInput.addEventListener('change', () => {
        const apiKey = apiKeyInput.value.trim();
        if (apiKey) {
-         post('save-api-key', { apiKey });
+         post('save-api-key', { apiKey, provider: providerSelector.value });
        }
+     });
+
+     providerSelector.addEventListener('change', () => {
+       clearLastEconomyRequest();
+       apiKeyValidated = false;
+       apiKeyInput.classList.remove('valid', 'invalid', 'validating');
+       apiKeyStatus.textContent = '';
+       post('save-api-key', { apiKey: apiKeyInput.value.trim(), provider: providerSelector.value });
+       updateButtonStates();
      });
      
      // Game name input handler
@@ -846,6 +875,7 @@
      // Validate API key button
      validateBtn.addEventListener('click', async () => {
        const apiKey = apiKeyInput.value.trim();
+       const provider = providerSelector.value;
        if (!apiKey) return;
        
        apiKeyInput.classList.remove('valid', 'invalid');
@@ -856,7 +886,7 @@
        researchStatus.textContent = 'Testing API key connection...';
        
        // Send validation request
-       post('validate-api-key', { apiKey });
+      post('validate-api-key', { apiKey, provider });
      });
      
      // Handle validation responses in message handler
@@ -866,6 +896,7 @@
        if (!m) return;
        
        if (m.type === 'api-key-loaded') {
+         if (m.provider) providerSelector.value = m.provider;
          if (m.apiKey) {
            apiKeyInput.value = m.apiKey;
            apiKeyValidated = m.validated || false;
@@ -897,7 +928,7 @@
            researchStatus.textContent = 'API key validated successfully! Ready to generate.';
            
            // Save the validated key
-           post('save-api-key', { apiKey: apiKeyInput.value.trim(), validated: true });
+           post('save-api-key', { apiKey: apiKeyInput.value.trim(), provider: providerSelector.value, validated: true });
         } else {
           apiKeyValidated = false;
           apiKeyInput.classList.add('invalid');
@@ -933,8 +964,8 @@
          game: gameName,
          depth: parseInt(depth),
          timestamp: new Date().toISOString(),
-         prompt_version: "1.0",
-         instructions: `Research the economy of ${gameName} at depth level ${depth}`
+         prompt_version: "2.0",
+         instructions: `Research the economy of ${gameName} at depth level ${depth} and convert it to Economy Flow schemaVersion 2.`
        };
        
        researchOutput.value = JSON.stringify(cache, null, 2);
@@ -959,7 +990,7 @@
      ];
      
      function setResearchControlsEnabled(enabled) {
-       [generateCacheBtn, generateEconomyBtn, refreshEconomyBtn, copyCacheBtn, useResearchBtn, createPrBtn, apiKeyInput, gameNameInput, depthSelector]
+       [generateCacheBtn, generateEconomyBtn, refreshEconomyBtn, copyCacheBtn, useResearchBtn, createPrBtn, apiKeyInput, providerSelector, gameNameInput, depthSelector]
          .forEach(el => { if (el) el.disabled = !enabled; });
      }
 
@@ -1015,8 +1046,8 @@
        }
        
        if (!apiKey) {
-         researchStatus.style.color = '#c62828';
-         researchStatus.textContent = 'Please enter your Gemini API key. Get one free at aistudio.google.com';
+       researchStatus.style.color = '#c62828';
+       researchStatus.textContent = 'Please enter an API key for the selected provider.';
          apiKeyInput.focus();
          apiKeyWarning.classList.add('show');
          return;
@@ -1042,7 +1073,7 @@
          gameName,
          depth: depthValue,
          apiKey,
-         provider: 'gemini'
+         provider: providerSelector.value
        };
        updateButtonStates();
 
@@ -1132,7 +1163,7 @@
 	       // Try to parse and see if it's an economy JSON (not just cache)
 	       try {
 	         const data = parseJsonFromText(researchJson);
-	         if (Array.isArray(data.inputs) && Array.isArray(data.nodes) && Array.isArray(data.edges)) {
+	         if (data.schemaVersion === 2 && Array.isArray(data.stages) && Array.isArray(data.nodes) && Array.isArray(data.edges)) {
 	           // It's a full economy JSON, use it
 	           document.querySelector('[data-tab="main"]').click();
 	           t.value = JSON.stringify(data, null, 2);
@@ -1171,7 +1202,7 @@
 	       // Validate it's an economy JSON
 	       try {
 	         const data = parseJsonFromText(researchJson);
-	         if (!Array.isArray(data.inputs) || !Array.isArray(data.nodes) || !Array.isArray(data.edges)) {
+	         if (data.schemaVersion !== 2 || !Array.isArray(data.stages) || !Array.isArray(data.nodes) || !Array.isArray(data.edges)) {
 	           researchStatus.style.color = '#c62828';
 	           researchStatus.textContent = 'Please generate a full economy JSON first, not just a cache.';
 	           return;

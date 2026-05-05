@@ -1,76 +1,45 @@
-# LLM Instructions for Economy Flow JSON Generation
+# LLM Instructions for Economy Flow v2 JSON Generation
 
-## AI Prompt for JSON Generation
-
-To quickly generate a new flowchart, you can use the following prompt with a capable AI assistant (like Google's Gemini or OpenAI's GPT-4). This prompt instructs the AI to research a game's economy and format the findings into the specific JSON structure required by the Economy-Flow plugin.
+Use this prompt with Gemini, OpenAI, Claude, or as the conversion step after a Deep Research report. The research step should gather evidence first; this step should emit the plugin payload.
 
 ```text
-You are an expert video game economist and analyst. Your task is to research the economy and player progression systems of the game "[Specify Game Title Here]". Based on your research, generate a JSON object that models the core gameplay loops, resource flows, and progression paths.
+You are an expert video game economist and analyst. Research the economy and player progression systems of "[Specify Game Title Here]" and generate a compact Economy Flow v2 JSON object.
 
-The output MUST be a single, complete JSON object with EXACTLY these three top-level keys: `inputs`, `nodes`, and `edges`. Optional fourth key: `subsections`.
+Return one raw JSON object only. Do not include markdown fences, comments, or prose.
 
-### Critical JSON Structure Rules:
+Required top-level keys:
+- "schemaVersion": always 2
+- "stages": ordered left-to-right stage columns
+- "nodes": player inputs, activities, systems, and final goals
+- "edges": directed object-form connections
 
-1. **NO MARKDOWN FORMATTING**: Output ONLY the raw JSON object. No \`\`\`json tags, no explanations before or after.
-2. **NO TRAILING COMMAS**: Never put a comma after the last item in any array or object.
-3. **NEVER LEAVE EMPTY VALUES**: Every property MUST have a value. Common mistakes to avoid:
-   - WRONG: `"sources":,` or `"sinks":,` or `"values":,`
-   - CORRECT: `"sources": [],` or `"sinks": [],` or `"values": []`
-   - If a node has no sources/sinks/values, use an empty array `[]`, never leave it blank
-4. **ALL ARRAYS MUST BE PROPERLY INITIALIZED**: Properties like `sources`, `sinks`, and `values` must ALWAYS be followed by either:
-   - An array with items: `"sources": ["Gold", "XP"]`
-   - An empty array: `"sources": []`
-   - NEVER just a comma or nothing: `"sources":,` ← THIS WILL CAUSE ERRORS
-5. **CONSISTENT ID FORMAT**: All `id` values must be lowercase with underscores (snake_case). Example: `daily_quest`, not `dailyQuest` or `DailyQuest`.
-6. **VALID EDGES**: Every edge must connect existing nodes. Each edge is a two-element array: `["from_id", "to_id"]`.
+Optional top-level keys:
+- "name"
+- "lanes"
 
-### JSON Structure Specification:
+Rules:
+1. Use snake_case ids only.
+2. Use short semantic stage labels such as "Inputs", "Play", "Earn", "Spend", "Collection", and "Outcomes"; never use generic labels like "Stage 2".
+3. Model player inputs as nodes with kind = "initial_sink_node"; prefer labels "Spend Time" and "Spend Money".
+4. Assign every node to an existing stageId and, when lanes are present, an existing laneId.
+5. Final goals use kind = "final_good" and must be assigned to the last stage.
+6. Every node includes "sources", "sinks", and "values" arrays, even if empty.
+7. Every edge is an object: { "from": "source_id", "to": "target_id" }.
+8. Optional edge type may be "normal", "value", "final", or "cross-lane".
+9. Prefer compact, high-signal diagrams over exhaustive detail.
 
-1. **`inputs`** (required array): Primary resources players invest (time, money). These are economy sources.
-   - `id` (string): Unique snake_case identifier
-   - `label` (string): Display name (e.g., "Time", "Money")
-   - `kind` (string): MUST be exactly `"initial_sink_node"`
+Definitions:
+- sources: spendable resources produced by a system.
+- sinks: spendable resources consumed by a system.
+- values: progress metrics that accumulate but are not directly spent.
+- final_good: the terminal player-facing outcome, such as mastery, collection completion, rank, expression, or dominance.
 
-2. **`nodes`** (required array): Game activities, systems, or milestones.
-   - `id` (string): Unique snake_case identifier
-   - `label` (string): Descriptive name (e.g., "Complete Daily Quest")
-   - `sources` (array of strings): Resources GAINED that can be spent elsewhere (e.g., ["Gold", "Crafting Materials"])
-   - `sinks` (array of strings): Resources CONSUMED from elsewhere (e.g., ["Energy", "Gold"])
-   - `values` (array of strings): Stores of value that accumulate but CANNOT be spent (e.g., ["Player XP", "Achievement Points", "Account Level"])
-   - `kind` (string, optional): Set to `"final_good"` for ultimate goals/win conditions
+Research focus:
+1. Identify primary player inputs.
+2. Map core gameplay, progression, monetization, events, and collection loops.
+3. For each activity, determine resources produced, resources consumed, and persistent progress granted.
+4. Trace relationships between systems with edges.
+5. Keep names consistent across the graph.
 
-3. **`edges`** (required array): Connections showing flow between nodes.
-   - Each edge is an array: `["from_id", "to_id"]`
-   - `from_id` and `to_id` must match existing node/input ids
-
-4. **`subsections`** (optional array): Visual groupings of related nodes.
-   - `id` (string): Unique identifier for the subsection
-   - `label` (string): Display name for the group
-   - `nodeIds` (array): List of node ids to include in this subsection
-   - `color` (string, optional): Hex color like "#FF5733"
-
-### Key Distinctions:
-
-**Sources vs Sinks vs Values:**
-- **Sources**: Resources gained that CAN be spent elsewhere (currencies, materials)
-- **Sinks**: Resources consumed that come from elsewhere  
-- **Values**: Metrics that accumulate but CANNOT be spent (XP, levels, achievement scores, collection progress)
-
-**Examples:**
-- Completing a quest might have:
-  - sources: ["100 Gold", "5 Gems"] (can spend these elsewhere)
-  - sinks: ["10 Energy"] (consumed from your energy pool)
-  - values: ["500 XP", "1 Achievement Point"] (accumulate but can't spend)
-
-### Research Focus:
-1. Identify primary player inputs (time, money)
-2. Map core gameplay loops and progression systems
-3. For each activity, determine:
-   - What it consumes (sinks)
-   - What spendable resources it produces (sources)
-   - What permanent progress it grants (values)
-4. Trace flow connections between activities
-5. Identify ultimate goals as final_good nodes
-
-Generate the complete JSON for "[Specify Game Title Here]" following these exact specifications.
+Generate the complete JSON for "[Specify Game Title Here]" following these exact requirements.
 ```

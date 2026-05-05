@@ -1,81 +1,92 @@
 import { validateGraphData, isValidColor, validateCustomColors } from '../validation';
-import { Graph } from '../types';
+import { V2Graph } from '../types';
 import { COLOR } from '../constants';
 
+function validGraph(): V2Graph {
+  return {
+    schemaVersion: 2,
+    stages: [
+      { id: 'inputs', label: 'Inputs' },
+      { id: 'actions', label: 'Actions' },
+      { id: 'outcomes', label: 'Outcomes' }
+    ],
+    lanes: [{ id: 'core', label: 'Core' }],
+    nodes: [
+      { id: 'time', label: 'Time', kind: 'initial_sink_node', stageId: 'inputs', laneId: 'core' },
+      { id: 'play', label: 'Play Game', stageId: 'actions', laneId: 'core', sources: ['XP'], sinks: [] },
+      { id: 'win', label: 'Win', kind: 'final_good', stageId: 'outcomes', laneId: 'core' }
+    ],
+    edges: [
+      { from: 'time', to: 'play' },
+      { from: 'play', to: 'win', type: 'final' }
+    ]
+  };
+}
+
 describe('validateGraphData', () => {
-  it('should validate a correct graph structure', () => {
-    const validGraph: Graph = {
-      inputs: [{ id: 'time', label: 'Time', kind: 'initial_sink_node' }],
-      nodes: [{ id: 'play', label: 'Play Game', sources: ['XP'], sinks: [] }],
-      edges: [['time', 'play']]
-    };
-
-    const errors = validateGraphData(validGraph);
-    expect(errors).toHaveLength(0);
+  it('validates a correct v2 graph structure', () => {
+    expect(validateGraphData(validGraph())).toHaveLength(0);
   });
 
-  it('should catch missing inputs array', () => {
-    const invalidGraph: any = {
-      nodes: [{ id: 'play', label: 'Play Game' }],
-      edges: []
-    };
+  it('catches missing schema version', () => {
+    const invalidGraph: any = validGraph();
+    delete invalidGraph.schemaVersion;
 
-    const errors = validateGraphData(invalidGraph);
-    expect(errors).toContain("'inputs' property must be an array.");
+    expect(validateGraphData(invalidGraph)).toContain("'schemaVersion' must be 2.");
   });
 
-  it('should catch invalid edge references', () => {
-    const invalidGraph: Graph = {
-      inputs: [{ id: 'time', label: 'Time', kind: 'initial_sink_node' }],
-      nodes: [{ id: 'play', label: 'Play Game' }],
-      edges: [['time', 'nonexistent']]
-    };
+  it('catches invalid edge references', () => {
+    const invalidGraph = validGraph();
+    invalidGraph.edges = [{ from: 'time', to: 'nonexistent' }];
 
     const errors = validateGraphData(invalidGraph);
     expect(errors.some(e => e.includes("'nonexistent' not found"))).toBe(true);
   });
 
-  it('should validate node properties', () => {
-    const invalidGraph: any = {
-      inputs: [{ id: 'time', label: 'Time', kind: 'initial_sink_node' }],
-      nodes: [{ label: 'Missing ID' }], // Missing id
-      edges: []
-    };
-
-    const errors = validateGraphData(invalidGraph);
-    expect(errors.some(e => e.includes("'id' is missing"))).toBe(true);
-  });
-
-  it('should detect cycles in edges', () => {
-    const graph: Graph = {
-      inputs: [{ id: 'time', label: 'Time', kind: 'initial_sink_node' }],
-      nodes: [
-        { id: 'a', label: 'A' },
-        { id: 'b', label: 'B' },
-        { id: 'c', label: 'C' }
-      ],
-      edges: [
-        ['time', 'a'],
-        ['a', 'b'],
-        ['b', 'c'],
-        ['c', 'a']
-      ]
-    };
+  it('detects cycles in edges', () => {
+    const graph = validGraph();
+    graph.edges = [
+      { from: 'time', to: 'play' },
+      { from: 'play', to: 'time' }
+    ];
 
     const errors = validateGraphData(graph);
     expect(errors.some(e => e.includes('cycle'))).toBe(true);
   });
+
+  it('enforces snake_case ids', () => {
+    const invalidGraph = validGraph();
+    invalidGraph.nodes[0].id = 'TimeInput';
+
+    const errors = validateGraphData(invalidGraph);
+    expect(errors.some(e => e.includes('snake_case'))).toBe(true);
+  });
+
+  it('allows currencies reused across sources, sinks, and values', () => {
+    const graph = validGraph();
+    graph.nodes[1] = {
+      id: 'play',
+      label: 'Play Game',
+      stageId: 'actions',
+      laneId: 'core',
+      sources: ['Gold'],
+      sinks: ['Gold'],
+      values: ['Gold']
+    };
+
+    expect(validateGraphData(graph)).toHaveLength(0);
+  });
 });
 
 describe('isValidColor', () => {
-  it('should accept valid hex colors', () => {
+  it('accepts valid hex colors', () => {
     expect(isValidColor('#FFFFFF')).toBe(true);
     expect(isValidColor('#000000')).toBe(true);
     expect(isValidColor('#4CAF50')).toBe(true);
     expect(isValidColor('#abc123')).toBe(true);
   });
 
-  it('should reject invalid hex colors', () => {
+  it('rejects invalid hex colors', () => {
     expect(isValidColor('#FFF')).toBe(false);
     expect(isValidColor('#GGGGGG')).toBe(false);
     expect(isValidColor('red')).toBe(false);
@@ -85,13 +96,13 @@ describe('isValidColor', () => {
 });
 
 describe('validateCustomColors', () => {
-  it('should return default colors when input is invalid', () => {
+  it('returns default colors when input is invalid', () => {
     const result = validateCustomColors(null);
     expect(result.sink).toBe(COLOR.INITIAL_SINK_NODE);
     expect(result.source).toBe(COLOR.SOURCE_GREEN);
   });
 
-  it('should use custom colors when valid', () => {
+  it('uses custom colors when valid', () => {
     const customColors = {
       sink: '#FF0000',
       source: '#00FF00',
@@ -103,128 +114,18 @@ describe('validateCustomColors', () => {
     expect(result).toEqual(customColors);
   });
 
-  it('should fallback to defaults for invalid custom colors', () => {
+  it('falls back to defaults for invalid custom colors', () => {
     const customColors = {
-      sink: 'red', // Invalid
-      source: '#00FF00', // Valid
-      xp: '#GGG', // Invalid
-      final: '#FFFF00' // Valid
+      sink: 'red',
+      source: '#00FF00',
+      xp: '#GGG',
+      final: '#FFFF00'
     };
 
     const result = validateCustomColors(customColors);
-    expect(result.sink).toBe(COLOR.INITIAL_SINK_NODE); // Default
-    expect(result.source).toBe('#00FF00'); // Custom
-    expect(result.xp).toBe(COLOR.XP_ORANGE); // Default
-    expect(result.final).toBe('#FFFF00'); // Custom
+    expect(result.sink).toBe(COLOR.INITIAL_SINK_NODE);
+    expect(result.source).toBe('#00FF00');
+    expect(result.xp).toBe(COLOR.XP_ORANGE);
+    expect(result.final).toBe('#FFFF00');
   });
 });
-
-describe('subsections validation', () => {
-  it('should validate correct subsections', () => {
-    const graph: Graph = {
-      inputs: [{ id: 'time', label: 'Time', kind: 'initial_sink_node' }],
-      nodes: [
-        { id: 'play', label: 'Play Game' },
-        { id: 'win', label: 'Win' }
-      ],
-      edges: [['time', 'play']],
-      subsections: [
-        { id: 'gameplay', label: 'Core Gameplay', nodeIds: ['play', 'win'] }
-      ]
-    };
-
-    const errors = validateGraphData(graph);
-    expect(errors).toHaveLength(0);
-  });
-
-  it('should catch invalid subsection node references', () => {
-    const graph: Graph = {
-      inputs: [{ id: 'time', label: 'Time', kind: 'initial_sink_node' }],
-      nodes: [{ id: 'play', label: 'Play Game' }],
-      edges: [],
-      subsections: [
-        { id: 'sub1', label: 'Subsection 1', nodeIds: ['play', 'nonexistent'] }
-      ]
-    };
-
-    const errors = validateGraphData(graph);
-    expect(errors.some(e => e.includes("'nonexistent' not found"))).toBe(true);
-  });
-
-  it('should validate subsection colors', () => {
-    const graph: Graph = {
-      inputs: [],
-      nodes: [{ id: 'node1', label: 'Node 1' }],
-      edges: [],
-      subsections: [
-        { id: 'sub1', label: 'Valid Color', nodeIds: ['node1'], color: '#FF00FF' },
-        { id: 'sub2', label: 'Invalid Color', nodeIds: ['node1'], color: 'purple' }
-      ]
-    };
-
-    const errors = validateGraphData(graph);
-    expect(errors.some(e => e.includes("Invalid color format 'purple'"))).toBe(true);
-  });
-
-  it('should catch duplicate subsection IDs', () => {
-    const graph: Graph = {
-      inputs: [],
-      nodes: [{ id: 'node1', label: 'Node 1' }],
-      edges: [],
-      subsections: [
-        { id: 'sub1', label: 'First', nodeIds: ['node1'] },
-        { id: 'sub1', label: 'Duplicate', nodeIds: ['node1'] }
-      ]
-    };
-
-    const errors = validateGraphData(graph);
-    expect(errors.some(e => e.includes("Duplicate subsection id 'sub1'"))).toBe(true);
-  });
-});
-  it('should enforce snake_case ids', () => {
-    const invalidGraph: any = {
-      inputs: [{ id: 'TimeInput', label: 'Time', kind: 'initial_sink_node' }],
-      nodes: [{ id: 'PlayGame', label: 'Play' }],
-      edges: []
-    };
-
-    const errors = validateGraphData(invalidGraph);
-    expect(errors.some(e => e.includes("snake_case"))).toBe(true);
-  });
-
-  it('should allow currencies that are both sources and sinks', () => {
-    const graph: Graph = {
-      inputs: [{ id: 'time', label: 'Time', kind: 'initial_sink_node' }],
-      nodes: [
-        { id: 'a', label: 'A', sources: ['Gold'] },
-        { id: 'b', label: 'B', sinks: ['Gold'] }
-      ],
-      edges: [['time', 'a'], ['a', 'b']]
-    };
-    const errors = validateGraphData(graph);
-    expect(errors).toHaveLength(0);
-  });
-
-  it('should allow currencies reused as both source and value', () => {
-    const graph: Graph = {
-      inputs: [{ id: 'time', label: 'Time', kind: 'initial_sink_node' }],
-      nodes: [
-        { id: 'a', label: 'A', sources: ['Gold'], values: ['Gold'] }
-      ],
-      edges: []
-    };
-    const errors = validateGraphData(graph);
-    expect(errors).toHaveLength(0);
-  });
-
-  it('should allow currencies reused as both sink and value', () => {
-    const graph: Graph = {
-      inputs: [{ id: 'time', label: 'Time', kind: 'initial_sink_node' }],
-      nodes: [
-        { id: 'a', label: 'A', sinks: ['Gold'], values: ['Gold'] }
-      ],
-      edges: []
-    };
-    const errors = validateGraphData(graph);
-    expect(errors).toHaveLength(0);
-  });

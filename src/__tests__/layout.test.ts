@@ -125,6 +125,48 @@ describe('LayoutEngine', () => {
       // C should be in column 2
       expect(columns[2]).toContain('c');
     });
+
+    it('should keep final goods to the right after subsection spreading', () => {
+      const graph: Graph = {
+        inputs: [
+          { id: 'time', label: 'Time', kind: 'initial_sink_node' }
+        ],
+        nodes: [
+          { id: 'a1', label: 'A1' },
+          { id: 'a2', label: 'A2' },
+          { id: 'a3', label: 'A3' },
+          { id: 'late_source', label: 'Late Source' },
+          { id: 'final', label: 'Final Outcome', kind: 'final_good' }
+        ],
+        edges: [
+          ['time', 'a1'],
+          ['time', 'a2'],
+          ['time', 'a3'],
+          ['time', 'late_source'],
+          ['late_source', 'final']
+        ],
+        subsections: [
+          {
+            id: 'wide_parallel_group',
+            label: 'Wide Parallel Group',
+            nodeIds: ['a1', 'a2', 'a3']
+          },
+          {
+            id: 'later_group',
+            label: 'Later Group',
+            nodeIds: ['late_source']
+          }
+        ]
+      };
+
+      const columns = engine.calculateColumns(graph);
+      const columnByNode = new Map<string, number>();
+      columns.forEach((nodeIds, columnIndex) => {
+        nodeIds.forEach(nodeId => columnByNode.set(nodeId, columnIndex));
+      });
+
+      expect(columnByNode.get('final')).toBeGreaterThan(columnByNode.get('late_source')!);
+    });
   });
 
   describe('findConflictFreeY', () => {

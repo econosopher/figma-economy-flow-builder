@@ -1,21 +1,77 @@
 {
+  "schemaVersion": 2,
   "name": "Subsections Example",
-  "inputs": [
+  "stages": [
+    {
+      "id": "stage_1",
+      "label": "Inputs"
+    },
+    {
+      "id": "stage_2",
+      "label": "Core Loop"
+    },
+    {
+      "id": "stage_3",
+      "label": "Rewards"
+    },
+    {
+      "id": "stage_4",
+      "label": "Spend"
+    },
+    {
+      "id": "stage_5",
+      "label": "Progress"
+    },
+    {
+      "id": "outcomes",
+      "label": "Outcomes"
+    }
+  ],
+  "lanes": [
+    {
+      "id": "inputs",
+      "label": "Inputs"
+    },
+    {
+      "id": "onboarding",
+      "label": "New Player Onboarding",
+      "color": "#E3F2FD"
+    },
+    {
+      "id": "core_loop",
+      "label": "Core Gameplay Loop",
+      "color": "#F3E5F5"
+    },
+    {
+      "id": "monetization",
+      "label": "Monetization",
+      "color": "#FFF3E0"
+    },
+    {
+      "id": "shared",
+      "label": "Shared"
+    }
+  ],
+  "nodes": [
     {
       "id": "time",
       "label": "Player Time",
+      "stageId": "stage_1",
+      "laneId": "inputs",
       "kind": "initial_sink_node"
     },
     {
       "id": "money",
       "label": "Real Money",
+      "stageId": "stage_1",
+      "laneId": "inputs",
       "kind": "initial_sink_node"
-    }
-  ],
-  "nodes": [
+    },
     {
       "id": "tutorial",
       "label": "Complete Tutorial",
+      "stageId": "stage_2",
+      "laneId": "onboarding",
       "sources": [
         "Basic Knowledge",
         "10 Gems"
@@ -24,6 +80,8 @@
     {
       "id": "first_match",
       "label": "Play First Match",
+      "stageId": "stage_3",
+      "laneId": "onboarding",
       "sources": [
         "50 XP",
         "5 Coins"
@@ -35,6 +93,8 @@
     {
       "id": "buy_starter",
       "label": "Buy Starter Pack",
+      "stageId": "stage_2",
+      "laneId": "monetization",
       "sources": [
         "Premium Items"
       ],
@@ -45,6 +105,8 @@
     {
       "id": "daily_quest",
       "label": "Complete Daily Quest",
+      "stageId": "stage_4",
+      "laneId": "core_loop",
       "sources": [
         "100 XP",
         "20 Coins"
@@ -56,6 +118,8 @@
     {
       "id": "pvp_match",
       "label": "PvP Match",
+      "stageId": "stage_5",
+      "laneId": "core_loop",
       "sources": [
         "200 XP",
         "50 Coins",
@@ -69,6 +133,8 @@
     {
       "id": "buy_premium",
       "label": "Buy Premium Pass",
+      "stageId": "stage_2",
+      "laneId": "monetization",
       "sources": [
         "VIP Status",
         "1000 Gems"
@@ -77,75 +143,49 @@
     {
       "id": "endgame",
       "label": "Reach Max Level",
+      "stageId": "outcomes",
+      "laneId": "shared",
       "kind": "final_good"
     }
   ],
   "edges": [
-    [
-      "time",
-      "tutorial"
-    ],
-    [
-      "tutorial",
-      "first_match"
-    ],
-    [
-      "money",
-      "buy_starter"
-    ],
-    [
-      "buy_starter",
-      "first_match"
-    ],
-    [
-      "first_match",
-      "daily_quest"
-    ],
-    [
-      "daily_quest",
-      "pvp_match"
-    ],
-    [
-      "money",
-      "buy_premium"
-    ],
-    [
-      "pvp_match",
-      "endgame"
-    ],
-    [
-      "buy_premium",
-      "endgame"
-    ]
-  ],
-  "subsections": [
     {
-      "id": "onboarding",
-      "label": "New Player Onboarding",
-      "nodeIds": [
-        "tutorial",
-        "first_match",
-        "buy_starter"
-      ],
-      "color": "#E3F2FD"
+      "from": "time",
+      "to": "tutorial"
     },
     {
-      "id": "core_loop",
-      "label": "Core Gameplay Loop",
-      "nodeIds": [
-        "daily_quest",
-        "pvp_match"
-      ],
-      "color": "#F3E5F5"
+      "from": "tutorial",
+      "to": "first_match"
     },
     {
-      "id": "monetization",
-      "label": "Monetization",
-      "nodeIds": [
-        "buy_starter",
-        "buy_premium"
-      ],
-      "color": "#FFF3E0"
+      "from": "money",
+      "to": "buy_starter"
+    },
+    {
+      "from": "buy_starter",
+      "to": "first_match"
+    },
+    {
+      "from": "first_match",
+      "to": "daily_quest"
+    },
+    {
+      "from": "daily_quest",
+      "to": "pvp_match"
+    },
+    {
+      "from": "money",
+      "to": "buy_premium"
+    },
+    {
+      "from": "pvp_match",
+      "to": "endgame",
+      "type": "final"
+    },
+    {
+      "from": "buy_premium",
+      "to": "endgame",
+      "type": "final"
     }
   ]
 }

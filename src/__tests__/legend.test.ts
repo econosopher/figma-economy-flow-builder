@@ -23,19 +23,17 @@ describe('Legend helpers', () => {
     expect(res.values).toEqual(['XP']);
   });
 
-  it('createLegendSection builds a section with header + items', () => {
-    const sec = createLegendSection(
+  it('createLegendSection builds a group with background + items', () => {
+    const group = createLegendSection(
       { sources: ['Gold'], sinks: ['Energy'], values: ['XP'] },
       0
     );
-    expect(sec).toBeTruthy();
-    if (sec) {
-      expect(sec.type).toBe('SECTION');
-      expect(sec.name).toBe('Legend');
-      // Should have children added under section (headers + items)
-      // At least 3 headers in columns; each with 1 item => >= 6 children
-      expect((sec as any).children.length).toBeGreaterThanOrEqual(6);
+    expect(group).toBeTruthy();
+    if (group) {
+      expect(group.type).toBe('GROUP');
+      expect(group.name).toBe('Legend');
+      // Background + 3 headers + 3 items => >= 7 nodes
+      expect((group as any).children.length).toBeGreaterThanOrEqual(7);
     }
   });
 });
-

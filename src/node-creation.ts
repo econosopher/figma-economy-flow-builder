@@ -1,6 +1,7 @@
 /// <reference types="@figma/plugin-typings" />
 
 import { COLOR, BOX_SIZE } from './constants';
+import { ConnectorRoutingSpec } from './connector-routing';
 import { hex } from './utils';
 
 export function makeBox(txt: string, w: number, h: number, fill: string, align: 'CENTER' | 'LEFT' = 'CENTER'): SceneNode {
@@ -81,7 +82,7 @@ export function makeFinalGoodBox(txt: string, w: number, h: number, bodyFill: st
   }
 }
 
-export function createConnector(A: SceneNode, B: SceneNode) {
+export function createConnector(A: SceneNode, B: SceneNode, routing: ConnectorRoutingSpec) {
   try {
     if (!A || !B || !A.id || !B.id) {
       throw new Error('Invalid nodes for connection');
@@ -90,46 +91,24 @@ export function createConnector(A: SceneNode, B: SceneNode) {
     const c = figma.createConnector();
     c.connectorLineType = 'ELBOWED';
     c.strokeWeight = 2;
-    // Use default grey for connectors
-    c.strokes = [{ type: 'SOLID', color: hex(COLOR.CONNECTOR_GREY) }];
+    c.strokes = [{
+      type: 'SOLID',
+      color: hex(routing.strokeColor || COLOR.CONNECTOR_GREY),
+      opacity: routing.strokeOpacity
+    } as any];
     
-    let targetNode = B;
-    
-    // Special handling for final goods - check if B is part of a Final Good group
-    // B might be the body box directly, or the Final Good group
-    let isFinalGood = false;
-    
-    if (B.name.startsWith("Final Good")) {
-      // B is the Final Good group
-      isFinalGood = true;
-      
-      // If B is a group (final good), find the body node
-      if (B.type === 'GROUP' && 'children' in B && B.children.length > 1) {
-        // Find the body box (the one with y > 0, as header is at y=0)
-        const bodyBox = B.children.find(child => 
-          child.type === 'SHAPE_WITH_TEXT' && child.y > 0
-        );
-        if (bodyBox) {
-          targetNode = bodyBox;
-        } else {
-          // Fallback to second child
-          targetNode = B.children[1];
-        }
-      }
-    } else if (B.parent && B.parent.name.startsWith("Final Good")) {
-      // B is already the body box of a Final Good
-      isFinalGood = true;
-    }
-    
-    // Apply dashed pattern for Final Good connections
-    if (isFinalGood) {
-      c.dashPattern = [10, 10];
+    if (routing.dashPattern && routing.dashPattern.length > 0) {
+      c.dashPattern = routing.dashPattern;
     }
 
-    // Use AUTO magnet to let Figma choose optimal connection points
-    // This helps spread out multiple connectors going to the same node
-    c.connectorStart = { endpointNodeId: A.id, magnet: 'AUTO' } as any;
-    c.connectorEnd = { endpointNodeId: targetNode.id, magnet: 'AUTO' } as any;
+    try {
+      c.connectorStart = { endpointNodeId: A.id, magnet: routing.startMagnet } as any;
+      c.connectorEnd = { endpointNodeId: B.id, magnet: routing.endMagnet } as any;
+    } catch (e) {
+      console.warn('Failed to set explicit connector magnets; falling back to AUTO', e);
+      c.connectorStart = { endpointNodeId: A.id, magnet: 'AUTO' } as any;
+      c.connectorEnd = { endpointNodeId: B.id, magnet: 'AUTO' } as any;
+    }
     return c;
   } catch (error) {
     console.error('Error creating connector:', error);
