@@ -106,3 +106,13 @@
 
 - The plugin bundle now reports `v2.0.0` in the UI and `package.json`.
 - The Downloads package contains the publishable `manifest.json` and adjacent `code.js` bundle for the Figma desktop release flow.
+
+# Opaque Section Background Patch
+
+- [x] Confirm v2 diagram/lane section backgrounds were transparent because renderer rectangles used empty fills
+- [x] Make diagram and lane section backgrounds opaque white while preserving subtle section strokes
+- [x] Add regression coverage for white background fills
+
+## Review
+
+- The v2 renderer now gives the overall diagram container and lane/section bands solid white fills, so they no longer inherit a transparent FigJam page background.

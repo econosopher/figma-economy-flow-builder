@@ -95,7 +95,7 @@ function createBackgroundLayer(data: V2Graph, layout: V2LayoutResult): GroupNode
     layout.bounds.width + (SECTION_PADDING * 2),
     layout.bounds.height + (SECTION_PADDING * 2)
   );
-  container.fills = [];
+  container.fills = [{ type: 'SOLID', color: hex(COLOR.MAIN_WHITE) } as any];
   container.strokes = [{ type: 'SOLID', color: hex(COLOR.STROKE_GREY), opacity: 0.35 } as any];
   container.strokeWeight = 3;
   container.setPluginData('economyFlowContainer', 'true');
@@ -107,7 +107,7 @@ function createBackgroundLayer(data: V2Graph, layout: V2LayoutResult): GroupNode
     laneRect.x = layout.bounds.x - 40;
     laneRect.y = lane.activeY;
     laneRect.resize(layout.bounds.width + 80, lane.activeHeight);
-    laneRect.fills = [];
+    laneRect.fills = [{ type: 'SOLID', color: hex(COLOR.MAIN_WHITE) } as any];
     laneRect.strokes = [{
       type: 'SOLID',
       color: hex(lane.color || COLOR.STROKE_GREY),
