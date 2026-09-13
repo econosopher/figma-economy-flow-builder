@@ -3,8 +3,10 @@ name: Test and Build
 on:
   push:
     branches: [ main ]
+    paths: ['src/**', 'tests/**', 'ui.html', 'build.js', 'package.json', 'tsconfig.json', '.github/workflows/test.yml']
   pull_request:
     branches: [ main ]
+    paths: ['src/**', 'tests/**', 'ui.html', 'build.js', 'package.json', 'tsconfig.json', '.github/workflows/test.yml']
 
 jobs:
   test:

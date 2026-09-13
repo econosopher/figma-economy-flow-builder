@@ -1,5 +1,6 @@
 name: Web editor checks
 on:
+  workflow_dispatch:
   push:
     paths: ['web/**', 'examples/**', 'src/research-contract.ts', '.github/workflows/web.yml']
   pull_request:
