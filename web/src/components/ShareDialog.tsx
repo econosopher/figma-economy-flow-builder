@@ -1,3 +1,4 @@
+import { exportEvidencePackage } from "../lib/evidenceMedia";
 import { useEffect, useState } from "react";
 import {
   Copy,
@@ -253,6 +254,11 @@ export function ShareDialog({
               >
                 Download editable JSON
               </button>
+              <button className="button" disabled={busy} onClick={() => void run(async () => {
+                download(await exportEvidencePackage(d), `${filename(d.name, "flowpack")}.json`);
+              })}><Download size={15} /> Download with screenshots</button>
+              {!!d.evidence?.items.some(i=>i.mediaId) && <p className="helper">Editable JSON and shared snapshots contain references only. Screenshot attachments stay in this browser; use Download with screenshots to transfer them.</p>}
+
             </>
           ) : (
             accountGate || (
