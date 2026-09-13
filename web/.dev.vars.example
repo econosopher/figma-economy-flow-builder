@@ -1,0 +1,8 @@
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your-publishable-or-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+# Base64 encoded 32 random bytes, used only by the server.
+CREDENTIAL_ENCRYPTION_KEY=
+SLACK_CLIENT_SECRET=
+# Comma separated Supabase user UUIDs for gallery moderation.
+ADMIN_USER_IDS=

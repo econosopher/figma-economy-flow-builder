@@ -1,0 +1,602 @@
+{
+  "schemaVersion": 3,
+  "id": "gossip_harbor",
+  "name": "Gossip Harbor",
+  "stages": [
+    {
+      "id": "s0",
+      "label": "Inputs"
+    },
+    {
+      "id": "s1",
+      "label": "Participation"
+    },
+    {
+      "id": "s2",
+      "label": "Production"
+    },
+    {
+      "id": "s3",
+      "label": "Rewards"
+    },
+    {
+      "id": "s4",
+      "label": "Reinvestment"
+    },
+    {
+      "id": "s5",
+      "label": "Progression"
+    },
+    {
+      "id": "s6",
+      "label": "Outcomes"
+    }
+  ],
+  "groups": [
+    {
+      "id": "g0",
+      "label": "Orders and restaurant",
+      "color": "#f3f6f4"
+    },
+    {
+      "id": "g1",
+      "label": "Capacity and collection",
+      "color": "#f4f5f8"
+    },
+    {
+      "id": "g2",
+      "label": "Purchases",
+      "color": "#faf6ec"
+    }
+  ],
+  "cards": [
+    {
+      "id": "wait",
+      "label": "Wait for energy",
+      "stageId": "s0",
+      "groupId": "g0",
+      "order": 0,
+      "kind": "action",
+      "sources": [
+        "Energy"
+      ],
+      "sinks": [],
+      "values": [],
+      "notes": "Regeneration stops at its cap."
+    },
+    {
+      "id": "generate",
+      "label": "Use an active generator",
+      "stageId": "s1",
+      "groupId": "g0",
+      "order": 0,
+      "kind": "action",
+      "sources": [
+        "Merge items"
+      ],
+      "sinks": [
+        "Energy"
+      ],
+      "values": [],
+      "notes": ""
+    },
+    {
+      "id": "merge",
+      "label": "Merge matching items",
+      "stageId": "s2",
+      "groupId": "g0",
+      "order": 0,
+      "kind": "action",
+      "sources": [
+        "Higher-level items"
+      ],
+      "sinks": [
+        "Matching items"
+      ],
+      "values": [],
+      "notes": "Merging itself does not spend energy."
+    },
+    {
+      "id": "orders",
+      "label": "Serve customer orders",
+      "stageId": "s3",
+      "groupId": "g0",
+      "order": 0,
+      "kind": "action",
+      "sources": [
+        "Coins"
+      ],
+      "sinks": [
+        "Requested items"
+      ],
+      "values": [],
+      "notes": ""
+    },
+    {
+      "id": "renovate",
+      "label": "Complete restaurant tasks",
+      "stageId": "s4",
+      "groupId": "g0",
+      "order": 0,
+      "kind": "action",
+      "sources": [],
+      "sinks": [
+        "Coins"
+      ],
+      "values": [
+        "Restaurant progress"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "story",
+      "label": "Reveal the next story",
+      "stageId": "s5",
+      "groupId": "g0",
+      "order": 0,
+      "kind": "action",
+      "sources": [],
+      "sinks": [],
+      "values": [
+        "Story chapters"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "auto",
+      "label": "Collect automatic spawns",
+      "stageId": "s1",
+      "groupId": "g1",
+      "order": 0,
+      "kind": "action",
+      "sources": [
+        "Automatic items"
+      ],
+      "sinks": [],
+      "values": [],
+      "notes": "Some generators use time and space instead of energy."
+    },
+    {
+      "id": "parts",
+      "label": "Collect generator parts",
+      "stageId": "s2",
+      "groupId": "g1",
+      "order": 0,
+      "kind": "action",
+      "sources": [
+        "Generator parts"
+      ],
+      "sinks": [],
+      "values": [],
+      "notes": ""
+    },
+    {
+      "id": "upgrade",
+      "label": "Merge generator parts",
+      "stageId": "s3",
+      "groupId": "g1",
+      "order": 0,
+      "kind": "action",
+      "sources": [],
+      "sinks": [
+        "Generator parts"
+      ],
+      "values": [
+        "Improved generators"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "drops",
+      "label": "Merge and collect drops",
+      "stageId": "s3",
+      "groupId": "g1",
+      "order": 1,
+      "kind": "action",
+      "sources": [
+        "Energy",
+        "Gems",
+        "Coins"
+      ],
+      "sinks": [
+        "Resource drops"
+      ],
+      "values": [],
+      "notes": "Each drop yields its own resource, not all three."
+    },
+    {
+      "id": "money",
+      "label": "Spend money",
+      "stageId": "s0",
+      "groupId": "g2",
+      "order": 0,
+      "kind": "initial_sink_node",
+      "sources": [],
+      "sinks": [
+        "Real money"
+      ],
+      "values": [],
+      "notes": ""
+    },
+    {
+      "id": "gems",
+      "label": "Buy gems or energy bundles",
+      "stageId": "s1",
+      "groupId": "g2",
+      "order": 0,
+      "kind": "action",
+      "sources": [
+        "Gems",
+        "Energy"
+      ],
+      "sinks": [
+        "Real money"
+      ],
+      "values": [],
+      "notes": "Contents depend on the selected purchase."
+    },
+    {
+      "id": "refill",
+      "label": "Refill energy with gems",
+      "stageId": "s2",
+      "groupId": "g2",
+      "order": 0,
+      "kind": "action",
+      "sources": [
+        "Energy"
+      ],
+      "sinks": [
+        "Gems"
+      ],
+      "values": [],
+      "notes": ""
+    },
+    {
+      "id": "space",
+      "label": "Expand inventory",
+      "stageId": "s4",
+      "groupId": "g2",
+      "order": 0,
+      "kind": "action",
+      "sources": [],
+      "sinks": [
+        "Gems"
+      ],
+      "values": [
+        "Storage capacity"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "shortcut",
+      "label": "Skip timers or buy items",
+      "stageId": "s3",
+      "groupId": "g2",
+      "order": 0,
+      "kind": "action",
+      "sources": [
+        "Merge items"
+      ],
+      "sinks": [
+        "Gems"
+      ],
+      "values": [],
+      "notes": "Optional shortcuts; exact offers vary."
+    },
+    {
+      "id": "discovery",
+      "label": "Discover the story",
+      "stageId": "s6",
+      "groupId": "g0",
+      "order": 0,
+      "kind": "final_good",
+      "sources": [],
+      "sinks": [],
+      "values": [],
+      "notes": "Player value: GEC interpretation."
+    },
+    {
+      "id": "expression",
+      "label": "Create a personal restaurant",
+      "stageId": "s6",
+      "groupId": "g1",
+      "order": 0,
+      "kind": "final_good",
+      "sources": [],
+      "sinks": [],
+      "values": [],
+      "notes": "Player value: GEC interpretation."
+    }
+  ],
+  "edges": [
+    {
+      "id": "wait__generate",
+      "to": "generate",
+      "type": "normal",
+      "feedback": false,
+      "label": "Energy",
+      "from": "wait"
+    },
+    {
+      "id": "generate__merge",
+      "to": "merge",
+      "type": "normal",
+      "feedback": false,
+      "label": "Merge items",
+      "from": "generate"
+    },
+    {
+      "id": "auto__merge",
+      "to": "merge",
+      "type": "normal",
+      "feedback": false,
+      "label": "Automatic items",
+      "from": "auto"
+    },
+    {
+      "id": "merge__orders",
+      "to": "orders",
+      "type": "normal",
+      "feedback": false,
+      "label": "Requested items",
+      "from": "merge"
+    },
+    {
+      "id": "orders__renovate",
+      "to": "renovate",
+      "type": "normal",
+      "feedback": false,
+      "label": "Coins",
+      "from": "orders"
+    },
+    {
+      "id": "renovate__story",
+      "to": "story",
+      "type": "normal",
+      "feedback": false,
+      "label": "Story progression",
+      "from": "renovate"
+    },
+    {
+      "id": "parts__upgrade",
+      "to": "upgrade",
+      "type": "normal",
+      "feedback": false,
+      "label": "Generator parts",
+      "from": "parts"
+    },
+    {
+      "id": "upgrade__generate",
+      "to": "generate",
+      "type": "normal",
+      "feedback": true,
+      "label": "Production capacity",
+      "from": "upgrade"
+    },
+    {
+      "id": "drops__generate",
+      "to": "generate",
+      "type": "normal",
+      "feedback": true,
+      "label": "Energy",
+      "from": "drops"
+    },
+    {
+      "id": "money__gems",
+      "to": "gems",
+      "type": "normal",
+      "feedback": false,
+      "label": "Purchase",
+      "from": "money"
+    },
+    {
+      "id": "gems__refill",
+      "to": "refill",
+      "type": "normal",
+      "feedback": false,
+      "label": "Gems",
+      "from": "gems"
+    },
+    {
+      "id": "gems__generate",
+      "to": "generate",
+      "type": "normal",
+      "feedback": true,
+      "label": "Bundle energy",
+      "from": "gems"
+    },
+    {
+      "id": "refill__generate",
+      "to": "generate",
+      "type": "normal",
+      "feedback": true,
+      "label": "Energy",
+      "from": "refill"
+    },
+    {
+      "id": "gems__space",
+      "to": "space",
+      "type": "normal",
+      "feedback": false,
+      "label": "Gems",
+      "from": "gems"
+    },
+    {
+      "id": "gems__shortcut",
+      "to": "shortcut",
+      "type": "normal",
+      "feedback": false,
+      "label": "Gems",
+      "from": "gems"
+    },
+    {
+      "id": "shortcut__merge",
+      "to": "merge",
+      "type": "normal",
+      "feedback": true,
+      "label": "Items",
+      "from": "shortcut"
+    },
+    {
+      "id": "space__merge",
+      "to": "merge",
+      "type": "normal",
+      "feedback": true,
+      "label": "Board management",
+      "from": "space"
+    },
+    {
+      "id": "story__discovery",
+      "to": "discovery",
+      "type": "final",
+      "feedback": false,
+      "label": "Player value",
+      "from": "story"
+    },
+    {
+      "id": "renovate__expression",
+      "to": "expression",
+      "type": "final",
+      "feedback": false,
+      "label": "Player value",
+      "from": "renovate"
+    }
+  ],
+  "settings": {
+    "actionHeader": "#000000",
+    "finalGood": "#F5C95C",
+    "source": "#21865b",
+    "sink": "#d15d44",
+    "value": "#ba8425",
+    "spacing": "comfortable",
+    "showLegend": true,
+    "background": "white"
+  },
+  "research": {
+    "presetId": "gossip_harbor",
+    "revision": "2026-09-14.1",
+    "category": "Mobile",
+    "summary": "Energy becomes merged orders, restaurant progress and story discovery.",
+    "scope": "Main restaurant merge board and enduring gem uses; event-specific economies excluded.",
+    "checkedAt": "2026-09-14",
+    "limitations": [
+      "The detailed economy analysis is from August 2024, corroborated by current store descriptions and platform editorial. Exact live offer contents and event rules are not verified.",
+      "Automatic generators are exceptions to energy-consuming generation; not every merge or spawn consumes energy.",
+      "Qualitative resource flows, not a balance simulation. Prices, odds and reward quantities are intentionally omitted. Sources were reviewed on the checked date; this is desk research, not a claim of live playtesting."
+    ],
+    "sources": [
+      {
+        "id": "store",
+        "title": "Gossip Harbor: developer description",
+        "url": "https://apps.apple.com/us/app/gossip-harbor-merge-story/id1623318294",
+        "publisher": "Microfun / App Store",
+        "kind": "Developer",
+        "note": "Developer copy supports serving merged dishes, restaurant renovation and story discovery. Listed purchases include gems and energy bundles. Customer reviews are not evidence for this diagram.",
+        "cardIds": [
+          "merge",
+          "orders",
+          "renovate",
+          "story",
+          "money",
+          "gems"
+        ],
+        "edgeIds": [
+          "renovate__story",
+          "money__gems",
+          "gems__generate"
+        ]
+      },
+      {
+        "id": "analysis",
+        "title": "Finding Genre Success: the Case of Gossip Harbor",
+        "url": "https://www.deconstructoroffun.com/blog/2024/8/19/finding-genre-success-the-case-of-gossip-harbor",
+        "publisher": "Deconstructor of Fun, August 2024",
+        "kind": "Independent analysis",
+        "note": "Observed order loop, coin-funded story tasks, generator parts and gem uses: energy, capacity, timers and items. Historical analysis, not a verification of current prices or offers.",
+        "cardIds": [
+          "generate",
+          "merge",
+          "orders",
+          "renovate",
+          "parts",
+          "upgrade",
+          "refill",
+          "space",
+          "shortcut"
+        ],
+        "edgeIds": [
+          "generate__merge",
+          "merge__orders",
+          "orders__renovate",
+          "parts__upgrade",
+          "upgrade__generate",
+          "gems__refill",
+          "gems__generate",
+          "gems__space",
+          "gems__shortcut",
+          "shortcut__merge",
+          "space__merge"
+        ]
+      },
+      {
+        "id": "tips",
+        "title": "Starter tips for Gossip Harbor",
+        "url": "https://play.google.com/store/apps/editorial?hl=en_GB&id=mc_games_editorial_evergreen_postinstall_starter_tips_gossip_harbor_now_fcp",
+        "publisher": "Google Play",
+        "kind": "Platform editorial",
+        "note": "Search-indexed platform guide corroborates automatic spawns, energy replenishment, merging resource drops and energy purchases. The direct regional page returned unavailable during review; no numeric rates used.",
+        "cardIds": [
+          "wait",
+          "generate",
+          "auto",
+          "drops",
+          "refill"
+        ],
+        "edgeIds": [
+          "wait__generate",
+          "auto__merge",
+          "drops__generate",
+          "refill__generate"
+        ]
+      },
+      {
+        "id": "appletips",
+        "title": "5 tips for Gossip Harbor",
+        "url": "https://apps.apple.com/cd/iphone/story/id1794773909",
+        "publisher": "Apple App Store",
+        "kind": "Platform editorial",
+        "note": "Platform editorial corroborates resource-drop merging, generator cooldowns, limited board capacity and event participation. No numeric efficiency recommendations used.",
+        "cardIds": [
+          "drops",
+          "upgrade",
+          "space"
+        ],
+        "edgeIds": [
+          "parts__upgrade",
+          "space__merge",
+          "drops__generate"
+        ]
+      }
+    ],
+    "interpretations": [
+      {
+        "cardIds": [
+          "discovery"
+        ],
+        "edgeIds": [
+          "story__discovery"
+        ],
+        "note": "Discover the story is an interpretation of player value, not a spendable currency or guaranteed outcome."
+      },
+      {
+        "cardIds": [
+          "expression"
+        ],
+        "edgeIds": [
+          "renovate__expression"
+        ],
+        "note": "Create a personal restaurant is an interpretation of player value, not a spendable currency or guaranteed outcome."
+      }
+    ]
+  }
+}

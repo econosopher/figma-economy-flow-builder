@@ -1,0 +1,683 @@
+{
+  "schemaVersion": 3,
+  "id": "royal_match",
+  "name": "Royal Match",
+  "stages": [
+    {
+      "id": "s0",
+      "label": "Inputs"
+    },
+    {
+      "id": "s1",
+      "label": "Participation"
+    },
+    {
+      "id": "s2",
+      "label": "Production"
+    },
+    {
+      "id": "s3",
+      "label": "Rewards"
+    },
+    {
+      "id": "s4",
+      "label": "Reinvestment"
+    },
+    {
+      "id": "s5",
+      "label": "Progression"
+    },
+    {
+      "id": "s6",
+      "label": "Outcomes"
+    }
+  ],
+  "groups": [
+    {
+      "id": "g0",
+      "label": "Levels and castle",
+      "color": "#f3f6f4"
+    },
+    {
+      "id": "g1",
+      "label": "Assistance and rewards",
+      "color": "#f4f5f8"
+    },
+    {
+      "id": "g2",
+      "label": "Purchases",
+      "color": "#faf6ec"
+    }
+  ],
+  "cards": [
+    {
+      "id": "regen",
+      "label": "Replenish lives over time",
+      "stageId": "s0",
+      "groupId": "g0",
+      "order": 0,
+      "kind": "action",
+      "sources": [
+        "Lives"
+      ],
+      "sinks": [],
+      "values": [],
+      "notes": ""
+    },
+    {
+      "id": "attempt",
+      "label": "Attempt a level",
+      "stageId": "s1",
+      "groupId": "g0",
+      "order": 0,
+      "kind": "action",
+      "sources": [],
+      "sinks": [
+        "Player time"
+      ],
+      "values": [],
+      "notes": "Requires a life; a win does not consume it."
+    },
+    {
+      "id": "win",
+      "label": "Beat the level",
+      "stageId": "s2",
+      "groupId": "g0",
+      "order": 0,
+      "kind": "action",
+      "sources": [
+        "Stars",
+        "Coins"
+      ],
+      "sinks": [],
+      "values": [
+        "Level progress"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "fail",
+      "label": "Fail without continuing",
+      "stageId": "s2",
+      "groupId": "g0",
+      "order": 1,
+      "kind": "action",
+      "sources": [],
+      "sinks": [
+        "Life"
+      ],
+      "values": [],
+      "notes": "Except during unlimited-life periods."
+    },
+    {
+      "id": "tasks",
+      "label": "Complete area tasks",
+      "stageId": "s3",
+      "groupId": "g0",
+      "order": 0,
+      "kind": "action",
+      "sources": [],
+      "sinks": [
+        "Stars"
+      ],
+      "values": [
+        "Castle progress"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "chest",
+      "label": "Finish the area",
+      "stageId": "s4",
+      "groupId": "g0",
+      "order": 0,
+      "kind": "action",
+      "sources": [
+        "Coins",
+        "Boosters",
+        "Cards"
+      ],
+      "sinks": [],
+      "values": [],
+      "notes": ""
+    },
+    {
+      "id": "team",
+      "label": "Request teammate lives",
+      "stageId": "s0",
+      "groupId": "g1",
+      "order": 0,
+      "kind": "action",
+      "sources": [
+        "Lives"
+      ],
+      "sinks": [],
+      "values": [],
+      "notes": ""
+    },
+    {
+      "id": "boost",
+      "label": "Use a booster",
+      "stageId": "s1",
+      "groupId": "g1",
+      "order": 0,
+      "kind": "action",
+      "sources": [],
+      "sinks": [
+        "Booster"
+      ],
+      "values": [
+        "Level assistance"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "moves",
+      "label": "Buy extra moves",
+      "stageId": "s3",
+      "groupId": "g1",
+      "order": 0,
+      "kind": "action",
+      "sources": [
+        "Extra moves"
+      ],
+      "sinks": [
+        "Coins"
+      ],
+      "values": [],
+      "notes": ""
+    },
+    {
+      "id": "lives",
+      "label": "Buy extra lives",
+      "stageId": "s3",
+      "groupId": "g1",
+      "order": 1,
+      "kind": "action",
+      "sources": [
+        "Lives"
+      ],
+      "sinks": [
+        "Coins"
+      ],
+      "values": [],
+      "notes": ""
+    },
+    {
+      "id": "buyboost",
+      "label": "Buy boosters",
+      "stageId": "s3",
+      "groupId": "g1",
+      "order": 2,
+      "kind": "action",
+      "sources": [
+        "Boosters"
+      ],
+      "sinks": [
+        "Coins"
+      ],
+      "values": [],
+      "notes": ""
+    },
+    {
+      "id": "events",
+      "label": "Earn event rewards",
+      "stageId": "s4",
+      "groupId": "g1",
+      "order": 0,
+      "kind": "action",
+      "sources": [
+        "Coins"
+      ],
+      "sinks": [],
+      "values": [],
+      "notes": "Event requirements differ."
+    },
+    {
+      "id": "keys",
+      "label": "Advance Royal Pass",
+      "stageId": "s3",
+      "groupId": "g2",
+      "order": 0,
+      "kind": "action",
+      "sources": [],
+      "sinks": [],
+      "values": [
+        "Royal Pass keys"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "passrewards",
+      "label": "Claim unlocked pass rewards",
+      "stageId": "s5",
+      "groupId": "g2",
+      "order": 0,
+      "kind": "action",
+      "sources": [],
+      "sinks": [],
+      "values": [
+        "Free and paid rewards"
+      ],
+      "notes": "Paid rewards also require pass ownership."
+    },
+    {
+      "id": "money",
+      "label": "Spend money",
+      "stageId": "s0",
+      "groupId": "g2",
+      "order": 0,
+      "kind": "initial_sink_node",
+      "sources": [],
+      "sinks": [
+        "Real money"
+      ],
+      "values": [],
+      "notes": ""
+    },
+    {
+      "id": "shop",
+      "label": "Buy coins",
+      "stageId": "s1",
+      "groupId": "g2",
+      "order": 0,
+      "kind": "action",
+      "sources": [
+        "Coins"
+      ],
+      "sinks": [
+        "Real money"
+      ],
+      "values": [],
+      "notes": ""
+    },
+    {
+      "id": "pass",
+      "label": "Activate Royal Pass",
+      "stageId": "s2",
+      "groupId": "g2",
+      "order": 0,
+      "kind": "action",
+      "sources": [],
+      "sinks": [
+        "Real money"
+      ],
+      "values": [
+        "Paid reward access",
+        "Temporary bonuses"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "castle",
+      "label": "Build the castle",
+      "stageId": "s6",
+      "groupId": "g0",
+      "order": 0,
+      "kind": "final_good",
+      "sources": [],
+      "sinks": [],
+      "values": [],
+      "notes": "Player value: GEC interpretation."
+    },
+    {
+      "id": "mastery",
+      "label": "Master harder puzzles",
+      "stageId": "s6",
+      "groupId": "g1",
+      "order": 0,
+      "kind": "final_good",
+      "sources": [],
+      "sinks": [],
+      "values": [],
+      "notes": "Player value: GEC interpretation."
+    }
+  ],
+  "edges": [
+    {
+      "id": "regen__attempt",
+      "to": "attempt",
+      "type": "normal",
+      "feedback": false,
+      "label": "Lives gate entry",
+      "from": "regen"
+    },
+    {
+      "id": "team__attempt",
+      "to": "attempt",
+      "type": "normal",
+      "feedback": false,
+      "label": "Gifted lives",
+      "from": "team"
+    },
+    {
+      "id": "attempt__win",
+      "to": "win",
+      "type": "normal",
+      "feedback": false,
+      "label": "Success",
+      "from": "attempt"
+    },
+    {
+      "id": "attempt__fail",
+      "to": "fail",
+      "type": "normal",
+      "feedback": false,
+      "label": "Failure",
+      "from": "attempt"
+    },
+    {
+      "id": "fail__attempt",
+      "to": "attempt",
+      "type": "normal",
+      "feedback": true,
+      "label": "Retry if lives remain",
+      "from": "fail"
+    },
+    {
+      "id": "win__tasks",
+      "to": "tasks",
+      "type": "normal",
+      "feedback": false,
+      "label": "Stars",
+      "from": "win"
+    },
+    {
+      "id": "tasks__chest",
+      "to": "chest",
+      "type": "normal",
+      "feedback": false,
+      "label": "All area tasks complete",
+      "from": "tasks"
+    },
+    {
+      "id": "chest__buyboost",
+      "to": "buyboost",
+      "type": "normal",
+      "feedback": true,
+      "label": "Coins",
+      "from": "chest"
+    },
+    {
+      "id": "chest__boost",
+      "to": "boost",
+      "type": "normal",
+      "feedback": true,
+      "label": "Boosters",
+      "from": "chest"
+    },
+    {
+      "id": "win__moves",
+      "to": "moves",
+      "type": "normal",
+      "feedback": false,
+      "label": "Coins",
+      "from": "win"
+    },
+    {
+      "id": "win__lives",
+      "to": "lives",
+      "type": "normal",
+      "feedback": false,
+      "label": "Coins",
+      "from": "win"
+    },
+    {
+      "id": "win__buyboost",
+      "to": "buyboost",
+      "type": "normal",
+      "feedback": false,
+      "label": "Coins",
+      "from": "win"
+    },
+    {
+      "id": "moves__attempt",
+      "to": "attempt",
+      "type": "normal",
+      "feedback": true,
+      "label": "Continue current attempt",
+      "from": "moves"
+    },
+    {
+      "id": "lives__attempt",
+      "to": "attempt",
+      "type": "normal",
+      "feedback": true,
+      "label": "Lives",
+      "from": "lives"
+    },
+    {
+      "id": "buyboost__boost",
+      "to": "boost",
+      "type": "normal",
+      "feedback": true,
+      "label": "Boosters",
+      "from": "buyboost"
+    },
+    {
+      "id": "boost__attempt",
+      "to": "attempt",
+      "type": "normal",
+      "feedback": true,
+      "label": "Assistance",
+      "from": "boost"
+    },
+    {
+      "id": "events__moves",
+      "to": "moves",
+      "type": "normal",
+      "feedback": true,
+      "label": "Coins",
+      "from": "events"
+    },
+    {
+      "id": "win__keys",
+      "to": "keys",
+      "type": "normal",
+      "feedback": false,
+      "label": "Wins earn keys",
+      "from": "win"
+    },
+    {
+      "id": "keys__passrewards",
+      "to": "passrewards",
+      "type": "normal",
+      "feedback": false,
+      "label": "Progress requirement",
+      "from": "keys"
+    },
+    {
+      "id": "pass__passrewards",
+      "to": "passrewards",
+      "type": "normal",
+      "feedback": false,
+      "label": "Paid eligibility",
+      "from": "pass"
+    },
+    {
+      "id": "money__shop",
+      "to": "shop",
+      "type": "normal",
+      "feedback": false,
+      "label": "Purchase",
+      "from": "money"
+    },
+    {
+      "id": "money__pass",
+      "to": "pass",
+      "type": "normal",
+      "feedback": false,
+      "label": "Purchase",
+      "from": "money"
+    },
+    {
+      "id": "shop__moves",
+      "to": "moves",
+      "type": "normal",
+      "feedback": false,
+      "label": "Coins",
+      "from": "shop"
+    },
+    {
+      "id": "shop__buyboost",
+      "to": "buyboost",
+      "type": "normal",
+      "feedback": false,
+      "label": "Coins",
+      "from": "shop"
+    },
+    {
+      "id": "tasks__castle",
+      "to": "castle",
+      "type": "final",
+      "feedback": false,
+      "label": "Player value",
+      "from": "tasks"
+    },
+    {
+      "id": "win__mastery",
+      "to": "mastery",
+      "type": "final",
+      "feedback": false,
+      "label": "Player value",
+      "from": "win"
+    }
+  ],
+  "settings": {
+    "actionHeader": "#000000",
+    "finalGood": "#F5C95C",
+    "source": "#21865b",
+    "sink": "#d15d44",
+    "value": "#ba8425",
+    "spacing": "comfortable",
+    "showLegend": true,
+    "background": "white"
+  },
+  "research": {
+    "presetId": "royal_match",
+    "revision": "2026-09-14.1",
+    "category": "Mobile",
+    "summary": "Level wins fund castle progress; failure, retries and boosters create the spending loop.",
+    "scope": "Core match-3 levels, area tasks, lives, coin spending and Royal Pass; individual event rules excluded.",
+    "checkedAt": "2026-09-14",
+    "limitations": [
+      "Lives gate attempts but are deducted on failure, not on every attempt. Unlimited-life periods are an exception.",
+      "Royal Pass rewards and event contents vary. Keys represent pass progress; they are not a shop currency.",
+      "Qualitative resource flows, not a balance simulation. Prices, odds and reward quantities are intentionally omitted. Sources were reviewed on the checked date; this is desk research, not a claim of live playtesting."
+    ],
+    "sources": [
+      {
+        "id": "lives",
+        "title": "Lives",
+        "url": "https://dreamgames.helpshift.com/hc/en/3-royal-match/faq/5-lives/",
+        "publisher": "Dream Games",
+        "kind": "Developer",
+        "note": "A failed level costs a life. Lives replenish over time and may be requested from teammates.",
+        "cardIds": [
+          "regen",
+          "attempt",
+          "fail",
+          "team"
+        ],
+        "edgeIds": [
+          "regen__attempt",
+          "team__attempt",
+          "attempt__fail",
+          "fail__attempt"
+        ]
+      },
+      {
+        "id": "coins",
+        "title": "Obtaining and spending coins",
+        "url": "https://dreamgames.helpshift.com/hc/en/3-royal-match/faq/21-how-can-i-obtain-and-use-coins/",
+        "publisher": "Dream Games",
+        "kind": "Developer",
+        "note": "Coins come from wins, remaining moves, area chests, events and purchases. They buy lives, moves and boosters.",
+        "cardIds": [
+          "win",
+          "boost",
+          "moves",
+          "lives",
+          "buyboost",
+          "events",
+          "money",
+          "shop"
+        ],
+        "edgeIds": [
+          "chest__buyboost",
+          "win__moves",
+          "win__lives",
+          "win__buyboost",
+          "moves__attempt",
+          "lives__attempt",
+          "buyboost__boost",
+          "boost__attempt",
+          "events__moves",
+          "money__shop",
+          "shop__moves",
+          "shop__buyboost"
+        ]
+      },
+      {
+        "id": "tasks",
+        "title": "Tasks and area completion",
+        "url": "https://dreamgames.helpshift.com/hc/en/3-royal-match/faq/15-what-are-tasks-and-how-do-i-complete-them/",
+        "publisher": "Dream Games",
+        "kind": "Developer",
+        "note": "Level wins award stars, spent on area tasks. Finishing all tasks opens a chest containing coins, boosters and cards.",
+        "cardIds": [
+          "win",
+          "tasks",
+          "chest"
+        ],
+        "edgeIds": [
+          "attempt__win",
+          "win__tasks",
+          "tasks__chest",
+          "chest__buyboost",
+          "chest__boost"
+        ]
+      },
+      {
+        "id": "pass",
+        "title": "Royal Pass",
+        "url": "https://dreamgames.helpshift.com/hc/en/3-royal-match/faq/112-royal-pass/",
+        "publisher": "Dream Games",
+        "kind": "Developer",
+        "note": "Wins advance the pass through keys. Free rewards require progress; purchasing the pass unlocks additional rewards and temporary bonuses.",
+        "cardIds": [
+          "keys",
+          "passrewards",
+          "money",
+          "pass"
+        ],
+        "edgeIds": [
+          "win__keys",
+          "keys__passrewards",
+          "pass__passrewards",
+          "money__pass"
+        ]
+      }
+    ],
+    "interpretations": [
+      {
+        "cardIds": [
+          "castle"
+        ],
+        "edgeIds": [
+          "tasks__castle"
+        ],
+        "note": "Build the castle is an interpretation of player value, not a spendable currency or guaranteed outcome."
+      },
+      {
+        "cardIds": [
+          "mastery"
+        ],
+        "edgeIds": [
+          "win__mastery"
+        ],
+        "note": "Master harder puzzles is an interpretation of player value, not a spendable currency or guaranteed outcome."
+      }
+    ]
+  }
+}

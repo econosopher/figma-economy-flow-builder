@@ -1,0 +1,9 @@
+{
+  "display_information": {"name": "Economy Flow Builder", "description": "Share an explicitly approved economy diagram PNG", "background_color": "#233b2d"},
+  "features": {"bot_user": {"display_name": "Economy Flow Builder", "always_online": false}},
+  "oauth_config": {
+    "redirect_urls": ["https://flow.gameeconomistconsulting.com/api/slack/callback"],
+    "scopes": {"bot": ["files:write", "channels:read", "groups:read"]}
+  },
+  "settings": {"org_deploy_enabled": false, "socket_mode_enabled": false, "token_rotation_enabled": false}
+}

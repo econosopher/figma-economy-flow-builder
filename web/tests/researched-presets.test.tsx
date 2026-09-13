@@ -1,0 +1,108 @@
+import { describe, it, expect } from "vitest";
+import { renderToStaticMarkup } from "react-dom/server";
+import { presets, starter } from "../src/core/presets";
+import {
+  deleteCard,
+  forkDocument,
+  importDocument,
+  validateDocument,
+} from "../src/core/document";
+import { DiagramSvg } from "../src/components/DiagramSvg";
+import { PresetTile } from "../src/components/PresetSources";
+import { layoutDocument } from "../src/core/layout";
+
+describe("researched public catalog", () => {
+  it("contains exactly the chosen ordered lineup and three games per platform", () => {
+    expect(presets.map((p) => p.id)).toEqual([
+      "gossip_harbor",
+      "royal_match",
+      "monopoly_go",
+      "world_of_warcraft",
+      "warzone",
+      "apex_legends",
+    ]);
+    expect(presets.map((p) => p.document.research!.category)).toEqual([
+      "Mobile",
+      "Mobile",
+      "Mobile",
+      "PC / console",
+      "PC / console",
+      "PC / console",
+    ]);
+    expect(starter.research).toBeUndefined();
+  });
+  for (const { document: d } of presets)
+    it(`accounts for every original card and relationship in ${d.name}`, () => {
+      const r = d.research!;
+      expect(d.cards.length).toBeGreaterThanOrEqual(15);
+      expect(d.cards.length).toBeLessThanOrEqual(25);
+      expect(r.sources.length).toBeGreaterThanOrEqual(3);
+      expect(new Set(r.sources.map((s) => s.id)).size).toBe(r.sources.length);
+      const mappings = [...r.sources, ...r.interpretations];
+      expect(new Set(mappings.flatMap((s) => s.cardIds))).toEqual(
+        new Set(d.cards.map((c) => c.id)),
+      );
+      expect(new Set(mappings.flatMap((s) => s.edgeIds))).toEqual(
+        new Set(d.edges.map((e) => e.id)),
+      );
+      for (const s of r.sources) expect(new URL(s.url).protocol).toBe("https:");
+    });
+  it("preserves original evidence through copying, user deletion and JSON round trips", () => {
+    const original = presets[0].document;
+    const copy = forkDocument(original);
+    expect(copy.id).not.toBe(original.id);
+    const edited = deleteCard(copy, copy.cards[0].id);
+    edited.cards[0].label = "My changed action";
+    const recovered = importDocument(
+      JSON.parse(JSON.stringify(edited)),
+    ).document;
+    expect(recovered.research).toEqual(original.research);
+    expect(recovered.cards[0].label).toBe("My changed action");
+    expect(original.cards[1].label).not.toBe("My changed action");
+    expect(validateDocument(starter).cards).toEqual(starter.cards);
+  });
+  it("rejects executable source links on JSON import", () => {
+    const d = structuredClone(presets[0].document);
+    d.research!.sources[0].url = "javascript:alert(1)";
+    expect(() => importDocument(d)).toThrow();
+  });
+  it("keeps evidence and controls outside SVG exports", () => {
+    const document = presets[1].document;
+    const svg = renderToStaticMarkup(
+      <DiagramSvg document={document} layout={layoutDocument(document)} />,
+    );
+    expect(svg).not.toContain("Original preset research");
+    expect(svg).not.toContain("helpshift.com");
+    expect(svg).not.toContain("Sources for");
+    const tile = renderToStaticMarkup(
+      <PresetTile
+        doc={document}
+        preview={null}
+        onOpen={() => {}}
+        onSources={() => {}}
+      />,
+    );
+    expect(tile).toContain('aria-label="Open Royal Match"');
+    expect(tile).toContain('aria-label="Sources for Royal Match"');
+    expect(tile.match(/<button/g)).toHaveLength(2);
+  });
+  it("keeps failure and currency semantics distinct", () => {
+    const royal = presets[1].document;
+    expect(royal.cards.find((c) => c.id === "attempt")!.sinks).not.toContain(
+      "Life",
+    );
+    expect(royal.cards.find((c) => c.id === "fail")!.sinks).toContain("Life");
+    const warzone = presets[4].document;
+    expect(warzone.cards.find((c) => c.id === "buy")!.sinks).toEqual([
+      "Match cash",
+    ]);
+    expect(warzone.cards.find((c) => c.id === "bundle")!.sinks).toEqual([
+      "COD Points",
+    ]);
+    const wow = presets[3].document;
+    expect(wow.cards.find((c) => c.id === "upgrade")!.sinks).toContain(
+      "Matching Mistcrests",
+    );
+    expect(JSON.stringify(wow.cards)).not.toContain("Valorstones");
+  });
+});

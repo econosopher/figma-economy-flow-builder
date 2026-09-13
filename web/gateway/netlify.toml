@@ -1,0 +1,4 @@
+# DNS is already managed by Netlify. This site only forwards traffic to Cloudflare.
+# App assets, API code and workflows remain on Cloudflare Workers.
+[build]
+  publish = "public"

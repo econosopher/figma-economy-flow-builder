@@ -1,0 +1,158 @@
+import { validateDocument, type EconomyDocument } from "./document";
+import gossip from "./researched/gossip_harbor.json";
+import royal from "./researched/royal_match.json";
+import monopoly from "./researched/monopoly_go.json";
+import wow from "./researched/world_of_warcraft.json";
+import warzone from "./researched/warzone.json";
+import apex from "./researched/apex_legends.json";
+// Explicit public allowlist. Archived examples and private fixtures stay private.
+export const presets = [gossip, royal, monopoly, wow, warzone, apex].map(
+  (data) => ({
+    id: data.id,
+    document: validateDocument(data),
+  }),
+);
+export const starter: EconomyDocument = {
+  schemaVersion: 3,
+  id: "starter",
+  name: "The everyday economy",
+  stages: [
+    { id: "invest", label: "Investment" },
+    { id: "play", label: "Core play" },
+    { id: "earn", label: "Rewards" },
+    { id: "spend", label: "Reinvestment" },
+    { id: "outcomes", label: "Outcomes" },
+  ],
+  groups: [
+    { id: "core", label: "The core loop", color: "#f3f7f4" },
+    { id: "premium", label: "Monetization", color: "#faf6f0" },
+  ],
+  cards: [
+    {
+      id: "time",
+      label: "Invest time",
+      kind: "initial_sink_node",
+      stageId: "invest",
+      groupId: "core",
+      order: 0,
+      sources: [],
+      sinks: ["Player time"],
+      values: [],
+      notes: "",
+    },
+    {
+      id: "play",
+      label: "Complete a mission",
+      kind: "action",
+      stageId: "play",
+      groupId: "core",
+      order: 0,
+      sources: ["Coins", "Crafting materials"],
+      sinks: ["Energy"],
+      values: ["Player XP"],
+      notes: "",
+    },
+    {
+      id: "rewards",
+      label: "Collect rewards",
+      kind: "action",
+      stageId: "earn",
+      groupId: "core",
+      order: 0,
+      sources: ["Coins", "Equipment"],
+      sinks: [],
+      values: [],
+      notes: "",
+    },
+    {
+      id: "upgrade",
+      label: "Upgrade equipment",
+      kind: "action",
+      stageId: "spend",
+      groupId: "core",
+      order: 0,
+      sources: [],
+      sinks: ["Coins", "Crafting materials"],
+      values: ["Power"],
+      notes: "",
+    },
+    {
+      id: "mastery",
+      label: "Master the game",
+      kind: "final_good",
+      stageId: "outcomes",
+      groupId: "core",
+      order: 0,
+      sources: [],
+      sinks: [],
+      values: ["Mastery", "Self-expression"],
+      notes: "",
+    },
+    {
+      id: "money",
+      label: "Spend money",
+      kind: "initial_sink_node",
+      stageId: "invest",
+      groupId: "premium",
+      order: 0,
+      sources: [],
+      sinks: ["Real money"],
+      values: [],
+      notes: "",
+    },
+    {
+      id: "premium",
+      label: "Buy premium currency",
+      kind: "action",
+      stageId: "play",
+      groupId: "premium",
+      order: 0,
+      sources: ["Gems"],
+      sinks: ["Real money"],
+      values: [],
+      notes: "",
+    },
+    {
+      id: "cosmetics",
+      label: "Choose cosmetics",
+      kind: "action",
+      stageId: "spend",
+      groupId: "premium",
+      order: 0,
+      sources: ["Cosmetics"],
+      sinks: ["Gems"],
+      values: [],
+      notes: "",
+    },
+  ],
+  edges: [
+    ["time", "play", "normal"],
+    ["play", "rewards", "normal"],
+    ["rewards", "upgrade", "normal"],
+    ["upgrade", "mastery", "final"],
+    ["money", "premium", "normal"],
+    ["premium", "cosmetics", "normal"],
+    ["cosmetics", "mastery", "final"],
+    ["upgrade", "play", "value"],
+  ].map(([from, to, type], i) => ({
+    id: `e${i}`,
+    from,
+    to,
+    type: type as "normal" | "value" | "final",
+    feedback: i === 7,
+    label: "",
+  })),
+  settings: {
+    actionHeader: "#000000",
+    finalGood: "#F5C95C",
+    spacing: "comfortable",
+    showLegend: true,
+    background: "white",
+    source: "#21865b",
+    sink: "#d15d44",
+    value: "#ba8425",
+  },
+};
+export function presetDescription(d: EconomyDocument) {
+  return `${d.cards.length} cards · ${d.groups.length} groups · ${d.edges.length} pipes`;
+}

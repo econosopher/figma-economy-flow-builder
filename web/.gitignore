@@ -1,0 +1,14 @@
+node_modules/
+dist/
+.wrangler/
+.dev.vars*
+.env*
+!.env.example
+!.dev.vars.example
+coverage/
+test-results/
+
+.netlify/
+
+# Reproducible public builds override the plugin root ignore.
+!package-lock.json

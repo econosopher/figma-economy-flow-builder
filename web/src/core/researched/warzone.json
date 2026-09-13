@@ -1,0 +1,749 @@
+{
+  "schemaVersion": 3,
+  "id": "warzone",
+  "name": "Call of Duty: Warzone",
+  "stages": [
+    {
+      "id": "s0",
+      "label": "Inputs"
+    },
+    {
+      "id": "s1",
+      "label": "Participation"
+    },
+    {
+      "id": "s2",
+      "label": "Production"
+    },
+    {
+      "id": "s3",
+      "label": "Rewards"
+    },
+    {
+      "id": "s4",
+      "label": "Reinvestment"
+    },
+    {
+      "id": "s5",
+      "label": "Progression"
+    },
+    {
+      "id": "s6",
+      "label": "Outcomes"
+    }
+  ],
+  "groups": [
+    {
+      "id": "g0",
+      "label": "Within a match",
+      "color": "#f3f6f4"
+    },
+    {
+      "id": "g1",
+      "label": "Persistent progression",
+      "color": "#f4f5f8"
+    },
+    {
+      "id": "g2",
+      "label": "Purchases and Battle Pass",
+      "color": "#faf6ec"
+    }
+  ],
+  "cards": [
+    {
+      "id": "drop",
+      "label": "Enter a Battle Royale match",
+      "stageId": "s0",
+      "groupId": "g0",
+      "order": 0,
+      "kind": "action",
+      "sources": [],
+      "sinks": [
+        "Player time"
+      ],
+      "values": [],
+      "notes": "Start a new match economy."
+    },
+    {
+      "id": "loot",
+      "label": "Loot and complete contracts",
+      "stageId": "s1",
+      "groupId": "g0",
+      "order": 0,
+      "kind": "action",
+      "sources": [
+        "Match cash",
+        "Ground loot"
+      ],
+      "sinks": [],
+      "values": [],
+      "notes": ""
+    },
+    {
+      "id": "buy",
+      "label": "Spend cash at Buy Stations",
+      "stageId": "s2",
+      "groupId": "g0",
+      "order": 0,
+      "kind": "action",
+      "sources": [],
+      "sinks": [
+        "Match cash"
+      ],
+      "values": [
+        "Equipment",
+        "Loadout access"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "redeploy",
+      "label": "Buy back an eligible squadmate",
+      "stageId": "s2",
+      "groupId": "g0",
+      "order": 1,
+      "kind": "action",
+      "sources": [],
+      "sinks": [
+        "Match cash"
+      ],
+      "values": [
+        "Squadmate redeployment"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "fight",
+      "label": "Fight and survive",
+      "stageId": "s3",
+      "groupId": "g0",
+      "order": 0,
+      "kind": "action",
+      "sources": [],
+      "sinks": [],
+      "values": [
+        "Match performance"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "end",
+      "label": "Finish the match",
+      "stageId": "s5",
+      "groupId": "g0",
+      "order": 0,
+      "kind": "action",
+      "sources": [],
+      "sinks": [
+        "Remaining match cash"
+      ],
+      "values": [
+        "Match result"
+      ],
+      "notes": "Match-only inventory resets; no cash carryover."
+    },
+    {
+      "id": "xp",
+      "label": "Earn player and weapon XP",
+      "stageId": "s2",
+      "groupId": "g1",
+      "order": 0,
+      "kind": "action",
+      "sources": [],
+      "sinks": [],
+      "values": [
+        "Player XP",
+        "Weapon XP"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "level",
+      "label": "Reach player level unlocks",
+      "stageId": "s3",
+      "groupId": "g1",
+      "order": 0,
+      "kind": "action",
+      "sources": [],
+      "sinks": [],
+      "values": [
+        "Warzone-compatible unlocks"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "weapon",
+      "label": "Level weapons",
+      "stageId": "s3",
+      "groupId": "g1",
+      "order": 1,
+      "kind": "action",
+      "sources": [],
+      "sinks": [],
+      "values": [
+        "Weapon levels",
+        "Attachments"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "loadout",
+      "label": "Configure a loadout",
+      "stageId": "s4",
+      "groupId": "g1",
+      "order": 0,
+      "kind": "action",
+      "sources": [],
+      "sinks": [],
+      "values": [
+        "Loadout options"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "challenges",
+      "label": "Complete eligible challenges",
+      "stageId": "s4",
+      "groupId": "g1",
+      "order": 1,
+      "kind": "action",
+      "sources": [],
+      "sinks": [],
+      "values": [
+        "Challenge XP",
+        "Camos and calling cards"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "prestige",
+      "label": "Choose to Prestige",
+      "stageId": "s5",
+      "groupId": "g1",
+      "order": 0,
+      "kind": "action",
+      "sources": [],
+      "sinks": [],
+      "values": [
+        "Prestige progress"
+      ],
+      "notes": "Resets player level unlocks; keeps weapon progress."
+    },
+    {
+      "id": "money",
+      "label": "Spend money",
+      "stageId": "s0",
+      "groupId": "g2",
+      "order": 0,
+      "kind": "initial_sink_node",
+      "sources": [],
+      "sinks": [
+        "Real money"
+      ],
+      "values": [],
+      "notes": ""
+    },
+    {
+      "id": "points",
+      "label": "Buy COD Points",
+      "stageId": "s1",
+      "groupId": "g2",
+      "order": 0,
+      "kind": "action",
+      "sources": [
+        "COD Points"
+      ],
+      "sinks": [
+        "Real money"
+      ],
+      "values": [],
+      "notes": ""
+    },
+    {
+      "id": "bundle",
+      "label": "Buy a store bundle",
+      "stageId": "s3",
+      "groupId": "g2",
+      "order": 0,
+      "kind": "action",
+      "sources": [],
+      "sinks": [
+        "COD Points"
+      ],
+      "values": [
+        "Skins",
+        "Weapon blueprints"
+      ],
+      "notes": "Bundle contents vary; some blueprints grant weapon access."
+    },
+    {
+      "id": "pass",
+      "label": "Unlock paid Battle Pass",
+      "stageId": "s2",
+      "groupId": "g2",
+      "order": 0,
+      "kind": "action",
+      "sources": [],
+      "sinks": [
+        "COD Points"
+      ],
+      "values": [
+        "Paid reward access"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "passprogress",
+      "label": "Progress the seasonal pass",
+      "stageId": "s3",
+      "groupId": "g2",
+      "order": 1,
+      "kind": "action",
+      "sources": [],
+      "sinks": [],
+      "values": [
+        "Battle Pass progress"
+      ],
+      "notes": "Earned by eligible play; free track available."
+    },
+    {
+      "id": "rewards",
+      "label": "Claim eligible pass rewards",
+      "stageId": "s4",
+      "groupId": "g2",
+      "order": 0,
+      "kind": "action",
+      "sources": [
+        "COD Points"
+      ],
+      "sinks": [],
+      "values": [
+        "Unlocked pass items"
+      ],
+      "notes": "Only rewards included in the current track."
+    },
+    {
+      "id": "victory",
+      "label": "Win through squad play",
+      "stageId": "s6",
+      "groupId": "g0",
+      "order": 0,
+      "kind": "final_good",
+      "sources": [],
+      "sinks": [],
+      "values": [],
+      "notes": "Player value: GEC interpretation."
+    },
+    {
+      "id": "mastery",
+      "label": "Demonstrate mastery",
+      "stageId": "s6",
+      "groupId": "g1",
+      "order": 0,
+      "kind": "final_good",
+      "sources": [],
+      "sinks": [],
+      "values": [],
+      "notes": "Player value: GEC interpretation."
+    },
+    {
+      "id": "identity",
+      "label": "Express a preferred identity",
+      "stageId": "s6",
+      "groupId": "g2",
+      "order": 0,
+      "kind": "final_good",
+      "sources": [],
+      "sinks": [],
+      "values": [],
+      "notes": "Player value: GEC interpretation."
+    }
+  ],
+  "edges": [
+    {
+      "id": "drop__loot",
+      "to": "loot",
+      "type": "normal",
+      "feedback": false,
+      "label": "Play",
+      "from": "drop"
+    },
+    {
+      "id": "loot__buy",
+      "to": "buy",
+      "type": "normal",
+      "feedback": false,
+      "label": "Match cash",
+      "from": "loot"
+    },
+    {
+      "id": "loot__redeploy",
+      "to": "redeploy",
+      "type": "normal",
+      "feedback": false,
+      "label": "Match cash",
+      "from": "loot"
+    },
+    {
+      "id": "buy__fight",
+      "to": "fight",
+      "type": "normal",
+      "feedback": false,
+      "label": "Tactical tools",
+      "from": "buy"
+    },
+    {
+      "id": "redeploy__fight",
+      "to": "fight",
+      "type": "normal",
+      "feedback": false,
+      "label": "Squad support",
+      "from": "redeploy"
+    },
+    {
+      "id": "fight__end",
+      "to": "end",
+      "type": "normal",
+      "feedback": false,
+      "label": "Match concludes",
+      "from": "fight"
+    },
+    {
+      "id": "fight__xp",
+      "to": "xp",
+      "type": "normal",
+      "feedback": true,
+      "label": "Eligible play",
+      "from": "fight"
+    },
+    {
+      "id": "xp__level",
+      "to": "level",
+      "type": "normal",
+      "feedback": false,
+      "label": "Player XP",
+      "from": "xp"
+    },
+    {
+      "id": "xp__weapon",
+      "to": "weapon",
+      "type": "normal",
+      "feedback": false,
+      "label": "Weapon XP",
+      "from": "xp"
+    },
+    {
+      "id": "level__loadout",
+      "to": "loadout",
+      "type": "normal",
+      "feedback": false,
+      "label": "Unlocked equipment",
+      "from": "level"
+    },
+    {
+      "id": "weapon__loadout",
+      "to": "loadout",
+      "type": "normal",
+      "feedback": false,
+      "label": "Unlocked attachments",
+      "from": "weapon"
+    },
+    {
+      "id": "loadout__buy",
+      "to": "buy",
+      "type": "normal",
+      "feedback": true,
+      "label": "Custom loadout selection",
+      "from": "loadout"
+    },
+    {
+      "id": "fight__challenges",
+      "to": "challenges",
+      "type": "normal",
+      "feedback": false,
+      "label": "Qualifying actions",
+      "from": "fight"
+    },
+    {
+      "id": "challenges__level",
+      "to": "level",
+      "type": "normal",
+      "feedback": true,
+      "label": "Challenge XP",
+      "from": "challenges"
+    },
+    {
+      "id": "level__prestige",
+      "to": "prestige",
+      "type": "normal",
+      "feedback": false,
+      "label": "Reach maximum level",
+      "from": "level"
+    },
+    {
+      "id": "prestige__level",
+      "to": "level",
+      "type": "normal",
+      "feedback": true,
+      "label": "Level again",
+      "from": "prestige"
+    },
+    {
+      "id": "money__points",
+      "to": "points",
+      "type": "normal",
+      "feedback": false,
+      "label": "Purchase",
+      "from": "money"
+    },
+    {
+      "id": "points__bundle",
+      "to": "bundle",
+      "type": "normal",
+      "feedback": false,
+      "label": "COD Points",
+      "from": "points"
+    },
+    {
+      "id": "points__pass",
+      "to": "pass",
+      "type": "normal",
+      "feedback": false,
+      "label": "COD Points",
+      "from": "points"
+    },
+    {
+      "id": "fight__passprogress",
+      "to": "passprogress",
+      "type": "normal",
+      "feedback": true,
+      "label": "Eligible play",
+      "from": "fight"
+    },
+    {
+      "id": "pass__rewards",
+      "to": "rewards",
+      "type": "normal",
+      "feedback": false,
+      "label": "Paid eligibility",
+      "from": "pass"
+    },
+    {
+      "id": "passprogress__rewards",
+      "to": "rewards",
+      "type": "normal",
+      "feedback": false,
+      "label": "Progress requirement",
+      "from": "passprogress"
+    },
+    {
+      "id": "rewards__pass",
+      "to": "pass",
+      "type": "normal",
+      "feedback": true,
+      "label": "Points for a later pass",
+      "from": "rewards"
+    },
+    {
+      "id": "bundle__loadout",
+      "to": "loadout",
+      "type": "normal",
+      "feedback": false,
+      "label": "Compatible blueprints",
+      "from": "bundle"
+    },
+    {
+      "id": "end__victory",
+      "to": "victory",
+      "type": "final",
+      "feedback": false,
+      "label": "Player value",
+      "from": "end"
+    },
+    {
+      "id": "challenges__mastery",
+      "to": "mastery",
+      "type": "final",
+      "feedback": false,
+      "label": "Player value",
+      "from": "challenges"
+    },
+    {
+      "id": "prestige__mastery",
+      "to": "mastery",
+      "type": "final",
+      "feedback": false,
+      "label": "Player value",
+      "from": "prestige"
+    },
+    {
+      "id": "bundle__identity",
+      "to": "identity",
+      "type": "final",
+      "feedback": false,
+      "label": "Player value",
+      "from": "bundle"
+    },
+    {
+      "id": "rewards__identity",
+      "to": "identity",
+      "type": "final",
+      "feedback": false,
+      "label": "Player value",
+      "from": "rewards"
+    }
+  ],
+  "settings": {
+    "actionHeader": "#000000",
+    "finalGood": "#F5C95C",
+    "source": "#21865b",
+    "sink": "#d15d44",
+    "value": "#ba8425",
+    "spacing": "comfortable",
+    "showLegend": true,
+    "background": "white"
+  },
+  "research": {
+    "presetId": "warzone",
+    "revision": "2026-09-14.1",
+    "category": "PC / console",
+    "summary": "Match cash buys tactical tools; persistent XP and COD Points drive different loops.",
+    "scope": "Standard Battle Royale and Black Ops 7-era persistent progression. Core mechanics, not a map-specific or limited-time mode.",
+    "checkedAt": "2026-09-14",
+    "limitations": [
+      "The tactical guide is from the Modern Warfare III era and is used for enduring cash/Buy Station structure only. Maps, buy prices and temporary modes are excluded.",
+      "Cash and purchased match equipment do not carry into the next standard Battle Royale match. COD Points do not convert into match cash.",
+      "Warzone-compatible unlocks only. Some prestige rewards require the premium game; store blueprints are not represented as purely visual because they can grant weapon access.",
+      "Qualitative resource flows, not a balance simulation. Prices, odds and reward quantities are intentionally omitted. Sources were reviewed on the checked date; this is desk research, not a claim of live playtesting."
+    ],
+    "sources": [
+      {
+        "id": "match",
+        "title": "Warzone: How to Play",
+        "url": "https://www.callofduty.com/guides/training/call-of-duty-guides-warzone-how-to-play",
+        "publisher": "Activision",
+        "kind": "Developer",
+        "note": "Loot and contracts yield match cash. Buy Stations offer equipment, loadouts and squadmate redeployment. Survival remains dependent on play, not a guaranteed purchase outcome.",
+        "cardIds": [
+          "drop",
+          "loot",
+          "buy",
+          "redeploy",
+          "fight",
+          "end",
+          "loadout",
+          "passprogress"
+        ],
+        "edgeIds": [
+          "drop__loot",
+          "loot__buy",
+          "loot__redeploy",
+          "buy__fight",
+          "redeploy__fight",
+          "fight__end",
+          "loadout__buy",
+          "fight__passprogress"
+        ]
+      },
+      {
+        "id": "career",
+        "title": "Black Ops 7 progression and Prestige",
+        "url": "https://www.callofduty.com/blog/2025/11/call-of-duty-black-ops-7-ready-for-launch-progression-prestige",
+        "publisher": "Activision",
+        "kind": "Developer",
+        "note": "Warzone-compatible player levels unlock equipment. Weapon progression, challenges and optional Prestige provide distinct goals. Prestige resets player levels but retains weapon progression; some rewards need the paid game.",
+        "cardIds": [
+          "xp",
+          "level",
+          "loadout",
+          "challenges",
+          "prestige"
+        ],
+        "edgeIds": [
+          "fight__xp",
+          "xp__level",
+          "level__loadout",
+          "fight__challenges",
+          "challenges__level",
+          "level__prestige",
+          "prestige__level",
+          "bundle__loadout"
+        ]
+      },
+      {
+        "id": "points",
+        "title": "Using COD Points in Warzone",
+        "url": "https://support.activision.com/warzone-2/articles/using-cod-points-in-warzone-2",
+        "publisher": "Activision Support, June 2026",
+        "kind": "Developer",
+        "note": "Money buys COD Points; points buy Battle Pass access and bundles. Pass rewards can return points. Point balances have platform restrictions; bundles can include skins and blueprints.",
+        "cardIds": [
+          "money",
+          "points",
+          "bundle",
+          "pass",
+          "passprogress",
+          "rewards"
+        ],
+        "edgeIds": [
+          "money__points",
+          "points__bundle",
+          "points__pass",
+          "pass__rewards",
+          "passprogress__rewards",
+          "rewards__pass",
+          "bundle__loadout"
+        ]
+      },
+      {
+        "id": "weapons",
+        "title": "Black Ops 7 weapons and equipment",
+        "url": "https://www.callofduty.com/blog/2025/11/call-of-duty-black-ops-7-ready-for-launch-weapons-equipment",
+        "publisher": "Activision",
+        "kind": "Developer",
+        "note": "Weapon XP levels and attachment progression; Black Ops 7 content integrates with Warzone from Season 1. Detailed weapon lists and level counts omitted.",
+        "cardIds": [
+          "xp",
+          "weapon",
+          "loadout"
+        ],
+        "edgeIds": [
+          "fight__xp",
+          "xp__weapon",
+          "weapon__loadout"
+        ]
+      }
+    ],
+    "interpretations": [
+      {
+        "cardIds": [
+          "victory"
+        ],
+        "edgeIds": [
+          "end__victory"
+        ],
+        "note": "Win through squad play is an interpretation of player value, not a spendable currency or guaranteed outcome."
+      },
+      {
+        "cardIds": [
+          "mastery"
+        ],
+        "edgeIds": [
+          "challenges__mastery",
+          "prestige__mastery"
+        ],
+        "note": "Demonstrate mastery is an interpretation of player value, not a spendable currency or guaranteed outcome."
+      },
+      {
+        "cardIds": [
+          "identity"
+        ],
+        "edgeIds": [
+          "bundle__identity",
+          "rewards__identity"
+        ],
+        "note": "Express a preferred identity is an interpretation of player value, not a spendable currency or guaranteed outcome."
+      }
+    ]
+  }
+}

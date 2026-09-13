@@ -1,0 +1,791 @@
+{
+  "schemaVersion": 3,
+  "id": "apex_legends",
+  "name": "Apex Legends",
+  "stages": [
+    {
+      "id": "s0",
+      "label": "Inputs"
+    },
+    {
+      "id": "s1",
+      "label": "Participation"
+    },
+    {
+      "id": "s2",
+      "label": "Production"
+    },
+    {
+      "id": "s3",
+      "label": "Rewards"
+    },
+    {
+      "id": "s4",
+      "label": "Reinvestment"
+    },
+    {
+      "id": "s5",
+      "label": "Progression"
+    },
+    {
+      "id": "s6",
+      "label": "Outcomes"
+    }
+  ],
+  "groups": [
+    {
+      "id": "g0",
+      "label": "Play and progression",
+      "color": "#f3f6f4"
+    },
+    {
+      "id": "g1",
+      "label": "Crafting and collection",
+      "color": "#f4f5f8"
+    },
+    {
+      "id": "g2",
+      "label": "Purchases and Battle Pass",
+      "color": "#faf6ec"
+    }
+  ],
+  "cards": [
+    {
+      "id": "play",
+      "label": "Play matches",
+      "stageId": "s0",
+      "groupId": "g0",
+      "order": 0,
+      "kind": "action",
+      "sources": [],
+      "sinks": [
+        "Player time"
+      ],
+      "values": [
+        "Account XP"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "level",
+      "label": "Level the account",
+      "stageId": "s1",
+      "groupId": "g0",
+      "order": 0,
+      "kind": "action",
+      "sources": [
+        "Legend Tokens",
+        "Apex Packs"
+      ],
+      "sinks": [],
+      "values": [
+        "Account level"
+      ],
+      "notes": "Pack awards follow the level reward schedule."
+    },
+    {
+      "id": "legend",
+      "label": "Unlock a Legend with tokens",
+      "stageId": "s2",
+      "groupId": "g0",
+      "order": 0,
+      "kind": "action",
+      "sources": [],
+      "sinks": [
+        "Legend Tokens"
+      ],
+      "values": [
+        "Playable Legend"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "ranked",
+      "label": "Compete in Ranked",
+      "stageId": "s2",
+      "groupId": "g0",
+      "order": 1,
+      "kind": "action",
+      "sources": [],
+      "sinks": [
+        "RP entry cost"
+      ],
+      "values": [
+        "Ranked Points"
+      ],
+      "notes": "Cost depends on rank; performance can raise or lower net RP."
+    },
+    {
+      "id": "rank",
+      "label": "Reach a ranked tier",
+      "stageId": "s4",
+      "groupId": "g0",
+      "order": 0,
+      "kind": "action",
+      "sources": [],
+      "sinks": [],
+      "values": [
+        "Rank",
+        "Ranked rewards"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "pack",
+      "label": "Open Apex Packs",
+      "stageId": "s2",
+      "groupId": "g1",
+      "order": 0,
+      "kind": "action",
+      "sources": [
+        "Crafting Metals",
+        "Heirloom Shards"
+      ],
+      "sinks": [
+        "Apex Packs"
+      ],
+      "values": [
+        "Cosmetic unlocks"
+      ],
+      "notes": "Possible contents, not all resources per pack."
+    },
+    {
+      "id": "craft",
+      "label": "Craft a cosmetic",
+      "stageId": "s3",
+      "groupId": "g1",
+      "order": 0,
+      "kind": "action",
+      "sources": [],
+      "sinks": [
+        "Crafting Metals"
+      ],
+      "values": [
+        "Cosmetic unlock"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "mythic",
+      "label": "Unlock an eligible Mythic",
+      "stageId": "s3",
+      "groupId": "g1",
+      "order": 1,
+      "kind": "action",
+      "sources": [],
+      "sinks": [
+        "Heirloom Shards"
+      ],
+      "values": [
+        "Mythic cosmetic"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "artifact",
+      "label": "Customize an owned Artifact",
+      "stageId": "s4",
+      "groupId": "g1",
+      "order": 0,
+      "kind": "action",
+      "sources": [],
+      "sinks": [
+        "Exotic Shards"
+      ],
+      "values": [
+        "Artifact customization"
+      ],
+      "notes": "Requires base Artifact; upgrades follow an order."
+    },
+    {
+      "id": "equip",
+      "label": "Equip owned cosmetics",
+      "stageId": "s5",
+      "groupId": "g1",
+      "order": 0,
+      "kind": "action",
+      "sources": [],
+      "sinks": [],
+      "values": [
+        "Chosen appearance"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "money",
+      "label": "Spend money",
+      "stageId": "s0",
+      "groupId": "g2",
+      "order": 0,
+      "kind": "initial_sink_node",
+      "sources": [],
+      "sinks": [
+        "Real money"
+      ],
+      "values": [],
+      "notes": ""
+    },
+    {
+      "id": "coins",
+      "label": "Buy Apex Coins",
+      "stageId": "s1",
+      "groupId": "g2",
+      "order": 0,
+      "kind": "action",
+      "sources": [
+        "Apex Coins"
+      ],
+      "sinks": [
+        "Real money"
+      ],
+      "values": [],
+      "notes": ""
+    },
+    {
+      "id": "buypack",
+      "label": "Buy Apex Packs",
+      "stageId": "s2",
+      "groupId": "g2",
+      "order": 0,
+      "kind": "action",
+      "sources": [
+        "Apex Packs"
+      ],
+      "sinks": [
+        "Apex Coins"
+      ],
+      "values": [],
+      "notes": ""
+    },
+    {
+      "id": "shop",
+      "label": "Buy store cosmetics",
+      "stageId": "s3",
+      "groupId": "g2",
+      "order": 0,
+      "kind": "action",
+      "sources": [],
+      "sinks": [
+        "Apex Coins"
+      ],
+      "values": [
+        "Cosmetic unlocks"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "paidlegend",
+      "label": "Unlock a Legend with coins",
+      "stageId": "s2",
+      "groupId": "g2",
+      "order": 1,
+      "kind": "action",
+      "sources": [],
+      "sinks": [
+        "Apex Coins"
+      ],
+      "values": [
+        "Playable Legend"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "premium",
+      "label": "Unlock Premium Battle Pass",
+      "stageId": "s2",
+      "groupId": "g2",
+      "order": 2,
+      "kind": "action",
+      "sources": [],
+      "sinks": [
+        "Apex Coins"
+      ],
+      "values": [
+        "Paid pass access"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "ultimate",
+      "label": "Buy an Ultimate pass tier",
+      "stageId": "s1",
+      "groupId": "g2",
+      "order": 1,
+      "kind": "action",
+      "sources": [],
+      "sinks": [
+        "Real money"
+      ],
+      "values": [
+        "Paid pass access",
+        "Tier benefits"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "challenges",
+      "label": "Complete daily and weekly challenges",
+      "stageId": "s3",
+      "groupId": "g0",
+      "order": 0,
+      "kind": "action",
+      "sources": [],
+      "sinks": [],
+      "values": [
+        "Battle Pass progress"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "rewards",
+      "label": "Claim eligible pass rewards",
+      "stageId": "s4",
+      "groupId": "g2",
+      "order": 0,
+      "kind": "action",
+      "sources": [
+        "Apex Coins",
+        "Apex Packs",
+        "Exotic Shards"
+      ],
+      "sinks": [],
+      "values": [
+        "Cosmetic rewards"
+      ],
+      "notes": "Availability depends on the pass tier and split."
+    },
+    {
+      "id": "exotic",
+      "label": "Buy Exotic Shards",
+      "stageId": "s3",
+      "groupId": "g2",
+      "order": 1,
+      "kind": "action",
+      "sources": [
+        "Exotic Shards"
+      ],
+      "sinks": [
+        "Real money"
+      ],
+      "values": [],
+      "notes": ""
+    },
+    {
+      "id": "mastery",
+      "label": "Achieve competitive mastery",
+      "stageId": "s6",
+      "groupId": "g0",
+      "order": 0,
+      "kind": "final_good",
+      "sources": [],
+      "sinks": [],
+      "values": [],
+      "notes": "Player value: GEC interpretation."
+    },
+    {
+      "id": "expression",
+      "label": "Express identity through cosmetics",
+      "stageId": "s6",
+      "groupId": "g1",
+      "order": 0,
+      "kind": "final_good",
+      "sources": [],
+      "sinks": [],
+      "values": [],
+      "notes": "Player value: GEC interpretation."
+    }
+  ],
+  "edges": [
+    {
+      "id": "play__level",
+      "to": "level",
+      "type": "normal",
+      "feedback": false,
+      "label": "Account XP",
+      "from": "play"
+    },
+    {
+      "id": "level__legend",
+      "to": "legend",
+      "type": "normal",
+      "feedback": false,
+      "label": "Legend Tokens",
+      "from": "level"
+    },
+    {
+      "id": "legend__play",
+      "to": "play",
+      "type": "normal",
+      "feedback": true,
+      "label": "Legend options",
+      "from": "legend"
+    },
+    {
+      "id": "play__ranked",
+      "to": "ranked",
+      "type": "normal",
+      "feedback": false,
+      "label": "Choose Ranked",
+      "from": "play"
+    },
+    {
+      "id": "ranked__rank",
+      "to": "rank",
+      "type": "normal",
+      "feedback": false,
+      "label": "RP",
+      "from": "ranked"
+    },
+    {
+      "id": "level__pack",
+      "to": "pack",
+      "type": "normal",
+      "feedback": false,
+      "label": "Awarded packs",
+      "from": "level"
+    },
+    {
+      "id": "pack__craft",
+      "to": "craft",
+      "type": "normal",
+      "feedback": false,
+      "label": "Crafting Metals",
+      "from": "pack"
+    },
+    {
+      "id": "pack__mythic",
+      "to": "mythic",
+      "type": "normal",
+      "feedback": false,
+      "label": "Heirloom Shards",
+      "from": "pack"
+    },
+    {
+      "id": "mythic__artifact",
+      "to": "artifact",
+      "type": "normal",
+      "feedback": false,
+      "label": "Base Artifact option",
+      "from": "mythic"
+    },
+    {
+      "id": "craft__equip",
+      "to": "equip",
+      "type": "normal",
+      "feedback": false,
+      "label": "Owned cosmetic",
+      "from": "craft"
+    },
+    {
+      "id": "mythic__equip",
+      "to": "equip",
+      "type": "normal",
+      "feedback": false,
+      "label": "Owned Mythic",
+      "from": "mythic"
+    },
+    {
+      "id": "artifact__equip",
+      "to": "equip",
+      "type": "normal",
+      "feedback": false,
+      "label": "Customization",
+      "from": "artifact"
+    },
+    {
+      "id": "money__coins",
+      "to": "coins",
+      "type": "normal",
+      "feedback": false,
+      "label": "Purchase",
+      "from": "money"
+    },
+    {
+      "id": "coins__buypack",
+      "to": "buypack",
+      "type": "normal",
+      "feedback": false,
+      "label": "Apex Coins",
+      "from": "coins"
+    },
+    {
+      "id": "buypack__pack",
+      "to": "pack",
+      "type": "normal",
+      "feedback": true,
+      "label": "Purchased packs",
+      "from": "buypack"
+    },
+    {
+      "id": "coins__shop",
+      "to": "shop",
+      "type": "normal",
+      "feedback": false,
+      "label": "Apex Coins",
+      "from": "coins"
+    },
+    {
+      "id": "shop__equip",
+      "to": "equip",
+      "type": "normal",
+      "feedback": false,
+      "label": "Owned cosmetic",
+      "from": "shop"
+    },
+    {
+      "id": "coins__paidlegend",
+      "to": "paidlegend",
+      "type": "normal",
+      "feedback": false,
+      "label": "Apex Coins",
+      "from": "coins"
+    },
+    {
+      "id": "paidlegend__play",
+      "to": "play",
+      "type": "normal",
+      "feedback": true,
+      "label": "Legend options",
+      "from": "paidlegend"
+    },
+    {
+      "id": "coins__premium",
+      "to": "premium",
+      "type": "normal",
+      "feedback": false,
+      "label": "Apex Coins",
+      "from": "coins"
+    },
+    {
+      "id": "money__ultimate",
+      "to": "ultimate",
+      "type": "normal",
+      "feedback": false,
+      "label": "Purchase",
+      "from": "money"
+    },
+    {
+      "id": "play__challenges",
+      "to": "challenges",
+      "type": "normal",
+      "feedback": false,
+      "label": "Qualifying actions",
+      "from": "play"
+    },
+    {
+      "id": "challenges__rewards",
+      "to": "rewards",
+      "type": "normal",
+      "feedback": false,
+      "label": "Pass progress",
+      "from": "challenges"
+    },
+    {
+      "id": "premium__rewards",
+      "to": "rewards",
+      "type": "normal",
+      "feedback": false,
+      "label": "Paid eligibility",
+      "from": "premium"
+    },
+    {
+      "id": "ultimate__rewards",
+      "to": "rewards",
+      "type": "normal",
+      "feedback": false,
+      "label": "Paid eligibility",
+      "from": "ultimate"
+    },
+    {
+      "id": "rewards__premium",
+      "to": "premium",
+      "type": "normal",
+      "feedback": true,
+      "label": "Coins for a later pass",
+      "from": "rewards"
+    },
+    {
+      "id": "rewards__pack",
+      "to": "pack",
+      "type": "normal",
+      "feedback": true,
+      "label": "Reward packs",
+      "from": "rewards"
+    },
+    {
+      "id": "rewards__artifact",
+      "to": "artifact",
+      "type": "normal",
+      "feedback": true,
+      "label": "Reward Exotic Shards",
+      "from": "rewards"
+    },
+    {
+      "id": "money__exotic",
+      "to": "exotic",
+      "type": "normal",
+      "feedback": false,
+      "label": "Purchase",
+      "from": "money"
+    },
+    {
+      "id": "exotic__artifact",
+      "to": "artifact",
+      "type": "normal",
+      "feedback": false,
+      "label": "Exotic Shards",
+      "from": "exotic"
+    },
+    {
+      "id": "rank__mastery",
+      "to": "mastery",
+      "type": "final",
+      "feedback": false,
+      "label": "Player value",
+      "from": "rank"
+    },
+    {
+      "id": "equip__expression",
+      "to": "expression",
+      "type": "final",
+      "feedback": false,
+      "label": "Player value",
+      "from": "equip"
+    }
+  ],
+  "settings": {
+    "actionHeader": "#000000",
+    "finalGood": "#F5C95C",
+    "source": "#21865b",
+    "sink": "#d15d44",
+    "value": "#ba8425",
+    "spacing": "comfortable",
+    "showLegend": true,
+    "background": "white"
+  },
+  "research": {
+    "presetId": "apex_legends",
+    "revision": "2026-09-14.1",
+    "category": "PC / console",
+    "summary": "Play unlocks Legends and rank; separate currencies fund cosmetic collection.",
+    "scope": "Account progression, Ranked, split-based Battle Pass and enduring cosmetic currencies; no event-specific packs or current reward quantities.",
+    "checkedAt": "2026-09-14",
+    "limitations": [
+      "Pack contents are random and region-dependent. No odds, guaranteed shard schedule, prices or season-specific rewards are assumed.",
+      "Legend unlocks add playable options; cosmetics do not imply stronger gameplay stats. Paid pass eligibility is separate from earning pass progress.",
+      "Ranked Points are a score with tier-dependent costs, not a shop currency.",
+      "Qualitative resource flows, not a balance simulation. Prices, odds and reward quantities are intentionally omitted. Sources were reviewed on the checked date; this is desk research, not a claim of live playtesting."
+    ],
+    "sources": [
+      {
+        "id": "currency",
+        "title": "Currencies, crafting and Apex Packs",
+        "url": "https://help.ea.com/en/articles/apex-legends/crafting-and-currency/",
+        "publisher": "EA Help",
+        "kind": "Developer",
+        "note": "Documents Apex Coins, Legend Tokens, Crafting Metals, Heirloom Shards and Exotic Shards. Packs can yield cosmetics or crafting currency. Artifact customization requires a base Artifact.",
+        "cardIds": [
+          "play",
+          "level",
+          "legend",
+          "pack",
+          "craft",
+          "mythic",
+          "artifact",
+          "equip",
+          "money",
+          "coins",
+          "buypack",
+          "shop",
+          "paidlegend",
+          "rewards",
+          "exotic"
+        ],
+        "edgeIds": [
+          "play__level",
+          "level__legend",
+          "legend__play",
+          "level__pack",
+          "pack__craft",
+          "pack__mythic",
+          "mythic__artifact",
+          "craft__equip",
+          "mythic__equip",
+          "artifact__equip",
+          "money__coins",
+          "coins__buypack",
+          "buypack__pack",
+          "coins__shop",
+          "shop__equip",
+          "coins__paidlegend",
+          "paidlegend__play",
+          "rewards__premium",
+          "rewards__pack",
+          "rewards__artifact",
+          "money__exotic",
+          "exotic__artifact"
+        ]
+      },
+      {
+        "id": "pass",
+        "title": "Apex Legends Battle Pass",
+        "url": "https://help.ea.com/en/articles/apex-legends/battle-pass/",
+        "publisher": "EA Help",
+        "kind": "Developer",
+        "note": "Daily/weekly challenges advance split-based passes. Premium uses Apex Coins; Ultimate tiers use money. Rewards depend on free or paid eligibility.",
+        "cardIds": [
+          "money",
+          "premium",
+          "ultimate",
+          "challenges",
+          "rewards"
+        ],
+        "edgeIds": [
+          "coins__premium",
+          "money__ultimate",
+          "play__challenges",
+          "challenges__rewards",
+          "premium__rewards",
+          "ultimate__rewards",
+          "rewards__premium"
+        ]
+      },
+      {
+        "id": "ranked",
+        "title": "How Ranked works",
+        "url": "https://help.ea.com/en/articles/apex-legends/ranked/",
+        "publisher": "EA Help",
+        "kind": "Developer",
+        "note": "Ranked Points determine rank, with performance scoring and tier-dependent entry costs. Ranked rewards recognize achieved rank.",
+        "cardIds": [
+          "ranked",
+          "rank"
+        ],
+        "edgeIds": [
+          "play__ranked",
+          "ranked__rank"
+        ]
+      }
+    ],
+    "interpretations": [
+      {
+        "cardIds": [
+          "mastery"
+        ],
+        "edgeIds": [
+          "rank__mastery"
+        ],
+        "note": "Achieve competitive mastery is an interpretation of player value, not a spendable currency or guaranteed outcome."
+      },
+      {
+        "cardIds": [
+          "expression"
+        ],
+        "edgeIds": [
+          "equip__expression"
+        ],
+        "note": "Express identity through cosmetics is an interpretation of player value, not a spendable currency or guaranteed outcome."
+      }
+    ]
+  }
+}

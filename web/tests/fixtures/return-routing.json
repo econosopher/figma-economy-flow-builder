@@ -1,0 +1,229 @@
+{
+  "schemaVersion": 2,
+  "name": "Return routing regression",
+  "stages": [
+    {
+      "id": "stage_0",
+      "label": "Stage 1"
+    },
+    {
+      "id": "stage_1",
+      "label": "Stage 2"
+    },
+    {
+      "id": "stage_2",
+      "label": "Stage 3"
+    },
+    {
+      "id": "stage_3",
+      "label": "Stage 4"
+    },
+    {
+      "id": "stage_4",
+      "label": "Stage 5"
+    },
+    {
+      "id": "stage_5",
+      "label": "Stage 6"
+    },
+    {
+      "id": "stage_6",
+      "label": "Stage 7"
+    }
+  ],
+  "lanes": [
+    {
+      "id": "group_0",
+      "label": "Group 1"
+    },
+    {
+      "id": "group_1",
+      "label": "Group 2"
+    },
+    {
+      "id": "group_2",
+      "label": "Group 3"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "node_0",
+      "label": "Action 1",
+      "stageId": "stage_0",
+      "laneId": "group_0",
+      "kind": "initial_sink_node",
+      "sources": [],
+      "sinks": [],
+      "values": []
+    },
+    {
+      "id": "node_1",
+      "label": "Action 2",
+      "stageId": "stage_0",
+      "laneId": "group_2",
+      "kind": "initial_sink_node",
+      "sources": [],
+      "sinks": [],
+      "values": []
+    },
+    {
+      "id": "node_2",
+      "label": "Action 3",
+      "stageId": "stage_1",
+      "laneId": "group_1",
+      "sources": ["Resource 1", "Resource 2"],
+      "sinks": ["Resource 1"],
+      "values": []
+    },
+    {
+      "id": "node_3",
+      "label": "Action 4",
+      "stageId": "stage_2",
+      "laneId": "group_1",
+      "sources": ["Resource 1", "Resource 2"],
+      "sinks": ["Resource 1", "Resource 2"],
+      "values": ["Resource 1"]
+    },
+    {
+      "id": "node_4",
+      "label": "Action 5",
+      "stageId": "stage_3",
+      "laneId": "group_1",
+      "sources": ["Resource 1", "Resource 2", "Resource 3"],
+      "sinks": ["Resource 1", "Resource 2"],
+      "values": []
+    },
+    {
+      "id": "node_5",
+      "label": "Action 6",
+      "stageId": "stage_4",
+      "laneId": "group_1",
+      "sources": ["Resource 1", "Resource 2", "Resource 3"],
+      "sinks": ["Resource 1", "Resource 2"],
+      "values": []
+    },
+    {
+      "id": "node_6",
+      "label": "Action 7",
+      "stageId": "stage_5",
+      "laneId": "group_1",
+      "sources": ["Resource 1", "Resource 2", "Resource 3"],
+      "sinks": ["Resource 1", "Resource 2"],
+      "values": []
+    },
+    {
+      "id": "node_7",
+      "label": "Action 8",
+      "stageId": "stage_6",
+      "laneId": "group_1",
+      "kind": "final_good",
+      "sources": [],
+      "sinks": [],
+      "values": []
+    },
+    {
+      "id": "node_8",
+      "label": "Action 9",
+      "stageId": "stage_2",
+      "laneId": "group_2",
+      "sources": [],
+      "sinks": [],
+      "values": ["Resource 1", "Resource 2"]
+    },
+    {
+      "id": "node_9",
+      "label": "Action 10",
+      "stageId": "stage_4",
+      "laneId": "group_2",
+      "sources": ["Resource 1", "Resource 2", "Resource 3"],
+      "sinks": ["Resource 1", "Resource 2"],
+      "values": ["Resource 1"]
+    },
+    {
+      "id": "node_10",
+      "label": "Action 11",
+      "stageId": "stage_3",
+      "laneId": "group_2",
+      "sources": ["Resource 1", "Resource 2"],
+      "sinks": ["Resource 1"],
+      "values": []
+    }
+  ],
+  "edges": [
+    {
+      "from": "node_0",
+      "to": "node_2",
+      "type": "normal"
+    },
+    {
+      "from": "node_2",
+      "to": "node_3",
+      "type": "normal"
+    },
+    {
+      "from": "node_3",
+      "to": "node_4",
+      "type": "normal"
+    },
+    {
+      "from": "node_3",
+      "to": "node_5",
+      "type": "normal"
+    },
+    {
+      "from": "node_4",
+      "to": "node_3",
+      "type": "value"
+    },
+    {
+      "from": "node_5",
+      "to": "node_6",
+      "type": "normal"
+    },
+    {
+      "from": "node_6",
+      "to": "node_7",
+      "type": "final"
+    },
+    {
+      "from": "node_4",
+      "to": "node_7",
+      "type": "final"
+    },
+    {
+      "from": "node_0",
+      "to": "node_8",
+      "type": "normal"
+    },
+    {
+      "from": "node_8",
+      "to": "node_9",
+      "type": "value"
+    },
+    {
+      "from": "node_1",
+      "to": "node_9",
+      "type": "normal"
+    },
+    {
+      "from": "node_1",
+      "to": "node_10",
+      "type": "normal"
+    },
+    {
+      "from": "node_9",
+      "to": "node_5",
+      "type": "normal"
+    },
+    {
+      "from": "node_9",
+      "to": "node_4",
+      "type": "normal"
+    },
+    {
+      "from": "node_10",
+      "to": "node_7",
+      "type": "final"
+    }
+  ]
+}

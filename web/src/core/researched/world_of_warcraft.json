@@ -1,0 +1,804 @@
+{
+  "schemaVersion": 3,
+  "id": "world_of_warcraft",
+  "name": "World of Warcraft",
+  "stages": [
+    {
+      "id": "s0",
+      "label": "Inputs"
+    },
+    {
+      "id": "s1",
+      "label": "Participation"
+    },
+    {
+      "id": "s2",
+      "label": "Production"
+    },
+    {
+      "id": "s3",
+      "label": "Rewards"
+    },
+    {
+      "id": "s4",
+      "label": "Reinvestment"
+    },
+    {
+      "id": "s5",
+      "label": "Progression"
+    },
+    {
+      "id": "s6",
+      "label": "Outcomes"
+    }
+  ],
+  "groups": [
+    {
+      "id": "g0",
+      "label": "Adventure and equipment",
+      "color": "#f3f6f4"
+    },
+    {
+      "id": "g1",
+      "label": "Professions and trade",
+      "color": "#f4f5f8"
+    },
+    {
+      "id": "g2",
+      "label": "Access and purchases",
+      "color": "#faf6ec"
+    }
+  ],
+  "cards": [
+    {
+      "id": "time",
+      "label": "Invest play time",
+      "stageId": "s0",
+      "groupId": "g0",
+      "order": 0,
+      "kind": "initial_sink_node",
+      "sources": [],
+      "sinks": [
+        "Player time"
+      ],
+      "values": [],
+      "notes": ""
+    },
+    {
+      "id": "quests",
+      "label": "Complete quests and activities",
+      "stageId": "s1",
+      "groupId": "g0",
+      "order": 0,
+      "kind": "action",
+      "sources": [
+        "Gold"
+      ],
+      "sinks": [],
+      "values": [
+        "Character progress"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "pve",
+      "label": "Complete dungeons, raids or delves",
+      "stageId": "s2",
+      "groupId": "g0",
+      "order": 0,
+      "kind": "action",
+      "sources": [
+        "Equipment",
+        "Mistcrests"
+      ],
+      "sinks": [],
+      "values": [],
+      "notes": "Loot and crest track depend on content difficulty."
+    },
+    {
+      "id": "equip",
+      "label": "Equip earned equipment",
+      "stageId": "s3",
+      "groupId": "g0",
+      "order": 0,
+      "kind": "action",
+      "sources": [],
+      "sinks": [],
+      "values": [
+        "Equipped gear"
+      ],
+      "notes": "Gear persists; equipping is not currency consumption."
+    },
+    {
+      "id": "upgrade",
+      "label": "Upgrade eligible equipment",
+      "stageId": "s4",
+      "groupId": "g0",
+      "order": 0,
+      "kind": "action",
+      "sources": [],
+      "sinks": [
+        "Matching Mistcrests",
+        "Gold"
+      ],
+      "values": [
+        "Higher item level"
+      ],
+      "notes": "Requires gear on the matching upgrade track."
+    },
+    {
+      "id": "challenge",
+      "label": "Attempt harder content",
+      "stageId": "s5",
+      "groupId": "g0",
+      "order": 0,
+      "kind": "action",
+      "sources": [],
+      "sinks": [],
+      "values": [
+        "Greater challenge access"
+      ],
+      "notes": "Gear helps; skill and group requirements still apply."
+    },
+    {
+      "id": "collect",
+      "label": "Earn collection rewards",
+      "stageId": "s4",
+      "groupId": "g0",
+      "order": 1,
+      "kind": "action",
+      "sources": [],
+      "sinks": [],
+      "values": [
+        "Collectibles",
+        "Housing decor"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "gather",
+      "label": "Gather raw materials",
+      "stageId": "s1",
+      "groupId": "g1",
+      "order": 0,
+      "kind": "action",
+      "sources": [
+        "Reagents"
+      ],
+      "sinks": [
+        "Player time"
+      ],
+      "values": [],
+      "notes": ""
+    },
+    {
+      "id": "craft",
+      "label": "Craft equipment or goods",
+      "stageId": "s2",
+      "groupId": "g1",
+      "order": 0,
+      "kind": "action",
+      "sources": [
+        "Crafted goods"
+      ],
+      "sinks": [
+        "Reagents"
+      ],
+      "values": [
+        "Profession progress"
+      ],
+      "notes": "Recipe and profession requirements apply."
+    },
+    {
+      "id": "sell",
+      "label": "Sell tradable goods to players",
+      "stageId": "s3",
+      "groupId": "g1",
+      "order": 0,
+      "kind": "action",
+      "sources": [
+        "Gold received"
+      ],
+      "sinks": [
+        "Sold goods"
+      ],
+      "values": [],
+      "notes": "Transfer from buyers, not newly created gold."
+    },
+    {
+      "id": "buy",
+      "label": "Buy materials or goods",
+      "stageId": "s4",
+      "groupId": "g1",
+      "order": 0,
+      "kind": "action",
+      "sources": [
+        "Purchased goods"
+      ],
+      "sinks": [
+        "Gold paid"
+      ],
+      "values": [],
+      "notes": "Transfer to sellers; only eligible items are tradable."
+    },
+    {
+      "id": "owncraft",
+      "label": "Use crafted equipment",
+      "stageId": "s4",
+      "groupId": "g1",
+      "order": 1,
+      "kind": "action",
+      "sources": [],
+      "sinks": [],
+      "values": [
+        "Equipped crafted gear"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "decorate",
+      "label": "Acquire and place decor",
+      "stageId": "s5",
+      "groupId": "g1",
+      "order": 0,
+      "kind": "action",
+      "sources": [],
+      "sinks": [],
+      "values": [
+        "Housing collection"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "money",
+      "label": "Spend money",
+      "stageId": "s0",
+      "groupId": "g2",
+      "order": 0,
+      "kind": "initial_sink_node",
+      "sources": [],
+      "sinks": [
+        "Real money"
+      ],
+      "values": [],
+      "notes": ""
+    },
+    {
+      "id": "access",
+      "label": "Buy subscription and expansion access",
+      "stageId": "s1",
+      "groupId": "g2",
+      "order": 0,
+      "kind": "action",
+      "sources": [],
+      "sinks": [
+        "Real money"
+      ],
+      "values": [
+        "Paid access"
+      ],
+      "notes": "Subscription/game time and expansion ownership are separate requirements."
+    },
+    {
+      "id": "tokenbuy",
+      "label": "Buy a Token for money",
+      "stageId": "s1",
+      "groupId": "g2",
+      "order": 1,
+      "kind": "action",
+      "sources": [
+        "Tradable WoW Token"
+      ],
+      "sinks": [
+        "Real money"
+      ],
+      "values": [],
+      "notes": ""
+    },
+    {
+      "id": "tokensell",
+      "label": "Sell that Token for gold",
+      "stageId": "s2",
+      "groupId": "g2",
+      "order": 0,
+      "kind": "action",
+      "sources": [
+        "Gold received"
+      ],
+      "sinks": [
+        "Tradable WoW Token"
+      ],
+      "values": [],
+      "notes": "Sold through the Token market, not to a vendor."
+    },
+    {
+      "id": "goldtoken",
+      "label": "Buy a Token with gold",
+      "stageId": "s4",
+      "groupId": "g2",
+      "order": 0,
+      "kind": "action",
+      "sources": [
+        "Redeemable WoW Token"
+      ],
+      "sinks": [
+        "Gold"
+      ],
+      "values": [],
+      "notes": "A gold-purchased Token cannot be resold."
+    },
+    {
+      "id": "redeem",
+      "label": "Redeem the Token",
+      "stageId": "s5",
+      "groupId": "g2",
+      "order": 0,
+      "kind": "action",
+      "sources": [],
+      "sinks": [
+        "Redeemable WoW Token"
+      ],
+      "values": [
+        "Game time OR eligible balance"
+      ],
+      "notes": "Choose one redemption. No cash withdrawal."
+    },
+    {
+      "id": "mastery",
+      "label": "Overcome harder encounters",
+      "stageId": "s6",
+      "groupId": "g0",
+      "order": 0,
+      "kind": "final_good",
+      "sources": [],
+      "sinks": [],
+      "values": [],
+      "notes": "Player value: GEC interpretation."
+    },
+    {
+      "id": "expression",
+      "label": "Build identity and collections",
+      "stageId": "s6",
+      "groupId": "g1",
+      "order": 0,
+      "kind": "final_good",
+      "sources": [],
+      "sinks": [],
+      "values": [],
+      "notes": "Player value: GEC interpretation."
+    },
+    {
+      "id": "continuity",
+      "label": "Continue the adventure",
+      "stageId": "s6",
+      "groupId": "g2",
+      "order": 0,
+      "kind": "final_good",
+      "sources": [],
+      "sinks": [],
+      "values": [],
+      "notes": "Player value: GEC interpretation."
+    }
+  ],
+  "edges": [
+    {
+      "id": "time__quests",
+      "to": "quests",
+      "type": "normal",
+      "feedback": false,
+      "label": "Play",
+      "from": "time"
+    },
+    {
+      "id": "quests__pve",
+      "to": "pve",
+      "type": "normal",
+      "feedback": false,
+      "label": "Progression",
+      "from": "quests"
+    },
+    {
+      "id": "pve__equip",
+      "to": "equip",
+      "type": "normal",
+      "feedback": false,
+      "label": "Earned gear",
+      "from": "pve"
+    },
+    {
+      "id": "equip__upgrade",
+      "to": "upgrade",
+      "type": "normal",
+      "feedback": false,
+      "label": "Eligible equipment",
+      "from": "equip"
+    },
+    {
+      "id": "pve__upgrade",
+      "to": "upgrade",
+      "type": "normal",
+      "feedback": false,
+      "label": "Matching Mistcrests",
+      "from": "pve"
+    },
+    {
+      "id": "quests__upgrade",
+      "to": "upgrade",
+      "type": "normal",
+      "feedback": false,
+      "label": "Gold",
+      "from": "quests"
+    },
+    {
+      "id": "upgrade__challenge",
+      "to": "challenge",
+      "type": "normal",
+      "feedback": false,
+      "label": "Improved equipment",
+      "from": "upgrade"
+    },
+    {
+      "id": "challenge__pve",
+      "to": "pve",
+      "type": "normal",
+      "feedback": true,
+      "label": "Repeat higher-tier content",
+      "from": "challenge"
+    },
+    {
+      "id": "pve__collect",
+      "to": "collect",
+      "type": "normal",
+      "feedback": false,
+      "label": "Eligible achievement rewards",
+      "from": "pve"
+    },
+    {
+      "id": "gather__craft",
+      "to": "craft",
+      "type": "normal",
+      "feedback": false,
+      "label": "Reagents",
+      "from": "gather"
+    },
+    {
+      "id": "craft__sell",
+      "to": "sell",
+      "type": "normal",
+      "feedback": false,
+      "label": "Tradable crafts",
+      "from": "craft"
+    },
+    {
+      "id": "gather__sell",
+      "to": "sell",
+      "type": "normal",
+      "feedback": false,
+      "label": "Tradable reagents",
+      "from": "gather"
+    },
+    {
+      "id": "sell__buy",
+      "to": "buy",
+      "type": "normal",
+      "feedback": false,
+      "label": "Gold received",
+      "from": "sell"
+    },
+    {
+      "id": "buy__craft",
+      "to": "craft",
+      "type": "normal",
+      "feedback": true,
+      "label": "Purchased reagents",
+      "from": "buy"
+    },
+    {
+      "id": "craft__owncraft",
+      "to": "owncraft",
+      "type": "normal",
+      "feedback": false,
+      "label": "Crafted equipment",
+      "from": "craft"
+    },
+    {
+      "id": "owncraft__challenge",
+      "to": "challenge",
+      "type": "normal",
+      "feedback": false,
+      "label": "Equipment",
+      "from": "owncraft"
+    },
+    {
+      "id": "buy__decorate",
+      "to": "decorate",
+      "type": "normal",
+      "feedback": false,
+      "label": "Purchased decor",
+      "from": "buy"
+    },
+    {
+      "id": "collect__decorate",
+      "to": "decorate",
+      "type": "normal",
+      "feedback": false,
+      "label": "Earned decor",
+      "from": "collect"
+    },
+    {
+      "id": "money__access",
+      "to": "access",
+      "type": "normal",
+      "feedback": false,
+      "label": "Payment",
+      "from": "money"
+    },
+    {
+      "id": "access__quests",
+      "to": "quests",
+      "type": "normal",
+      "feedback": true,
+      "label": "Access requirement",
+      "from": "access"
+    },
+    {
+      "id": "money__tokenbuy",
+      "to": "tokenbuy",
+      "type": "normal",
+      "feedback": false,
+      "label": "Purchase",
+      "from": "money"
+    },
+    {
+      "id": "tokenbuy__tokensell",
+      "to": "tokensell",
+      "type": "normal",
+      "feedback": false,
+      "label": "Tradable Token",
+      "from": "tokenbuy"
+    },
+    {
+      "id": "tokensell__buy",
+      "to": "buy",
+      "type": "normal",
+      "feedback": false,
+      "label": "Gold",
+      "from": "tokensell"
+    },
+    {
+      "id": "quests__goldtoken",
+      "to": "goldtoken",
+      "type": "normal",
+      "feedback": false,
+      "label": "Earned gold",
+      "from": "quests"
+    },
+    {
+      "id": "sell__goldtoken",
+      "to": "goldtoken",
+      "type": "normal",
+      "feedback": false,
+      "label": "Traded gold",
+      "from": "sell"
+    },
+    {
+      "id": "goldtoken__redeem",
+      "to": "redeem",
+      "type": "normal",
+      "feedback": false,
+      "label": "Redeemable Token",
+      "from": "goldtoken"
+    },
+    {
+      "id": "redeem__access",
+      "to": "access",
+      "type": "normal",
+      "feedback": true,
+      "label": "Game-time option only",
+      "from": "redeem"
+    },
+    {
+      "id": "challenge__mastery",
+      "to": "mastery",
+      "type": "final",
+      "feedback": false,
+      "label": "Player value",
+      "from": "challenge"
+    },
+    {
+      "id": "decorate__expression",
+      "to": "expression",
+      "type": "final",
+      "feedback": false,
+      "label": "Player value",
+      "from": "decorate"
+    },
+    {
+      "id": "redeem__continuity",
+      "to": "continuity",
+      "type": "final",
+      "feedback": false,
+      "label": "Player value",
+      "from": "redeem"
+    }
+  ],
+  "settings": {
+    "actionHeader": "#000000",
+    "finalGood": "#F5C95C",
+    "source": "#21865b",
+    "sink": "#d15d44",
+    "value": "#ba8425",
+    "spacing": "comfortable",
+    "showLegend": true,
+    "background": "white"
+  },
+  "research": {
+    "presetId": "world_of_warcraft",
+    "revision": "2026-09-14.1",
+    "category": "PC / console",
+    "summary": "Adventure and trade fund stronger gear, collections and continued access.",
+    "scope": "Retail, Midnight Season 2. Broad PvE gearing, professions, gold and Token loop; Classic, PvP currencies and class systems excluded.",
+    "checkedAt": "2026-09-14",
+    "limitations": [
+      "Midnight Season 2 gearing is corroborated with Icy Veins, updated August 2026. Upgrade currency is Mistcrests, not the older Valorstones. Track restrictions are retained; exact costs omitted.",
+      "Player-to-player gold transfers are not new system gold. Materials and tradable crafted items are alternatives, not a claim that all equipment is tradable.",
+      "Token rules differ by region and account eligibility. Gold-purchased Tokens cannot be resold, and Battle.net balance is not withdrawable cash.",
+      "Qualitative resource flows, not a balance simulation. Prices, odds and reward quantities are intentionally omitted. Sources were reviewed on the checked date; this is desk research, not a claim of live playtesting."
+    ],
+    "sources": [
+      {
+        "id": "gear",
+        "title": "Midnight Season 2 gear upgrading",
+        "url": "https://www.icy-veins.com/wow/world-of-warcraft-gear-upgrading-guide",
+        "publisher": "Icy Veins, August 2026",
+        "kind": "Independent analysis",
+        "note": "Season 2 activities award gear and Mistcrests. Track-specific crests plus gold upgrade eligible equipment. This is the seasonal corroboration, not a publisher source.",
+        "cardIds": [
+          "time",
+          "quests",
+          "pve",
+          "equip",
+          "upgrade",
+          "challenge"
+        ],
+        "edgeIds": [
+          "time__quests",
+          "quests__pve",
+          "pve__equip",
+          "equip__upgrade",
+          "pve__upgrade",
+          "quests__upgrade",
+          "upgrade__challenge",
+          "challenge__pve",
+          "owncraft__challenge"
+        ]
+      },
+      {
+        "id": "prof",
+        "title": "Making It with Professions",
+        "url": "https://worldofwarcraft.blizzard.com/en-us/news/23876529",
+        "publisher": "Blizzard",
+        "kind": "Developer",
+        "note": "Explains gathering, crafting with reagents and the Auction House. Only enduring production/trading structure is used from this Dragonflight-era article, not its old quality or skill tuning.",
+        "cardIds": [
+          "gather",
+          "craft",
+          "sell",
+          "buy",
+          "owncraft"
+        ],
+        "edgeIds": [
+          "gather__craft",
+          "craft__sell",
+          "gather__sell",
+          "sell__buy",
+          "buy__craft",
+          "craft__owncraft",
+          "owncraft__challenge"
+        ]
+      },
+      {
+        "id": "housing",
+        "title": "Come Home to Azeroth with Housing",
+        "url": "https://worldofwarcraft.blizzard.com/en-gb/news/24230692/midnight-vuelve-a-casa-con-las-viviendas-de-azeroth",
+        "publisher": "Blizzard",
+        "kind": "Developer",
+        "note": "Collection rewards can come from adventuring, achievements, professions and Auction House purchases. Supports optional collection as a parallel use of play and trade.",
+        "cardIds": [
+          "collect",
+          "decorate"
+        ],
+        "edgeIds": [
+          "pve__collect",
+          "buy__decorate",
+          "collect__decorate"
+        ]
+      },
+      {
+        "id": "token",
+        "title": "Using a WoW Token",
+        "url": "https://eu.support.blizzard.com/en/help/article/31218",
+        "publisher": "Blizzard Support",
+        "kind": "Developer",
+        "note": "Cash-purchased Tokens are sold for gold; gold-purchased Tokens are redeemed for game time or eligible Battle.net balance. Regional restrictions apply. Support article was readable in indexed content.",
+        "cardIds": [
+          "tokenbuy",
+          "tokensell",
+          "goldtoken",
+          "redeem"
+        ],
+        "edgeIds": [
+          "quests__goldtoken",
+          "sell__goldtoken",
+          "goldtoken__redeem",
+          "redeem__access"
+        ]
+      },
+      {
+        "id": "tokenintro",
+        "title": "Introducing the WoW Token",
+        "url": "https://worldofwarcraft.blizzard.com/en-gb/news/18141101/presentamos-la-ficha-de-wow",
+        "publisher": "Blizzard",
+        "kind": "Developer",
+        "note": "Explains two different players: one pays money for a Token to sell, another pays gold for a Token to redeem. It is not a reversible money cash-out loop.",
+        "cardIds": [
+          "money",
+          "access",
+          "tokenbuy",
+          "tokensell",
+          "goldtoken"
+        ],
+        "edgeIds": [
+          "money__tokenbuy",
+          "tokenbuy__tokensell",
+          "tokensell__buy"
+        ]
+      },
+      {
+        "id": "access",
+        "title": "World of Warcraft: Midnight revealed",
+        "url": "https://worldofwarcraft.blizzard.com/en-us/news/24228402/world-of-warcraft-midnight-revealed",
+        "publisher": "Blizzard",
+        "kind": "Developer",
+        "note": "Expansion access and adventure scope. Paid access is distinct from the amount of time spent playing.",
+        "cardIds": [
+          "money",
+          "access"
+        ],
+        "edgeIds": [
+          "money__access",
+          "access__quests"
+        ]
+      }
+    ],
+    "interpretations": [
+      {
+        "cardIds": [
+          "mastery"
+        ],
+        "edgeIds": [
+          "challenge__mastery"
+        ],
+        "note": "Overcome harder encounters is an interpretation of player value, not a spendable currency or guaranteed outcome."
+      },
+      {
+        "cardIds": [
+          "expression"
+        ],
+        "edgeIds": [
+          "decorate__expression"
+        ],
+        "note": "Build identity and collections is an interpretation of player value, not a spendable currency or guaranteed outcome."
+      },
+      {
+        "cardIds": [
+          "continuity"
+        ],
+        "edgeIds": [
+          "redeem__continuity"
+        ],
+        "note": "Continue the adventure is an interpretation of player value, not a spendable currency or guaranteed outcome."
+      }
+    ]
+  }
+}

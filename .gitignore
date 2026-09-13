@@ -21,3 +21,9 @@ examples/predecessor.json
 # Claude configuration
 CLAUDE.md
 .claude/
+
+# Local hosting and credential state
+.netlify/
+.wrangler/
+.dev.vars*
+*.pem

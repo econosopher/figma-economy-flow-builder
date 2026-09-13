@@ -1,0 +1,736 @@
+{
+  "schemaVersion": 3,
+  "id": "monopoly_go",
+  "name": "MONOPOLY GO!",
+  "stages": [
+    {
+      "id": "s0",
+      "label": "Inputs"
+    },
+    {
+      "id": "s1",
+      "label": "Participation"
+    },
+    {
+      "id": "s2",
+      "label": "Production"
+    },
+    {
+      "id": "s3",
+      "label": "Rewards"
+    },
+    {
+      "id": "s4",
+      "label": "Reinvestment"
+    },
+    {
+      "id": "s5",
+      "label": "Progression"
+    },
+    {
+      "id": "s6",
+      "label": "Outcomes"
+    }
+  ],
+  "groups": [
+    {
+      "id": "g0",
+      "label": "Board and landmarks",
+      "color": "#f3f6f4"
+    },
+    {
+      "id": "g1",
+      "label": "Stickers and events",
+      "color": "#f4f5f8"
+    },
+    {
+      "id": "g2",
+      "label": "Purchases",
+      "color": "#faf6ec"
+    }
+  ],
+  "cards": [
+    {
+      "id": "regenerate",
+      "label": "Replenish free rolls",
+      "stageId": "s0",
+      "groupId": "g0",
+      "order": 0,
+      "kind": "action",
+      "sources": [
+        "Dice rolls"
+      ],
+      "sinks": [],
+      "values": [],
+      "notes": "Regeneration pauses at the roll cap."
+    },
+    {
+      "id": "roll",
+      "label": "Roll around the board",
+      "stageId": "s1",
+      "groupId": "g0",
+      "order": 0,
+      "kind": "action",
+      "sources": [],
+      "sinks": [
+        "Dice rolls"
+      ],
+      "values": [
+        "Tile outcome"
+      ],
+      "notes": "Multipliers spend more rolls; landing odds do not improve."
+    },
+    {
+      "id": "cash",
+      "label": "Collect cash tile rewards",
+      "stageId": "s2",
+      "groupId": "g0",
+      "order": 0,
+      "kind": "action",
+      "sources": [
+        "Cash"
+      ],
+      "sinks": [],
+      "values": [],
+      "notes": ""
+    },
+    {
+      "id": "rail",
+      "label": "Resolve a railroad encounter",
+      "stageId": "s2",
+      "groupId": "g0",
+      "order": 1,
+      "kind": "action",
+      "sources": [
+        "Cash"
+      ],
+      "sinks": [],
+      "values": [],
+      "notes": "Shutdown or bank heist; rewards depend on outcome."
+    },
+    {
+      "id": "build",
+      "label": "Build and upgrade landmarks",
+      "stageId": "s3",
+      "groupId": "g0",
+      "order": 0,
+      "kind": "action",
+      "sources": [],
+      "sinks": [
+        "Cash"
+      ],
+      "values": [
+        "Landmark progress",
+        "Property houses"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "next",
+      "label": "Complete the board",
+      "stageId": "s4",
+      "groupId": "g0",
+      "order": 0,
+      "kind": "action",
+      "sources": [
+        "Dice rolls"
+      ],
+      "sinks": [],
+      "values": [
+        "Next board access"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "wheel",
+      "label": "Complete property sets",
+      "stageId": "s4",
+      "groupId": "g0",
+      "order": 1,
+      "kind": "action",
+      "sources": [
+        "Wheel rewards"
+      ],
+      "sinks": [],
+      "values": [],
+      "notes": "Wheel rewards can include sticker packs."
+    },
+    {
+      "id": "events",
+      "label": "Progress events and tournaments",
+      "stageId": "s2",
+      "groupId": "g1",
+      "order": 0,
+      "kind": "action",
+      "sources": [],
+      "sinks": [],
+      "values": [
+        "Event progress"
+      ],
+      "notes": "Qualifying actions depend on the event."
+    },
+    {
+      "id": "quick",
+      "label": "Complete Quick Wins",
+      "stageId": "s2",
+      "groupId": "g1",
+      "order": 1,
+      "kind": "action",
+      "sources": [],
+      "sinks": [],
+      "values": [
+        "Daily progress"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "packs",
+      "label": "Claim event and task rewards",
+      "stageId": "s3",
+      "groupId": "g1",
+      "order": 0,
+      "kind": "action",
+      "sources": [
+        "Sticker packs",
+        "Dice rolls"
+      ],
+      "sinks": [],
+      "values": [],
+      "notes": ""
+    },
+    {
+      "id": "open",
+      "label": "Open sticker packs",
+      "stageId": "s4",
+      "groupId": "g1",
+      "order": 0,
+      "kind": "action",
+      "sources": [
+        "New stickers",
+        "Duplicate stickers"
+      ],
+      "sinks": [
+        "Sticker packs"
+      ],
+      "values": [],
+      "notes": "Random contents; no particular rarity promised."
+    },
+    {
+      "id": "trade",
+      "label": "Trade eligible duplicates",
+      "stageId": "s5",
+      "groupId": "g1",
+      "order": 0,
+      "kind": "action",
+      "sources": [
+        "Received stickers"
+      ],
+      "sinks": [
+        "Traded duplicates"
+      ],
+      "values": [],
+      "notes": "Gold stickers: designated event windows only."
+    },
+    {
+      "id": "vault",
+      "label": "Exchange duplicate stars",
+      "stageId": "s5",
+      "groupId": "g1",
+      "order": 1,
+      "kind": "action",
+      "sources": [
+        "Dice rolls",
+        "Sticker packs"
+      ],
+      "sinks": [
+        "Duplicate sticker stars"
+      ],
+      "values": [],
+      "notes": "Duplicates spent here cannot also be traded."
+    },
+    {
+      "id": "album",
+      "label": "Complete sets and albums",
+      "stageId": "s5",
+      "groupId": "g1",
+      "order": 2,
+      "kind": "action",
+      "sources": [
+        "Dice rolls",
+        "Cash"
+      ],
+      "sinks": [],
+      "values": [
+        "Album completion",
+        "Collectibles"
+      ],
+      "notes": "Rewards vary. Collected stickers meet a requirement."
+    },
+    {
+      "id": "money",
+      "label": "Spend money",
+      "stageId": "s0",
+      "groupId": "g2",
+      "order": 0,
+      "kind": "initial_sink_node",
+      "sources": [],
+      "sinks": [
+        "Real money"
+      ],
+      "values": [],
+      "notes": ""
+    },
+    {
+      "id": "buy",
+      "label": "Buy resource offers",
+      "stageId": "s1",
+      "groupId": "g2",
+      "order": 0,
+      "kind": "action",
+      "sources": [
+        "Dice rolls",
+        "Cash",
+        "Sticker packs"
+      ],
+      "sinks": [
+        "Real money"
+      ],
+      "values": [],
+      "notes": "Only the resources included in the selected offer."
+    },
+    {
+      "id": "empire",
+      "label": "Grow a landmark empire",
+      "stageId": "s6",
+      "groupId": "g0",
+      "order": 0,
+      "kind": "final_good",
+      "sources": [],
+      "sinks": [],
+      "values": [],
+      "notes": "Player value: GEC interpretation."
+    },
+    {
+      "id": "collection",
+      "label": "Complete a collection",
+      "stageId": "s6",
+      "groupId": "g1",
+      "order": 0,
+      "kind": "final_good",
+      "sources": [],
+      "sinks": [],
+      "values": [],
+      "notes": "Player value: GEC interpretation."
+    }
+  ],
+  "edges": [
+    {
+      "id": "roll__cash",
+      "to": "cash",
+      "type": "normal",
+      "feedback": false,
+      "label": "Cash tiles",
+      "from": "roll"
+    },
+    {
+      "id": "roll__rail",
+      "to": "rail",
+      "type": "normal",
+      "feedback": false,
+      "label": "Railroad tiles",
+      "from": "roll"
+    },
+    {
+      "id": "cash__build",
+      "to": "build",
+      "type": "normal",
+      "feedback": false,
+      "label": "Cash",
+      "from": "cash"
+    },
+    {
+      "id": "rail__build",
+      "to": "build",
+      "type": "normal",
+      "feedback": false,
+      "label": "Cash",
+      "from": "rail"
+    },
+    {
+      "id": "build__next",
+      "to": "next",
+      "type": "normal",
+      "feedback": false,
+      "label": "All landmarks complete",
+      "from": "build"
+    },
+    {
+      "id": "build__wheel",
+      "to": "wheel",
+      "type": "normal",
+      "feedback": false,
+      "label": "Property houses",
+      "from": "build"
+    },
+    {
+      "id": "roll__events",
+      "to": "events",
+      "type": "normal",
+      "feedback": false,
+      "label": "Qualifying landings",
+      "from": "roll"
+    },
+    {
+      "id": "roll__quick",
+      "to": "quick",
+      "type": "normal",
+      "feedback": false,
+      "label": "Qualifying tasks",
+      "from": "roll"
+    },
+    {
+      "id": "events__packs",
+      "to": "packs",
+      "type": "normal",
+      "feedback": false,
+      "label": "Milestone rewards",
+      "from": "events"
+    },
+    {
+      "id": "quick__packs",
+      "to": "packs",
+      "type": "normal",
+      "feedback": false,
+      "label": "Daily rewards",
+      "from": "quick"
+    },
+    {
+      "id": "wheel__packs",
+      "to": "packs",
+      "type": "normal",
+      "feedback": true,
+      "label": "Pack reward outcome",
+      "from": "wheel"
+    },
+    {
+      "id": "packs__open",
+      "to": "open",
+      "type": "normal",
+      "feedback": false,
+      "label": "Packs",
+      "from": "packs"
+    },
+    {
+      "id": "open__trade",
+      "to": "trade",
+      "type": "normal",
+      "feedback": false,
+      "label": "Duplicates",
+      "from": "open"
+    },
+    {
+      "id": "open__vault",
+      "to": "vault",
+      "type": "normal",
+      "feedback": false,
+      "label": "Duplicate star value",
+      "from": "open"
+    },
+    {
+      "id": "open__album",
+      "to": "album",
+      "type": "normal",
+      "feedback": false,
+      "label": "Missing stickers",
+      "from": "open"
+    },
+    {
+      "id": "trade__album",
+      "to": "album",
+      "type": "normal",
+      "feedback": true,
+      "label": "Received missing stickers",
+      "from": "trade"
+    },
+    {
+      "id": "vault__open",
+      "to": "open",
+      "type": "normal",
+      "feedback": true,
+      "label": "Reward packs",
+      "from": "vault"
+    },
+    {
+      "id": "vault__roll",
+      "to": "roll",
+      "type": "normal",
+      "feedback": true,
+      "label": "Reward rolls",
+      "from": "vault"
+    },
+    {
+      "id": "album__roll",
+      "to": "roll",
+      "type": "normal",
+      "feedback": true,
+      "label": "Reward rolls",
+      "from": "album"
+    },
+    {
+      "id": "album__build",
+      "to": "build",
+      "type": "normal",
+      "feedback": true,
+      "label": "Reward cash",
+      "from": "album"
+    },
+    {
+      "id": "money__buy",
+      "to": "buy",
+      "type": "normal",
+      "feedback": false,
+      "label": "Purchase",
+      "from": "money"
+    },
+    {
+      "id": "buy__roll",
+      "to": "roll",
+      "type": "normal",
+      "feedback": true,
+      "label": "Purchased rolls",
+      "from": "buy"
+    },
+    {
+      "id": "buy__build",
+      "to": "build",
+      "type": "normal",
+      "feedback": false,
+      "label": "Purchased cash",
+      "from": "buy"
+    },
+    {
+      "id": "buy__open",
+      "to": "open",
+      "type": "normal",
+      "feedback": false,
+      "label": "Purchased packs",
+      "from": "buy"
+    },
+    {
+      "id": "next__empire",
+      "to": "empire",
+      "type": "final",
+      "feedback": false,
+      "label": "Player value",
+      "from": "next"
+    },
+    {
+      "id": "album__collection",
+      "to": "collection",
+      "type": "final",
+      "feedback": false,
+      "label": "Player value",
+      "from": "album"
+    },
+    {
+      "id": "regenerate__roll",
+      "from": "regenerate",
+      "to": "roll",
+      "type": "normal",
+      "feedback": false,
+      "label": "Regenerated rolls"
+    },
+    {
+      "id": "next__roll",
+      "from": "next",
+      "to": "roll",
+      "type": "normal",
+      "feedback": true,
+      "label": "Board completion rolls"
+    },
+    {
+      "id": "packs__roll",
+      "from": "packs",
+      "to": "roll",
+      "type": "normal",
+      "feedback": true,
+      "label": "Event and task rolls"
+    }
+  ],
+  "settings": {
+    "actionHeader": "#000000",
+    "finalGood": "#F5C95C",
+    "source": "#21865b",
+    "sink": "#d15d44",
+    "value": "#ba8425",
+    "spacing": "comfortable",
+    "showLegend": true,
+    "background": "white"
+  },
+  "research": {
+    "presetId": "monopoly_go",
+    "revision": "2026-09-14.1",
+    "category": "Mobile",
+    "summary": "Rolls drive board growth and sticker collection, with rewards returning rolls to play.",
+    "scope": "Persistent board, landmark and sticker loops; generic recurring rewards and purchases, not a particular album.",
+    "checkedAt": "2026-09-14",
+    "limitations": [
+      "Album announcement is a dated example of the reward structure, not the current album. No album names, pack odds, trade limits or vault prices are assumed.",
+      "Qualitative resource flows, not a balance simulation. Prices, odds and reward quantities are intentionally omitted. Sources were reviewed on the checked date; this is desk research, not a claim of live playtesting."
+    ],
+    "sources": [
+      {
+        "id": "board",
+        "title": "Board",
+        "url": "https://support.monopolygo.com/article/3b26c9ef-8a1a-4bc0-9057-b0e515ff35f9",
+        "publisher": "Scopely",
+        "kind": "Developer",
+        "note": "Current official support, read through the browser: rolls trigger tile outcomes, cash buys landmark upgrades, completed boards unlock the next board, and houses affect rent. Railroad encounters include Shutdown and Bank Heist.",
+        "cardIds": [
+          "roll",
+          "cash",
+          "rail",
+          "build",
+          "next"
+        ],
+        "edgeIds": [
+          "roll__cash",
+          "roll__rail",
+          "rail__build",
+          "build__wheel",
+          "cash__build",
+          "build__next"
+        ]
+      },
+      {
+        "id": "stickers",
+        "title": "All about stickers in Monopoly Go",
+        "url": "https://play.google.com/store/apps/editorial?id=mc_games_editorialevergreen_monopoly_go_all_about_stickers_postinstall_now_fcp",
+        "publisher": "Google Play",
+        "kind": "Platform editorial",
+        "note": "Packs come from events, Quick Wins, property wheels and bundles. Duplicates can be traded or exchanged through sticker-star vaults. Gold trades are restricted to event windows.",
+        "cardIds": [
+          "wheel",
+          "events",
+          "quick",
+          "packs",
+          "open",
+          "trade",
+          "vault",
+          "album"
+        ],
+        "edgeIds": [
+          "build__wheel",
+          "roll__events",
+          "roll__quick",
+          "events__packs",
+          "quick__packs",
+          "wheel__packs",
+          "packs__open",
+          "open__trade",
+          "open__vault",
+          "open__album",
+          "trade__album",
+          "vault__open",
+          "vault__roll"
+        ]
+      },
+      {
+        "id": "album",
+        "title": "MONOPOLY Ever After",
+        "url": "https://www.monopolygo.com/news/164/monopoly-ever-after",
+        "publisher": "Scopely",
+        "kind": "Developer",
+        "note": "A dated publisher example of completing an album for rolls, cash and a collectible token. Exact rewards and album theme are excluded.",
+        "cardIds": [
+          "album"
+        ],
+        "edgeIds": [
+          "album__roll",
+          "album__build"
+        ]
+      },
+      {
+        "id": "shop",
+        "title": "Tycoon Club",
+        "url": "https://www.monopolygo.com/news/35",
+        "publisher": "Scopely",
+        "kind": "Developer",
+        "note": "Publisher describes purchase offers containing rolls, cash and sticker packs; loyalty systems and offer prices are outside this diagram.",
+        "cardIds": [
+          "money",
+          "buy"
+        ],
+        "edgeIds": [
+          "money__buy",
+          "buy__roll",
+          "buy__build",
+          "buy__open"
+        ]
+      },
+      {
+        "id": "store",
+        "title": "MONOPOLY GO! developer description",
+        "url": "https://apps.apple.com/us/app/monopoly-go/id1621328561",
+        "publisher": "Scopely / App Store",
+        "kind": "Developer",
+        "note": "Developer copy corroborates dice-driven cash rewards, bank heists, property building, sticker trading and events. Customer reviews are not used.",
+        "cardIds": [
+          "roll",
+          "cash",
+          "rail",
+          "build",
+          "events",
+          "trade"
+        ],
+        "edgeIds": [
+          "roll__cash",
+          "roll__rail",
+          "rail__build",
+          "roll__events"
+        ]
+      },
+      {
+        "id": "dice",
+        "title": "Dice Rolls",
+        "url": "https://support.monopolygo.com/article/cd011724-2189-402a-b311-0c9e708e9d72",
+        "publisher": "Scopely",
+        "kind": "Developer",
+        "note": "Current official support, read through the browser: rolls regenerate below a cap and come from board completion, events, tasks and purchases. Multipliers spend more rolls for multiplied eligible rewards; they do not improve landing odds.",
+        "cardIds": [
+          "regenerate",
+          "roll",
+          "next",
+          "packs"
+        ],
+        "edgeIds": [
+          "regenerate__roll",
+          "next__roll",
+          "packs__roll",
+          "roll__events",
+          "roll__quick"
+        ]
+      }
+    ],
+    "interpretations": [
+      {
+        "cardIds": [
+          "empire"
+        ],
+        "edgeIds": [
+          "next__empire"
+        ],
+        "note": "Grow a landmark empire is an interpretation of player value, not a spendable currency or guaranteed outcome."
+      },
+      {
+        "cardIds": [
+          "collection"
+        ],
+        "edgeIds": [
+          "album__collection"
+        ],
+        "note": "Complete a collection is an interpretation of player value, not a spendable currency or guaranteed outcome."
+      }
+    ]
+  }
+}

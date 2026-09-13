@@ -1,0 +1,130 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "economy-flow-dev",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-09-13",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"],
+  },
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1,
+  },
+  "vars": {
+    "ENVIRONMENT": "development",
+    "APP_URL": "http://127.0.0.1:5173",
+    "SUPABASE_URL": "",
+    "SUPABASE_ANON_KEY": "",
+    "SLACK_CLIENT_ID": "",
+    "GEMINI_MODEL": "gemini-3.5-flash",
+    "OPENAI_MODEL": "gpt-5-mini",
+    "CLAUDE_MODEL": "claude-sonnet-5",
+  },
+  "workflows": [
+    {
+      "binding": "RESEARCH",
+      "name": "economy-flow-research-dev",
+      "class_name": "ResearchWorkflow",
+    },
+    {
+      "binding": "SLACK_SEND",
+      "name": "economy-flow-slack-dev",
+      "class_name": "SlackSendWorkflow",
+    },
+  ],
+  "triggers": {
+    "crons": ["17 * * * *"],
+  },
+  "env": {
+    "staging": {
+      "name": "economy-flow-staging",
+      "vars": {
+        "ENVIRONMENT": "staging",
+        "APP_URL": "https://economy-flow-staging.twig-transcripts-mcp.workers.dev",
+        "SUPABASE_URL": "",
+        "SUPABASE_ANON_KEY": "",
+        "SLACK_CLIENT_ID": "",
+        "GEMINI_MODEL": "gemini-3.5-flash",
+        "OPENAI_MODEL": "gpt-5-mini",
+        "CLAUDE_MODEL": "claude-sonnet-5",
+      },
+      "workflows": [
+        {
+          "binding": "RESEARCH",
+          "name": "economy-flow-research-staging",
+          "class_name": "ResearchWorkflow",
+        },
+        {
+          "binding": "SLACK_SEND",
+          "name": "economy-flow-slack-staging",
+          "class_name": "SlackSendWorkflow",
+        },
+      ],
+      "triggers": {
+        "crons": ["17 * * * *"],
+      },
+      "ratelimits": [
+        {
+          "name": "EVENT_LIMIT",
+          "namespace_id": "1000130901",
+          "simple": {
+            "limit": 60,
+            "period": 60,
+          },
+        },
+      ],
+    },
+    "production": {
+      "name": "economy-flow",
+      "vars": {
+        "ENVIRONMENT": "production",
+        "APP_URL": "https://flow.gameeconomistconsulting.com",
+        "SUPABASE_URL": "",
+        "SUPABASE_ANON_KEY": "",
+        "SLACK_CLIENT_ID": "",
+        "GEMINI_MODEL": "gemini-3.5-flash",
+        "OPENAI_MODEL": "gpt-5-mini",
+        "CLAUDE_MODEL": "claude-sonnet-5",
+      },
+      "workflows": [
+        {
+          "binding": "RESEARCH",
+          "name": "economy-flow-research",
+          "class_name": "ResearchWorkflow",
+        },
+        {
+          "binding": "SLACK_SEND",
+          "name": "economy-flow-slack",
+          "class_name": "SlackSendWorkflow",
+        },
+      ],
+      "triggers": {
+        "crons": ["17 * * * *"],
+      },
+      "ratelimits": [
+        {
+          "name": "EVENT_LIMIT",
+          "namespace_id": "1000130902",
+          "simple": {
+            "limit": 60,
+            "period": 60,
+          },
+        },
+      ],
+    },
+  },
+  "ratelimits": [
+    {
+      "name": "EVENT_LIMIT",
+      "namespace_id": "1000130900",
+      "simple": {
+        "limit": 60,
+        "period": 60,
+      },
+    },
+  ],
+}
