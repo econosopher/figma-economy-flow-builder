@@ -1,3 +1,28 @@
+# Hosted MCP implementation and public catalog: 14 September 2026
+
+The source adds the Cloudflare Streamable HTTP MCP endpoint, stable-ID atomic edits, revision and retry protection, shared previews, scoped account consent, repository-only GitHub App contribution flow, and a manifest-driven preset bundle. The public browsing UI defaults to Most viewed, pins the starter, and supports server search, pagination and sorting. Personal diagrams keep their recent-edit order.
+
+Staging and production serve the verified build. Account services are not activated: MCP returns 503, view counts display as unavailable, and public browsing falls back to deterministic title/ID ordering. No historical counts were invented. No credentials were supplied to Netlify.
+
+## Verified
+
+- 95 automated tests passed, including actual PGlite RLS isolation, scoped OAuth policy enforcement and revocation, atomic edits, revisions, idempotency, analytics deduplication, privacy, moderation, and ranking before pagination. Type checking and the production build passed.
+- GitHub App contribution tests verify exact JSON/manifest changes, restricted paths, unchanged main, and recovery from duplicate or uncertain submissions against a mocked GitHub API. MCP initialization and tools/list use the actual SDK with mocked authentication.
+- Final staging passed 12 public-catalog browser checks and all 22 direct-canvas checks, including keyboard access, recovery and rapid dragging without old-position frames. The updated research browser runner also passed all 37 checks against the local production build.
+- The shared browser renderer produced identical SVG and PNG output to the editor pipeline for Apex, Rainbow Six Siege, Dice Throne Digital and the anonymized routing fixture, with no routing errors. These local-browser parity tests do not establish live Cloudflare rendering-service access.
+- The 100-card/300-edge browser Worker fixture completed in 729 ms with no routing issues. A local database dump/restore test preserved data and RLS; live project backup restoration remains pending.
+- Public readback confirmed `main-slMr4qmE.js`, healthy production/configuration responses, the six-game catalog, disabled MCP and unavailable analytics.
+
+Staging Worker: `53bf54cd-2ea4-4bd1-8a59-434b6a265784`. Production Worker: `b594a5f9-29ca-451c-be6d-134aab72f84f`.
+
+## Activation gates
+
+Supabase sign-in is waiting at GitHub's provider consent screen in Aside. Separate staging/production projects, live migrations, the OAuth token hook, storage and Worker secrets still need activation. A repository-scoped GitHub App must be installed and configured. Codex has the direct production MCP URL registered but disabled until these checks pass.
+
+Real two-account OAuth connection/revocation, authenticated read/edit/preview/save through Codex, daily production counters, real preset pull requests, operational alert delivery and live backup restoration are not yet verified. GitHub Actions remains blocked by the account billing restriction; local checks are reported separately above. Slack and provider-backed research remain separate.
+
+---
+
 # Open-source website and visibility update: 14 September 2026
 
 The public GitHub source now includes the website, JSON presets, locked dependencies, credential-free CI and contributor/self-hosting documentation. A header link opens the source repository. The FigJam documentation remains under `docs/FIGJAM.md`.

@@ -1,17 +1,9 @@
 import { validateDocument, type EconomyDocument } from "./document";
-import gossip from "./researched/gossip_harbor.json";
-import royal from "./researched/royal_match.json";
-import monopoly from "./researched/monopoly_go.json";
-import wow from "./researched/world_of_warcraft.json";
-import warzone from "./researched/warzone.json";
-import apex from "./researched/apex_legends.json";
-// Explicit public allowlist. Archived examples and private fixtures stay private.
-export const presets = [gossip, royal, monopoly, wow, warzone, apex].map(
-  (data) => ({
-    id: data.id,
-    document: validateDocument(data),
-  }),
-);
+import { presetDocuments } from "./presets.generated";
+export const presets = presetDocuments.map((data) => ({
+  id: data.id,
+  document: validateDocument(data),
+}));
 export const starter: EconomyDocument = {
   schemaVersion: 3,
   id: "starter",

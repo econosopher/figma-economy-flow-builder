@@ -9,7 +9,9 @@ export function PresetTile({
   preview,
   onOpen,
   onSources,
+  views,
 }: {
+  views?: number | null;
   doc: EconomyDocument;
   preview: ReactNode;
   onOpen: () => void;
@@ -30,6 +32,13 @@ export function PresetTile({
               "Start with a simple, editable economy loop."}
           </p>
           <p>{presetDescription(doc)}</p>
+          {views !== undefined && (
+            <p>
+              {views === null
+                ? "Views unavailable"
+                : `${views.toLocaleString()} views`}
+            </p>
+          )}
           <span>
             {doc.research?.category ?? "START HERE"}
             <ArrowRight size={15} />

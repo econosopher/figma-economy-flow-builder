@@ -1,3 +1,5 @@
+import { PublicCatalog } from "./components/PublicCatalog";
+import { recordDiagramView } from "./lib/api";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ReactFlowProvider, type Connection } from "@xyflow/react";
 import {
@@ -33,7 +35,7 @@ import { textEditKey } from "./core/history";
 import { Canvas, type Selection } from "./components/Canvas";
 import { ResourceDrawer, type ResourceKind } from "./components/DirectEditing";
 import { Inspector } from "./components/Inspector";
-import { PresetSources, PresetTile } from "./components/PresetSources";
+import { PresetSources } from "./components/PresetSources";
 import { Modal } from "./components/Modal";
 import { ShareDialog } from "./components/ShareDialog";
 import { ResearchDialog } from "./components/ResearchDialog";
@@ -54,7 +56,7 @@ import {
   measureHeadings,
   type Layout,
 } from "./core/layout";
-import { starter, presets, presetDescription } from "./core/presets";
+import { starter, presetDescription } from "./core/presets";
 import {
   api,
   ApiError,
@@ -86,13 +88,7 @@ type RemoteDocument = {
   updated_at: string;
   is_preset: boolean;
 };
-type GalleryItem = {
-  id: string;
-  title: string;
-  description: string;
-  author: string;
-  thumbnail_path?: string;
-};
+
 function initial() {
   try {
     const id = localStorage.getItem(`${storagePrefix}last:guest`);
@@ -135,12 +131,12 @@ function Editor() {
     [toast, setToast] = useState("");
   const [localItems, setLocalItems] = useState<SavedDocument[]>([]),
     [remoteItems, setRemoteItems] = useState<RemoteDocument[]>([]),
-    [gallery, setGallery] = useState<GalleryItem[]>([]),
-    [galleryError, setGalleryError] = useState("");
+    [authCode, setAuthCode] = useState("");
   const [readonly, setReadonly] = useState(
       () =>
         new URLSearchParams(location.search).has("share") ||
-        new URLSearchParams(location.search).has("gallery"),
+        new URLSearchParams(location.search).has("gallery") ||
+        new URLSearchParams(location.search).has("document"),
     ),
     [publicLoading, setPublicLoading] = useState(readonly),
     [publicError, setPublicError] = useState(""),
@@ -164,6 +160,9 @@ function Editor() {
     past: EconomyDocument[];
     future: EconomyDocument[];
   }>({ past: [], future: [] });
+  const pendingView = useRef<{ itemId: string; documentId: string } | null>(
+    null,
+  );
   const docRef = useRef(doc);
   docRef.current = doc;
   const revisions = useRef(new Map<string, number>()),
@@ -172,6 +171,9 @@ function Editor() {
   const lastCommit = useRef(0);
   const lastEditKey = useRef<string | null>(null);
   const bootstrappedOwner = useRef("");
+  const requestedAccountDocument = useRef(
+    new URLSearchParams(location.search).get("document"),
+  );
   const owner = session?.user.id || "guest";
   const activeOwner = useRef(owner);
   activeOwner.current = owner;
@@ -214,7 +216,13 @@ function Editor() {
       share ? `/shared/${share}` : `/gallery/${publicId}`,
     )
       .then((r) => {
-        setDoc(validateDocument(r.snapshot));
+        const snapshot = validateDocument(r.snapshot);
+        if (publicId)
+          pendingView.current = {
+            itemId: `publication:${publicId}`,
+            documentId: snapshot.id,
+          };
+        setDoc(snapshot);
         setDirty(false);
         setFitKey((k) => k + 1);
       })
@@ -240,6 +248,13 @@ function Editor() {
       }
       setLayoutError("");
       setLayout(event.data.layout);
+      if (
+        pendingView.current?.documentId === docRef.current.id &&
+        !event.data.layout.issues.length
+      ) {
+        recordDiagramView(pendingView.current.itemId);
+        pendingView.current = null;
+      }
       if (event.data.layout.issues.length)
         reportEvent("route_failed", {
           cards: docRef.current.cards.length,
@@ -314,6 +329,7 @@ function Editor() {
   const openDocument = useCallback(
     (d: EconomyDocument, asCopy = true, cloudRevision?: number) => {
       const next = asCopy ? forkDocument(d) : validateDocument(d);
+      pendingView.current = null;
       history.current = { past: [], future: [] };
       lastCommit.current = 0;
       setDoc(next);
@@ -331,6 +347,7 @@ function Editor() {
       if (cloudRevision !== undefined)
         cloudRevisions.current.set(next.id, cloudRevision);
       window.history.replaceState(null, "", location.pathname);
+      return next.id;
     },
     [],
   );
@@ -489,6 +506,44 @@ function Editor() {
       .then(setRemoteItems)
       .catch((e) => notify(e.message));
   }, [session, readonly, notify]);
+  useEffect(() => {
+    const id = requestedAccountDocument.current;
+    if (!id || !config.cloud) return;
+    if (!session) {
+      setPublicLoading(false);
+      setPublicError("Sign in to open this account diagram.");
+      return;
+    }
+    let cancelled = false;
+    setPublicLoading(true);
+    setPublicError("");
+    void api<RemoteDocument>(
+      `/documents/${encodeURIComponent(id)}`,
+      {},
+      session.user.id,
+    )
+      .then((row) => {
+        if (cancelled) return;
+        const local = readSaved(id, session.user.id);
+        if (local?.pendingCloud) {
+          setPublicError(
+            "This browser has unsaved changes for this diagram. Open it from My diagrams to recover them.",
+          );
+          return;
+        }
+        requestedAccountDocument.current = null;
+        openDocument(row.document, false, row.revision);
+      })
+      .catch((e) => {
+        if (!cancelled) setPublicError(e.message);
+      })
+      .finally(() => {
+        if (!cancelled) setPublicLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [session, config.cloud, openDocument]);
   const undo = useCallback(() => {
     const previous = history.current.past.pop();
     if (!previous || readonly) return;
@@ -581,19 +636,12 @@ function Editor() {
   async function loadLibrary() {
     setModal("library");
     setLocalItems(listLocal(owner));
-    setGalleryError("");
     if (session)
       try {
         setRemoteItems(await api("/documents"));
       } catch (e) {
         notify(e instanceof Error ? e.message : "Cloud library unavailable.");
       }
-    try {
-      const r = await api<{ items: GalleryItem[] }>("/gallery");
-      setGallery(r.items);
-    } catch (e) {
-      setGalleryError(e instanceof Error ? e.message : "Gallery unavailable.");
-    }
   }
   const newCard = useCallback(
     (fromId?: string) => {
@@ -713,14 +761,6 @@ function Editor() {
     [commit, notify, selection],
   );
   const currentCount = layout.routes.filter((r) => !r.unresolved).length;
-  const libraryPresets = [
-    { id: "starter", document: starter },
-    ...presets,
-  ].filter((p) =>
-    `${p.document.name} ${p.document.research?.summary ?? ""} ${p.document.research?.category ?? ""}`
-      .toLowerCase()
-      .includes(search.toLowerCase()),
-  );
   const localFiltered = localItems.filter((i) =>
     i.document.name.toLowerCase().includes(search.toLowerCase()),
   );
@@ -822,6 +862,15 @@ function Editor() {
             title="Source code and JSON contributions"
           >
             <Code2 size={17} />
+          </a>
+          <a
+            className="text-button"
+            href={`${config.apiOrigin || ""}/connections`}
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Connect an AI client"
+          >
+            MCP
           </a>
           <button
             className="icon-button"
@@ -1214,19 +1263,6 @@ function Editor() {
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-          {libraryTab === "presets" && (
-            <div className="preset-grid">
-              {libraryPresets.map((p) => (
-                <PresetTile
-                  key={p.id}
-                  doc={p.document}
-                  preview={<Miniature doc={p.document} />}
-                  onOpen={() => openDocument(p.document)}
-                  onSources={() => setSourcesDocument(p.document)}
-                />
-              ))}
-            </div>
-          )}
           {libraryTab === "mine" && (
             <>
               <div className="library-note">
@@ -1308,71 +1344,39 @@ function Editor() {
               )}
             </>
           )}
-          {libraryTab === "gallery" && (
-            <>
-              {galleryError && <p className="error-box">{galleryError}</p>}
-              <div className="library-note">
-                Public snapshots you can explore and copy. Your own diagrams
-                autosave locally. New unlocked diagrams publish with account
-                saves; use the lock to keep them private.
-              </div>
-              <div className="preset-grid">
-                {gallery
-                  .filter((g) =>
-                    `${g.title} ${g.description}`
-                      .toLowerCase()
-                      .includes(search.toLowerCase()),
-                  )
-                  .map((g) => (
-                    <button
-                      className="preset-card"
-                      key={g.id}
-                      onClick={async () => {
-                        try {
-                          const r = await api<{ snapshot: unknown }>(
-                            `/gallery/${g.id}`,
-                          );
-                          setDoc(validateDocument(r.snapshot));
-                          setReadonly(true);
-                          setPublicationId(g.id);
-                          setDirty(false);
-                          setModal(null);
-                          setFitKey((k) => k + 1);
-                        } catch (e) {
-                          notify(
-                            e instanceof Error ? e.message : "Unable to open.",
-                          );
-                        }
-                      }}
-                    >
-                      <div className="preset-preview">
-                        {g.thumbnail_path ? (
-                          <img src={g.thumbnail_path} alt={g.title} />
-                        ) : (
-                          <Globe size={32} />
-                        )}
-                      </div>
-                      <div className="preset-info">
-                        <h3>{g.title}</h3>
-                        <p>By {g.author}</p>
-                        <span>
-                          COMMUNITY
-                          <ArrowRight size={15} />
-                        </span>
-                      </div>
-                    </button>
-                  ))}
-                {libraryPresets.map((p) => (
-                  <PresetTile
-                    key={`seed-${p.id}`}
-                    doc={p.document}
-                    preview={<Miniature doc={p.document} />}
-                    onOpen={() => openDocument(p.document)}
-                    onSources={() => setSourcesDocument(p.document)}
-                  />
-                ))}
-              </div>
-            </>
+          {libraryTab !== "mine" && (
+            <PublicCatalog
+              source={libraryTab === "presets" ? "preset" : "all"}
+              search={search}
+              onPreset={(document) => {
+                const documentId = openDocument(document);
+                if (document.id !== "starter")
+                  pendingView.current = {
+                    itemId: `preset:${document.id}`,
+                    documentId,
+                  };
+              }}
+              onSources={setSourcesDocument}
+              preview={(d) => <Miniature doc={d} />}
+              onCommunity={async (id) => {
+                try {
+                  const r = await api<{ snapshot: unknown }>(`/gallery/${id}`);
+                  const snapshot = validateDocument(r.snapshot);
+                  pendingView.current = {
+                    itemId: `publication:${id}`,
+                    documentId: snapshot.id,
+                  };
+                  setDoc(snapshot);
+                  setReadonly(true);
+                  setPublicationId(id);
+                  setDirty(false);
+                  setModal(null);
+                  setFitKey((k) => k + 1);
+                } catch (e) {
+                  notify(e instanceof Error ? e.message : "Unable to open.");
+                }
+              }}
+            />
           )}
         </Modal>
       )}
@@ -1520,17 +1524,45 @@ function Editor() {
                 onClick={async () => {
                   const r = await authClient()?.auth.signInWithOtp({
                     email,
-                    options: { emailRedirectTo: location.origin },
+                    options: {
+                      emailRedirectTo: config.apiOrigin || location.origin,
+                    },
                   });
                   setAuthMessage(
                     r?.error?.message ||
-                      "Check your email for your sign-in link.",
+                      "Check your email for your sign-in link or code. Enter the code here to keep editing this diagram.",
                   );
                 }}
               >
                 Send sign-in link
                 <ArrowRight size={15} />
               </button>
+              {config.cloud && authMessage && (
+                <div className="field">
+                  <label>
+                    Email sign-in code
+                    <input
+                      value={authCode}
+                      onChange={(e) => setAuthCode(e.target.value)}
+                      autoComplete="one-time-code"
+                    />
+                  </label>
+                  <button
+                    className="button"
+                    disabled={!authCode.trim()}
+                    onClick={async () => {
+                      const result = await authClient()?.auth.verifyOtp({
+                        email,
+                        token: authCode.trim(),
+                        type: "email",
+                      });
+                      if (result?.error) setAuthMessage(result.error.message);
+                    }}
+                  >
+                    Verify code
+                  </button>
+                </div>
+              )}
               {!config.cloud && (
                 <p className="helper">
                   Cloud accounts are not connected yet. Your diagrams save in

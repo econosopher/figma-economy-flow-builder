@@ -1,0 +1,13 @@
+{
+  "name": "Economy Flow Presets",
+  "url": "https://flow.gameeconomistconsulting.com",
+  "description": "Create reviewable JSON preset pull requests from authenticated Economy Flow contributors.",
+  "public": false,
+  "default_permissions": {
+    "contents": "write",
+    "pull_requests": "write",
+    "metadata": "read"
+  },
+  "default_events": [],
+  "hook_attributes": { "active": false }
+}

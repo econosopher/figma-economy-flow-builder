@@ -6,6 +6,7 @@ import type { AppEnv } from "../worker/env";
 import { blankDocument } from "../src/core/document";
 function environment(): AppEnv {
   return {
+    BROWSER: {} as AppEnv["BROWSER"],
     EVENT_LIMIT: { limit: vi.fn().mockResolvedValue({ success: true }) },
     ENVIRONMENT: "development",
     APP_URL: "https://flow.example.com",

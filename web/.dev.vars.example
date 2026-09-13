@@ -6,3 +6,12 @@ CREDENTIAL_ENCRYPTION_KEY=
 SLACK_CLIENT_SECRET=
 # Comma separated Supabase user UUIDs for gallery moderation.
 ADMIN_USER_IDS=
+
+# Direct Worker origin (never the Netlify gateway for authenticated traffic).
+API_ORIGIN=http://127.0.0.1:8787
+MCP_ENABLED=false
+VIEW_HASH_KEY=
+GITHUB_APP_ID=
+GITHUB_INSTALLATION_ID=
+# PKCS#8 PEM, injected from a credential manager.
+GITHUB_APP_PRIVATE_KEY=

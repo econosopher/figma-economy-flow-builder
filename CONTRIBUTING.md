@@ -12,12 +12,12 @@ Describe the user-visible change and your validation in the pull request. Includ
 
 1. Create a diagram in the website, or copy an existing JSON file from `web/src/core/researched/` as a structural reference.
 2. Choose **Edit JSON → Copy JSON** to copy the editable document. Save it as a `.json` file. Others can import it from disk or paste its contents into the editor without contributing code.
-3. To propose a bundled public preset, add the JSON under `web/src/core/researched/` and explicitly import it in `web/src/core/presets.ts`. Update the expected catalog and browser checks if the proposal changes the catalog.
+3. To propose a bundled public preset, add the JSON under `web/src/core/researched/` and add its stable `id` and filename to `web/src/core/presets.manifest.json`. Run `npm run presets:generate` inside `web/`; the generator includes only manifest-listed files.
 4. Use stable card and edge IDs. Stages run left to right; backward or same-stage pipes must have `feedback: true`. Final goods belong in the last stage. The validator is `web/src/core/document.ts`.
 5. For researched game presets, include `research`: scope, review date, linked sources, original card/edge mappings, interpretations and limitations. Cite evidence you actually reviewed. Avoid inventing reward quantities or treating purchases as guaranteed outcomes.
 6. Add the preset to the geometry regression coverage and run the checks. Inspect the editor and a full PNG for wrapping, collisions and readable pipes.
 
-The six bundled game presets are curated. A pull request proposes a catalog change; it does not automatically deploy it. Community gallery copies are separate from files committed to GitHub. Locking a diagram on the website cannot remove a copy you already committed to a public repository.
+The initial six bundled game presets are curated. New entries can be proposed through JSON-and-manifest pull requests or the hosted MCP described in `web/MCP.md`. A pull request proposes a catalog change; it does not automatically deploy it. Community gallery copies are separate from files committed to GitHub. Locking a diagram on the website cannot remove a copy you already committed to a public repository.
 
 ## Self-hosting
 

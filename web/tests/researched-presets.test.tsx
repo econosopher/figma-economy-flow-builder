@@ -12,8 +12,18 @@ import { PresetTile } from "../src/components/PresetSources";
 import { layoutDocument } from "../src/core/layout";
 
 describe("researched public catalog", () => {
-  it("contains exactly the chosen ordered lineup and three games per platform", () => {
-    expect(presets.map((p) => p.id)).toEqual([
+  const originals = presets.filter((p) =>
+    [
+      "gossip_harbor",
+      "royal_match",
+      "monopoly_go",
+      "world_of_warcraft",
+      "warzone",
+      "apex_legends",
+    ].includes(p.id),
+  );
+  it("retains the researched launch lineup while allowing new manifest contributions", () => {
+    expect(originals.map((p) => p.id)).toEqual([
       "gossip_harbor",
       "royal_match",
       "monopoly_go",
@@ -21,7 +31,7 @@ describe("researched public catalog", () => {
       "warzone",
       "apex_legends",
     ]);
-    expect(presets.map((p) => p.document.research!.category)).toEqual([
+    expect(originals.map((p) => p.document.research!.category)).toEqual([
       "Mobile",
       "Mobile",
       "Mobile",
@@ -31,7 +41,7 @@ describe("researched public catalog", () => {
     ]);
     expect(starter.research).toBeUndefined();
   });
-  for (const { document: d } of presets)
+  for (const { document: d } of originals)
     it(`accounts for every original card and relationship in ${d.name}`, () => {
       const r = d.research!;
       expect(d.cards.length).toBeGreaterThanOrEqual(15);

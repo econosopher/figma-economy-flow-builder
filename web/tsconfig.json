@@ -16,6 +16,7 @@
   "include": [
     "src",
     "worker",
+    "mcp",
     "tests",
     "vite.config.ts",
     "vitest.config.ts",

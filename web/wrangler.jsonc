@@ -8,8 +8,9 @@
     "directory": "./dist",
     "binding": "ASSETS",
     "not_found_handling": "single-page-application",
-    "run_worker_first": ["/api/*"],
+    "run_worker_first": ["/api/*", "/mcp", "/.well-known/*"],
   },
+  "browser": { "binding": "BROWSER" },
   "observability": {
     "enabled": true,
     "head_sampling_rate": 1,
@@ -42,9 +43,12 @@
   "env": {
     "staging": {
       "name": "economy-flow-staging",
+      "browser": { "binding": "BROWSER" },
       "vars": {
         "ENVIRONMENT": "staging",
         "APP_URL": "https://economy-flow-staging.twig-transcripts-mcp.workers.dev",
+        "API_ORIGIN": "https://economy-flow-staging.twig-transcripts-mcp.workers.dev",
+        "MCP_ENABLED": "false",
         "SUPABASE_URL": "",
         "SUPABASE_ANON_KEY": "",
         "SLACK_CLIENT_ID": "",
@@ -80,9 +84,12 @@
     },
     "production": {
       "name": "economy-flow",
+      "browser": { "binding": "BROWSER" },
       "vars": {
         "ENVIRONMENT": "production",
         "APP_URL": "https://flow.gameeconomistconsulting.com",
+        "API_ORIGIN": "https://economy-flow.twig-transcripts-mcp.workers.dev",
+        "MCP_ENABLED": "false",
         "SUPABASE_URL": "",
         "SUPABASE_ANON_KEY": "",
         "SLACK_CLIENT_ID": "",

@@ -1,6 +1,9 @@
 import { type SupabaseClient } from "@supabase/supabase-js";
 export interface AppConfig {
   cloud: boolean;
+  apiOrigin?: string;
+  mcp?: boolean;
+  mcpUrl?: string;
   supabaseUrl?: string;
   supabaseAnonKey?: string;
   slack: boolean;
@@ -8,14 +11,20 @@ export interface AppConfig {
   environment: string;
 }
 let client: SupabaseClient | null = null;
+let apiOrigin = "";
 export function authClient() {
   return client;
 }
-export async function initializeApi(): Promise<AppConfig> {
+let initialization: Promise<AppConfig> | undefined;
+export function initializeApi(): Promise<AppConfig> {
+  return (initialization ??= loadApi());
+}
+async function loadApi(): Promise<AppConfig> {
   try {
     const response = await fetch("/api/config");
     if (!response.ok) throw new Error();
     const config: AppConfig = await response.json();
+    apiOrigin = config.apiOrigin || "";
     if (config.cloud && config.supabaseUrl && config.supabaseAnonKey) {
       const { createClient } = await import("@supabase/supabase-js");
       client = createClient(config.supabaseUrl, config.supabaseAnonKey);
@@ -57,7 +66,10 @@ export async function api<T = Record<string, unknown>>(
     !(options.body instanceof FormData)
   )
     headers.set("Content-Type", "application/json");
-  const response = await fetch(`/api${path}`, { ...options, headers });
+  const response = await fetch(`${apiOrigin}/api${path}`, {
+    ...options,
+    headers,
+  });
   const data = await response
     .json()
     .catch(() => ({ error: "The server did not return a valid response." }));
@@ -86,4 +98,25 @@ export function reportEvent(
     body: JSON.stringify({ kind, ...counts }),
     keepalive: true,
   }).catch(() => {});
+}
+
+export function recordDiagramView(itemId: string) {
+  if (document.visibilityState !== "visible") return;
+  try {
+    let visitorId = localStorage.getItem("economy-flow:visitor");
+    if (!visitorId) {
+      visitorId = crypto.randomUUID();
+      localStorage.setItem("economy-flow:visitor", visitorId);
+    }
+    void initializeApi()
+      .then(() =>
+        api("/catalog/views", {
+          method: "POST",
+          body: JSON.stringify({ itemId, visitorId }),
+        }),
+      )
+      .catch(() => {});
+  } catch {
+    /* Browsing also works when storage is disabled. */
+  }
 }

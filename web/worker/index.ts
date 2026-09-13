@@ -1,3 +1,13 @@
+import { browseCatalog, recordView } from "./catalog";
+import { saveDocument, saveInput } from "./documents";
+import { handleMcp } from "../mcp/server";
+import {
+  protectedResource,
+  mcpUrl,
+  requireWebsiteSession,
+  requireCapability,
+} from "../mcp/auth";
+import { mcpAccountRoutes, cleanupMcp } from "../mcp/accounts";
 import { z } from "zod";
 import { validateDocument, settingsSchema } from "../src/core/document";
 import type { AppEnv } from "./env";
@@ -68,6 +78,9 @@ async function handle(request: Request, env: AppEnv): Promise<Response> {
   if (path === "/config")
     return json({
       cloud: cloudReady(env),
+      apiOrigin: env.API_ORIGIN || "",
+      mcp: env.MCP_ENABLED === "true" && cloudReady(env),
+      mcpUrl: mcpUrl(env),
       supabaseUrl: env.SUPABASE_URL,
       supabaseAnonKey: env.SUPABASE_ANON_KEY,
       slack:
@@ -84,6 +97,10 @@ async function handle(request: Request, env: AppEnv): Promise<Response> {
       environment: env.ENVIRONMENT,
       cloudConfigured: cloudReady(env),
     });
+  if (path === "/catalog" && method === "GET")
+    return json(await browseCatalog(env, Object.fromEntries(url.searchParams)));
+  if (path === "/catalog/views" && method === "POST")
+    return json(await recordView(env, request, await bodyJson(request, 2048)));
   if (path === "/gallery" && method === "GET") {
     if (!cloudReady(env)) return json({ items: [], configured: false });
     const items = await rest(
@@ -142,6 +159,9 @@ async function handle(request: Request, env: AppEnv): Promise<Response> {
   if (path === "/slack/callback" && method === "GET")
     return slackOAuthCallback(request, env);
   const user = await authenticate(request, env);
+  if (path.startsWith("/mcp/"))
+    return mcpAccountRoutes(request, env, user, path);
+  requireWebsiteSession(user);
   if (path === "/documents" && method === "GET")
     return json(
       await rest(
@@ -165,33 +185,19 @@ async function handle(request: Request, env: AppEnv): Promise<Response> {
       return json(rows[0]);
     }
     if (method === "PUT") {
-      const payload = z
-        .object({
-          document: z.unknown(),
-          expectedRevision: z.number().int().nonnegative(),
-          isPreset: z.boolean().default(false),
-        })
-        .parse(await bodyJson(request));
-      const document = validateDocument(payload.document);
-      if (document.id !== documentMatch[1])
+      const payload = saveInput.parse(await bodyJson(request));
+      if (
+        typeof payload.document !== "object" ||
+        payload.document === null ||
+        !("id" in payload.document) ||
+        payload.document.id !== documentMatch[1]
+      )
         throw new HttpError(400, "Diagram ID mismatch.");
       return json(
-        await rest(
-          env,
-          "rpc/save_document",
-          {
-            method: "POST",
-            body: JSON.stringify({
-              p_id: document.id,
-              p_document: document,
-              p_expected_revision: payload.expectedRevision,
-              p_is_preset: payload.isPreset,
-            }),
-          },
-          user.token,
-        ),
+        await saveDocument(env, user, { ...payload, operationId: undefined }),
       );
     }
+
     if (method === "DELETE") {
       await rest(
         env,
@@ -545,14 +551,59 @@ async function handle(request: Request, env: AppEnv): Promise<Response> {
   throw new HttpError(404, "Not found.");
 }
 export default {
-  async fetch(request: Request, env: AppEnv): Promise<Response> {
-    if (!new URL(request.url).pathname.startsWith("/api/"))
+  async fetch(
+    request: Request,
+    env: AppEnv,
+    ctx?: ExecutionContext,
+  ): Promise<Response> {
+    const pathname = new URL(request.url).pathname;
+    if (
+      !pathname.startsWith("/api/") &&
+      pathname !== "/mcp" &&
+      !pathname.startsWith("/.well-known/")
+    )
       return env.ASSETS.fetch(request);
+    const cors = (response: Response) => {
+      const origin = request.headers.get("Origin");
+      if (
+        origin &&
+        [env.APP_URL, env.API_ORIGIN, new URL(request.url).origin].includes(
+          origin,
+        )
+      ) {
+        response.headers.set("Access-Control-Allow-Origin", origin);
+        response.headers.set("Vary", "Origin");
+        response.headers.set(
+          "Access-Control-Allow-Methods",
+          "GET,POST,PUT,PATCH,DELETE,OPTIONS",
+        );
+        response.headers.set(
+          "Access-Control-Allow-Headers",
+          "Authorization,Content-Type,MCP-Protocol-Version,Mcp-Session-Id",
+        );
+        response.headers.set(
+          "Access-Control-Expose-Headers",
+          "WWW-Authenticate,Mcp-Session-Id",
+        );
+      }
+      return response;
+    };
     try {
-      const response = await handle(request, env);
+      if (request.method === "OPTIONS") {
+        requireSameOrigin(request, env);
+        return cors(new Response(null, { status: 204 }));
+      }
+      let response: Response;
+      if (pathname.startsWith("/.well-known/oauth-protected-resource"))
+        response = json(protectedResource(env));
+      else if (pathname === "/mcp") {
+        requireSameOrigin(request, env);
+        if (!ctx) throw new HttpError(503, "MCP runtime unavailable.");
+        response = await handleMcp(request, env, ctx);
+      } else response = await handle(request, env);
       response.headers.set("Cache-Control", "no-store");
       response.headers.set("X-Content-Type-Options", "nosniff");
-      return response;
+      return cors(response);
     } catch (error) {
       const status =
         error instanceof HttpError
@@ -576,7 +627,16 @@ export default {
             status,
           }),
         );
-      return json({ error: message }, status, { "Cache-Control": "no-store" });
+      return cors(
+        json({ error: message }, status, {
+          "Cache-Control": "no-store",
+          ...(pathname === "/mcp" && status === 401
+            ? {
+                "WWW-Authenticate": `Bearer resource_metadata="${env.API_ORIGIN || env.APP_URL}/.well-known/oauth-protected-resource"`,
+              }
+            : {}),
+        }),
+      );
     }
   },
   async scheduled(_event: ScheduledController, env: AppEnv) {
@@ -618,6 +678,11 @@ export default {
             : {}),
         }),
       });
+    }
+    try {
+      await cleanupMcp(env);
+    } catch {
+      console.error(JSON.stringify({ event: "mcp_cleanup_failed" }));
     }
     console.log(
       JSON.stringify({

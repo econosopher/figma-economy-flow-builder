@@ -1,0 +1,26 @@
+[
+  {
+    "id": "gossip_harbor",
+    "file": "gossip_harbor.json"
+  },
+  {
+    "id": "royal_match",
+    "file": "royal_match.json"
+  },
+  {
+    "id": "monopoly_go",
+    "file": "monopoly_go.json"
+  },
+  {
+    "id": "world_of_warcraft",
+    "file": "world_of_warcraft.json"
+  },
+  {
+    "id": "warzone",
+    "file": "warzone.json"
+  },
+  {
+    "id": "apex_legends",
+    "file": "apex_legends.json"
+  }
+]

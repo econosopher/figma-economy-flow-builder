@@ -6,8 +6,14 @@ import "@fontsource/inter/600.css";
 import "@xyflow/react/dist/style.css";
 import "./styles.css";
 import App from "./App";
+import { McpAccount } from "./components/McpAccount";
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <App />
+    {location.pathname === "/oauth/consent" ||
+    location.pathname === "/connections" ? (
+      <McpAccount />
+    ) : (
+      <App />
+    )}
   </StrictMode>,
 );

@@ -52,6 +52,12 @@ Slack requires OAuth, membership in the destination channel, an exact PNG previe
 
 Research uses only the user's supplied Gemini, OpenAI or Claude API key. The encrypted key stays in `job_credentials` and is read inside the provider step, never placed in a Workflow payload or log. Completion and cancellation delete it. Expiry prevents use after one hour; the scheduled cleanup removes expired rows. Results are validated and opened as a new draft, preserving the current diagram. Provider model IDs are deployment configuration, not funded fallback credentials.
 
+## MCP and popular diagrams
+
+The hosted MCP reads and edits account diagrams, validates JSON, renders private previews and submits preset pull requests. Both public browse tabs default to Most viewed, with the starter pinned. See [MCP.md](MCP.md) for tools, connection settings, OAuth activation, view-count semantics and operational checks.
+
+Authenticated browser API requests go directly to `API_ORIGIN`, bypassing the Netlify gateway. The backend remains disabled until its service configuration and live acceptance checks are complete.
+
 ## Deployments
 
 - Production: https://flow.gameeconomistconsulting.com
@@ -95,4 +101,4 @@ Automated tests cover public and anonymized private routing fixtures, long text/
 
 Local database backup/restore behavior is exercised with fixture data. A live Supabase backup restoration has not been verified. Before account release, enable the chosen backup policy, restore a backup to a dedicated isolated project, run `ops/restore-check.sql` and the two-account isolation checks, compare row counts and sample document hashes, and record the restore time. Database backups do not contain Storage object bytes; back up or regenerate published thumbnails separately. Keep integration jobs disabled in the restore target.
 
-See `DELIVERY.md` for the current live checks and remaining activation gates. The browser regression runners in `tests/browser/direct-canvas.js` and `tests/browser/researched-presets.js` run inside the approved Aside session and never sends Slack messages or consumes provider keys.
+See `DELIVERY.md` for the current live checks and remaining activation gates. The browser regression runners in `tests/browser/direct-canvas.js`, `tests/browser/public-catalog.js`, and `tests/browser/researched-presets.js` run inside the approved Aside session and never send Slack messages or consumes provider keys.

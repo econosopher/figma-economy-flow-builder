@@ -1,6 +1,6 @@
 # Economy Flow
 
-[Open the editor](https://flow.gameeconomistconsulting.com/) · [Contribute](CONTRIBUTING.md) · [Web setup and hosting](web/README.md) · [FigJam plugin](docs/FIGJAM.md)
+[Open the editor](https://flow.gameeconomistconsulting.com/) · [Contribute](CONTRIBUTING.md) · [Web setup and hosting](web/README.md) · [MCP tools](web/MCP.md) · [FigJam plugin](docs/FIGJAM.md)
 
 An open-source editor for game economy diagrams. Arrange actions, resources and final goods; the application handles spacing and orthogonal pipes. The website uses React, TypeScript, Vite and React Flow, with a Cloudflare Worker for hosting and APIs. The original FigJam plugin remains in this repository.
 
@@ -26,7 +26,13 @@ npm run build
 
 The six public game presets are ordinary [JSON files](web/src/core/researched/). Use **Edit JSON** in the website to open a JSON file or paste JSON copied from GitHub. Both the web v3 format and the plugin's v2 format are accepted. Review the import before opening a new editable copy.
 
-You can also export your own JSON, fork this repository and submit a pull request. [CONTRIBUTING.md](CONTRIBUTING.md) explains how to add a preset, cite its sources and run the geometry checks. The public catalog uses explicit imports so adding a private file to a checkout does not publish it.
+You can also export your own JSON, fork this repository and submit a pull request. [CONTRIBUTING.md](CONTRIBUTING.md) explains how to add a preset, cite its sources and run the geometry checks. The public catalog uses an explicit JSON manifest to generate imports, so adding a private file to a checkout does not publish it.
+
+## Browse and edit with an AI client
+
+Public browsing defaults to **Most viewed**, with the starter pinned and private diagrams kept in your recent-edit library. Counts become available when the Supabase backend is activated; offline browsing retains the bundled presets.
+
+The included hosted MCP can read, create, edit and validate JSON diagrams, render private SVG/PNG previews, and submit public preset pull requests. It uses account consent and the same revision and ownership checks as the website. See [MCP setup and tools](web/MCP.md).
 
 ## Saving and visibility
 
