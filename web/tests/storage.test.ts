@@ -1,7 +1,7 @@
 import { beforeEach, describe, it, expect, vi } from "vitest";
 import { blankDocument } from "../src/core/document";
 import { saveLocal, readSaved, listLocal } from "../src/lib/storage";
-import { initial } from "../src/App";
+import { editorRoute, initial } from "../src/App";
 class MemoryStorage {
   [key: string]: unknown;
   getItem(key: string) {
@@ -44,5 +44,34 @@ describe("local recovery and conflicts", () => {
     saveLocal(saved, 0);
     expect(initial().id).toBe(saved.id);
     expect(initial().name).toBe("Returning guest diagram");
+  });
+  it("honors explicit local and preset routes without replacing a saved guest document", () => {
+    const existing = { ...blankDocument(), name: "Existing guest diagram" };
+    const selected = { ...blankDocument(), name: "Explicit local diagram" };
+    saveLocal(existing, 0);
+    saveLocal(selected, 0);
+
+    expect(initial(`?local=${selected.id}`).id).toBe(selected.id);
+    expect(initial("?local=missing").id).toBe(selected.id);
+
+    const preset = initial("?preset=wardogs");
+    expect(preset.id).not.toBe("wardogs");
+    expect(preset.visibility).toBe("private");
+    expect(initial("?preset=missing").id).toBe(selected.id);
+  });
+  it("gives read-only snapshot and account routes precedence", () => {
+    expect(editorRoute("?preset=wardogs&local=one")).toEqual({
+      kind: "local",
+      id: "one",
+    });
+    expect(editorRoute("?gallery=published&preset=wardogs")).toEqual({
+      kind: "snapshot",
+    });
+    expect(editorRoute("?share=token&local=one")).toEqual({
+      kind: "snapshot",
+    });
+    expect(editorRoute("?document=mine&preset=wardogs")).toEqual({
+      kind: "account",
+    });
   });
 });

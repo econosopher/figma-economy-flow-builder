@@ -94,13 +94,44 @@ type RemoteDocument = {
   is_preset: boolean;
 };
 
-export function initial() {
+export type EditorRoute =
+  | { kind: "snapshot" }
+  | { kind: "account" }
+  | { kind: "local"; id: string }
+  | { kind: "preset"; id: string }
+  | { kind: "default" };
+
+export function editorRoute(search: string): EditorRoute {
+  const params = new URLSearchParams(search);
+  if (params.has("share") || params.has("gallery")) return { kind: "snapshot" };
+  if (params.has("document")) return { kind: "account" };
+  const local = params.get("local");
+  if (local) return { kind: "local", id: local };
+  const preset = params.get("preset");
+  if (preset) return { kind: "preset", id: preset };
+  return { kind: "default" };
+}
+
+function privateFork(document: EconomyDocument) {
+  return { ...forkDocument(document), visibility: "private" as const };
+}
+
+export function initial(search = globalThis.location?.search ?? "") {
+  const route = editorRoute(search);
   try {
+    if (route.kind === "local") {
+      const saved = readSaved(route.id);
+      if (saved) return saved.document;
+    }
+    if (route.kind === "preset") {
+      const preset = presets.find((entry) => entry.id === route.id);
+      if (preset) return privateFork(preset.document);
+    }
     const id = localStorage.getItem(`${storagePrefix}last:guest`);
     const saved = id && readSaved(id);
     if (saved) return saved.document;
   } catch {}
-  return forkDocument(
+  return privateFork(
     presets.find((preset) => preset.id === "wardogs")?.document || starter,
   );
 }
@@ -355,7 +386,11 @@ function Editor() {
       setHistoryTick((k) => k + 1);
       if (cloudRevision !== undefined)
         cloudRevisions.current.set(next.id, cloudRevision);
-      window.history.replaceState(null, "", location.pathname);
+      window.history.replaceState(
+        null,
+        "",
+        `${location.pathname}?local=${encodeURIComponent(next.id)}`,
+      );
       return next.id;
     },
     [],
