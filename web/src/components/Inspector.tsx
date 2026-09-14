@@ -104,6 +104,9 @@ export function Inspector({
               onChange={(e) =>
                 changeCard({
                   kind: e.target.value as Card["kind"],
+                  ...(e.target.value !== "initial_sink_node"
+                    ? { inputRole: undefined }
+                    : {}),
                   ...(e.target.value === "final_good"
                     ? { stageId: d.stages.at(-1)!.id }
                     : {}),
@@ -115,6 +118,25 @@ export function Inspector({
               <option value="final_good">Final good</option>
             </select>
           </label>
+          {card.kind === "initial_sink_node" && (
+            <label className="field">
+              Player input
+              <select
+                aria-label="Player input role"
+                value={card.inputRole || ""}
+                onChange={(e) =>
+                  changeCard({
+                    inputRole: (e.target.value ||
+                      undefined) as Card["inputRole"],
+                  })
+                }
+              >
+                <option value="">Choose time or money…</option>
+                <option value="time">Spend Time</option>
+                <option value="money">Spend Money</option>
+              </select>
+            </label>
+          )}
           <div className="field-pair">
             <label className="field">
               Stage
@@ -341,6 +363,24 @@ export function Inspector({
             <ArrowLeft size={14} />
             Return pipe
           </label>
+          {edge.feedback && (
+            <label className="field">
+              Feedback explanation
+              <input
+                aria-label="Feedback explanation"
+                value={edge.label}
+                placeholder="e.g. Reinvestment loop"
+                onChange={(e) =>
+                  onChange({
+                    ...d,
+                    edges: d.edges.map((p) =>
+                      p.id === edge.id ? { ...p, label: e.target.value } : p,
+                    ),
+                  })
+                }
+              />
+            </label>
+          )}
           <p className="helper">
             Return pipes travel outside the main flow. Each connection keeps its
             own track.

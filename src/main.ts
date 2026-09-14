@@ -6,6 +6,7 @@ import { generateDiagram } from './diagram-renderer';
 import { syncFromCanvas } from './sync';
 import { loadFonts, clear, reply } from './utils';
 import { validateGraphData } from './validation';
+import { checkEconomyConventions } from './economy-conventions';
 import {
   generateResearchCache,
   generateEconomyJSON,
@@ -181,7 +182,16 @@ figma.ui.onmessage = async (m: PluginMessage) => {
       const errors = validateGraphData(parsed as any);
 
       if (errors.length === 0) {
-        reply('JSON is valid.', true);
+        const readiness = checkEconomyConventions(parsed);
+        if (readiness.ready) {
+          reply('JSON is valid and ready for final Figma rendering.', true);
+        } else {
+          reply([
+            'JSON is structurally valid and can be kept as a draft.',
+            'Fix these conventions before final Figma rendering:',
+            ...readiness.violations.map(violation => `• ${violation.message}`)
+          ], false);
+        }
         return;
       }
 
@@ -352,6 +362,16 @@ figma.ui.onmessage = async (m: PluginMessage) => {
     }
 
     reply(errors, false);
+    return;
+  }
+
+  const readiness = checkEconomyConventions(data);
+  if (!readiness.ready) {
+    reply([
+      'Draft is structurally valid, but it is not ready for final Figma rendering:',
+      ...readiness.violations.map(violation => `• ${violation.message}`),
+      'Keep editing the JSON and run Validate to review the draft.'
+    ], false);
     return;
   }
 

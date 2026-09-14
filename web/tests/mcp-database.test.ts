@@ -25,6 +25,7 @@ beforeAll(async () => {
     "202609130001_economy_flow",
     "202609140001_diagram_visibility",
     "202609140002_mcp_catalog",
+    "202609140003_release_gate",
   ]) {
     await db.exec(
       readFileSync(

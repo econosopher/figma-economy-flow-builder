@@ -1,0 +1,123 @@
+{
+  "schemaVersion": 2,
+  "name": "Illustrative Economy (Not Researched)",
+  "stages": [
+    { "id": "inputs", "label": "Inputs" },
+    { "id": "play", "label": "Core Play" },
+    { "id": "rewards", "label": "Rewards" },
+    { "id": "reinvestment", "label": "Reinvestment" },
+    { "id": "outcomes", "label": "Outcomes" }
+  ],
+  "lanes": [
+    { "id": "core", "label": "Illustrative Core Loop" },
+    { "id": "premium", "label": "Illustrative Monetization" }
+  ],
+  "nodes": [
+    {
+      "id": "time",
+      "label": "Spend Time",
+      "stageId": "inputs",
+      "laneId": "core",
+      "kind": "initial_sink_node",
+      "inputRole": "time",
+      "sources": [],
+      "sinks": ["Player time"],
+      "values": [],
+      "notes": "Illustrative input, not a claim about a specific game."
+    },
+    {
+      "id": "money",
+      "label": "Spend Money",
+      "stageId": "inputs",
+      "laneId": "premium",
+      "kind": "initial_sink_node",
+      "inputRole": "money",
+      "sources": [],
+      "sinks": ["Real money"],
+      "values": [],
+      "notes": "Illustrative input, not a claim about a specific game."
+    },
+    {
+      "id": "mission",
+      "label": "Complete a Mission",
+      "stageId": "play",
+      "laneId": "core",
+      "kind": "action",
+      "sources": ["Coins", "Crafting materials"],
+      "sinks": ["Energy"],
+      "values": ["Player XP"],
+      "notes": "Illustrative mechanic."
+    },
+    {
+      "id": "collect",
+      "label": "Collect Rewards",
+      "stageId": "rewards",
+      "laneId": "core",
+      "kind": "action",
+      "sources": ["Coins", "Equipment"],
+      "sinks": [],
+      "values": [],
+      "notes": "Illustrative mechanic."
+    },
+    {
+      "id": "upgrade",
+      "label": "Upgrade Equipment",
+      "stageId": "reinvestment",
+      "laneId": "core",
+      "kind": "action",
+      "sources": [],
+      "sinks": ["Coins", "Crafting materials"],
+      "values": ["Power"],
+      "notes": "Illustrative mechanic."
+    },
+    {
+      "id": "purchase",
+      "label": "Buy Premium Currency",
+      "stageId": "play",
+      "laneId": "premium",
+      "kind": "action",
+      "sources": ["Gems"],
+      "sinks": ["Real money"],
+      "values": [],
+      "notes": "Illustrative mechanic."
+    },
+    {
+      "id": "cosmetics",
+      "label": "Choose Cosmetics",
+      "stageId": "reinvestment",
+      "laneId": "premium",
+      "kind": "action",
+      "sources": ["Cosmetics"],
+      "sinks": ["Gems"],
+      "values": [],
+      "notes": "Illustrative mechanic."
+    },
+    {
+      "id": "mastery",
+      "label": "Master the Game",
+      "stageId": "outcomes",
+      "laneId": "core",
+      "kind": "final_good",
+      "sources": [],
+      "sinks": [],
+      "values": ["Mastery", "Self-expression"],
+      "notes": "Illustrative player value."
+    }
+  ],
+  "edges": [
+    { "from": "time", "to": "mission", "type": "normal" },
+    { "from": "mission", "to": "collect", "type": "normal" },
+    { "from": "collect", "to": "upgrade", "type": "normal" },
+    { "from": "upgrade", "to": "mastery", "type": "final" },
+    { "from": "money", "to": "purchase", "type": "normal" },
+    { "from": "purchase", "to": "cosmetics", "type": "normal" },
+    { "from": "cosmetics", "to": "mastery", "type": "final" },
+    {
+      "from": "upgrade",
+      "to": "mission",
+      "type": "value",
+      "feedback": true,
+      "label": "Improved equipment"
+    }
+  ]
+}

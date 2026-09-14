@@ -11,6 +11,7 @@ import {
   deleteCard,
   type EconomyDocument,
 } from "../src/core/document";
+import { checkReleaseReadiness } from "../src/core/conventions";
 import {
   layoutDocument,
   measureCards,
@@ -211,7 +212,7 @@ describe("economy layout", () => {
     expect(next.edges.some((e) => e.from === id || e.to === id)).toBe(false);
     expect(d.cards.some((c) => c.id === id)).toBe(true);
   });
-  it("rejects dangling edges and implicit backwards pipes", () => {
+  it("rejects dangling edges but retains backwards pipes in drafts", () => {
     const d = examples[0].doc;
     expect(() =>
       validateDocument({
@@ -219,12 +220,15 @@ describe("economy layout", () => {
         edges: [{ id: "x", from: "missing", to: d.cards[0].id }],
       }),
     ).toThrow();
-    expect(() =>
-      validateDocument({
-        ...d,
-        edges: [{ id: "x", from: d.cards[0].id, to: d.cards[0].id }],
-      }),
-    ).toThrow("explicit return pipe");
+    const draft = validateDocument({
+      ...d,
+      edges: [{ id: "x", from: d.cards[0].id, to: d.cards[0].id }],
+    });
+    expect(checkReleaseReadiness(draft).violations).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: "forward_edge_order", edgeId: "x" }),
+      ]),
+    );
   });
   it("lays out 100 cards and 300 edges within one second", () => {
     const d = blankDocument();

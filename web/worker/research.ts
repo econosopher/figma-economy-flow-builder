@@ -171,7 +171,9 @@ export function parseResearch(text: string) {
     .trim()
     .replace(/^```(?:json)?\s*/, "")
     .replace(/\s*```$/, "");
-  return importDocument(JSON.parse(clean));
+  const imported = importDocument(JSON.parse(clean));
+  imported.document.visibility = "private";
+  return imported;
 }
 export class ResearchWorkflow extends WorkflowEntrypoint<
   AppEnv,

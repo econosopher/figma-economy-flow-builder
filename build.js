@@ -69,6 +69,7 @@ function hasSourceChanges() {
     'src/**/*.ts',
     'ui.html',
     'examples/**/*.json',
+    'templates.manifest.json',
     'manifest.json'
   ];
   
@@ -194,15 +195,45 @@ console.log(`📦 Using entry: ${path.relative(__dirname, entryPoints[0])}`);
 // Read ui.html content
 const uiHtml = fs.readFileSync(path.join(__dirname, 'ui.html'), 'utf-8');
 
-// Read examples
+// Bundle only explicitly released examples. Files outside the manifest remain
+// useful authoring references, but are not presented as approved defaults.
 const examplesDir = path.join(__dirname, 'examples');
+const releaseManifestPath = path.join(__dirname, 'templates.manifest.json');
+const releasedExamples = JSON.parse(fs.readFileSync(releaseManifestPath, 'utf8'));
+if (!Array.isArray(releasedExamples)) {
+  throw new Error('templates.manifest.json must be an array of example JSON filenames');
+}
+const checkerBuild = esbuild.buildSync({
+  entryPoints: [path.join(__dirname, 'src', 'economy-conventions.ts')],
+  bundle: true,
+  platform: 'node',
+  format: 'cjs',
+  write: false
+});
+const checkerModule = { exports: {} };
+new Function('module', 'exports', checkerBuild.outputFiles[0].text)(
+  checkerModule,
+  checkerModule.exports
+);
+const { checkEconomyConventions } = checkerModule.exports;
 const templates = {};
-fs.readdirSync(examplesDir).forEach(file => {
-  if (path.extname(file) === '.json') {
-    const templateName = path.basename(file, '.json');
-    const templateContent = fs.readFileSync(path.join(examplesDir, file), 'utf-8');
-    templates[templateName] = JSON.parse(templateContent);
+const releasedNames = new Set();
+releasedExamples.forEach(file => {
+  if (!/^[a-z0-9_-]+\.json$/.test(file) || releasedNames.has(file)) {
+    throw new Error(`Invalid or duplicate released example: ${file}`);
   }
+  releasedNames.add(file);
+  const templateName = path.basename(file, '.json');
+  const templateContent = fs.readFileSync(path.join(examplesDir, file), 'utf-8');
+  const template = JSON.parse(templateContent);
+  const readiness = checkEconomyConventions(template);
+  if (!readiness.ready) {
+    const details = readiness.violations
+      .map(violation => `[${violation.code}] ${violation.message}`)
+      .join('\n');
+    throw new Error(`Released example ${file} fails economy conventions:\n${details}`);
+  }
+  templates[templateName] = template;
 });
 
 // Load default config if it exists (from compiled dist)

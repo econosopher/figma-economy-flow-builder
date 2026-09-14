@@ -116,6 +116,7 @@ a {
 .document-heading {
   min-width: 140px;
   flex: 1;
+  position: relative;
 }
 .document-heading input {
   border: 0;
@@ -145,6 +146,81 @@ a {
 }
 .status-dot.warning {
   background: #d3903a;
+}
+.release-status {
+  margin-top: 3px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #7b887f;
+  font-size: 10px;
+}
+.release-status.ready {
+  color: #23724f;
+}
+.release-status.draft {
+  color: #9a6323;
+}
+.release-panel {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 12px);
+  left: 0;
+  width: min(430px, 70vw);
+  max-height: min(440px, 70vh);
+  overflow: auto;
+  padding: 14px;
+  background: white;
+  border: 1px solid #dfe5e0;
+  border-radius: 9px;
+  box-shadow: 0 12px 35px #21372a24;
+}
+.release-panel strong,
+.release-panel p {
+  display: block;
+  margin-bottom: 8px;
+}
+.release-panel button {
+  width: 100%;
+  border: 0;
+  border-top: 1px solid #edf0ed;
+  background: white;
+  padding: 9px 2px;
+  color: #5d685f;
+  text-align: left;
+  line-height: 1.4;
+}
+.release-panel button:hover {
+  color: #245b3e;
+  background: #f7f9f7;
+}
+.release-gate,
+.draft-backup-notice {
+  border: 1px solid #e5c99f;
+  border-radius: 8px;
+  background: #fff8ee;
+  color: #684b25;
+  padding: 12px;
+}
+.release-gate p {
+  margin-top: 5px;
+  line-height: 1.45;
+}
+.release-gate ul {
+  margin: 10px 0 0;
+  padding-left: 18px;
+  max-height: 210px;
+  overflow: auto;
+}
+.release-gate li + li {
+  margin-top: 6px;
+}
+.draft-backup-notice {
+  margin: 10px 0;
+  line-height: 1.45;
 }
 .header-actions {
   display: flex;

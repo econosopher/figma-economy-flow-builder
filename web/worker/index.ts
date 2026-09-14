@@ -10,6 +10,7 @@ import {
 import { mcpAccountRoutes, cleanupMcp } from "../mcp/accounts";
 import { z } from "zod";
 import { validateDocument, settingsSchema } from "../src/core/document";
+import { assertReleaseReady } from "../src/core/conventions";
 import type { AppEnv } from "./env";
 import {
   authenticate,
@@ -43,6 +44,16 @@ const researchRequest = z.object({
   depth: z.number().int().min(1).max(3),
   apiKey: z.string().min(20).max(1000),
 });
+function releaseDocument(input: unknown, status = 400) {
+  try {
+    return assertReleaseReady(validateDocument(input));
+  } catch (error) {
+    throw new HttpError(
+      status,
+      error instanceof Error ? error.message : "Diagram is not release ready.",
+    );
+  }
+}
 async function handle(request: Request, env: AppEnv): Promise<Response> {
   const url = new URL(request.url),
     path = url.pathname.slice(4),
@@ -103,23 +114,42 @@ async function handle(request: Request, env: AppEnv): Promise<Response> {
     return json(await recordView(env, request, await bodyJson(request, 2048)));
   if (path === "/gallery" && method === "GET") {
     if (!cloudReady(env)) return json({ items: [], configured: false });
-    const items = await rest(
+    const rows = await rest<
+      Array<{
+        id: string;
+        title: string;
+        description: string;
+        author: string;
+        thumbnail_path: string | null;
+        created_at: string;
+        snapshot: unknown;
+      }>
+    >(
       env,
-      "publications?hidden=eq.false&listed=eq.true&select=id,title,description,author,thumbnail_path,created_at&order=created_at.desc&limit=50",
-      {},
-      String(env.SUPABASE_ANON_KEY),
+      "publications?hidden=eq.false&listed=eq.true&select=id,title,description,author,thumbnail_path,created_at,snapshot&order=created_at.desc&limit=50",
     );
+    const items = rows.flatMap(({ snapshot, ...item }) => {
+      try {
+        releaseDocument(snapshot, 409);
+        return [item];
+      } catch {
+        return [];
+      }
+    });
     return json({ items });
   }
   const thumbnailMatch = path.match(/^\/gallery\/([a-f0-9-]{36})\/thumbnail$/);
   if (thumbnailMatch && method === "GET") {
-    const rows = await rest<{ owner_id: string }[]>(
+    const rows = await rest<{ owner_id: string; snapshot: unknown }[]>(
       env,
-      `publications?id=eq.${thumbnailMatch[1]}&hidden=eq.false&listed=eq.true&select=owner_id`,
-      {},
-      String(env.SUPABASE_ANON_KEY),
+      `publications?id=eq.${thumbnailMatch[1]}&hidden=eq.false&listed=eq.true&select=owner_id,snapshot`,
     );
     if (!rows[0]) throw new HttpError(404, "Thumbnail unavailable.");
+    try {
+      releaseDocument(rows[0].snapshot, 409);
+    } catch {
+      throw new HttpError(404, "Thumbnail unavailable.");
+    }
     const response = await fetch(
       `${env.SUPABASE_URL}/storage/v1/object/gallery-thumbnails/${rows[0].owner_id}/${thumbnailMatch[1]}.png`,
       {
@@ -137,13 +167,12 @@ async function handle(request: Request, env: AppEnv): Promise<Response> {
   }
   const galleryMatch = path.match(/^\/gallery\/([a-f0-9-]{36})$/);
   if (galleryMatch && method === "GET") {
-    const rows = await rest<unknown[]>(
+    const rows = await rest<Array<{ snapshot: unknown } & Record<string, unknown>>>(
       env,
       `publications?id=eq.${galleryMatch[1]}&hidden=eq.false&listed=eq.true`,
-      {},
-      String(env.SUPABASE_ANON_KEY),
     );
     if (!rows[0]) throw new HttpError(404, "This publication is unavailable.");
+    releaseDocument(rows[0].snapshot, 409);
     return json(rows[0]);
   }
   const shareMatch = path.match(/^\/shared\/([a-f0-9]{64})$/);
@@ -154,6 +183,7 @@ async function handle(request: Request, env: AppEnv): Promise<Response> {
     );
     if (!rows[0])
       throw new HttpError(404, "This link has expired or been revoked.");
+    releaseDocument(rows[0].snapshot, 409);
     return json(rows[0]);
   }
   if (path === "/slack/callback" && method === "GET")
@@ -248,7 +278,7 @@ async function handle(request: Request, env: AppEnv): Promise<Response> {
         ),
       );
     if (method === "POST") {
-      const document = validateDocument(await bodyJson(request));
+      const document = releaseDocument(await bodyJson(request));
       await rateLimit(env, user.id, "share_links", 30);
       const token = randomToken();
       const rows = await rest<{ id: string }[]>(env, "share_links", {
@@ -293,7 +323,7 @@ async function handle(request: Request, env: AppEnv): Promise<Response> {
         author: z.string().trim().min(1).max(100),
       })
       .parse(await bodyJson(request));
-    const document = validateDocument(payload.document);
+    const document = releaseDocument(payload.document);
     if (document.visibility !== undefined)
       throw new HttpError(
         400,

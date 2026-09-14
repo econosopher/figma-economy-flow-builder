@@ -8,8 +8,8 @@ import { presets, starter } from "../src/core/presets";
 import { initial } from "../src/App";
 
 describe("visibility compatibility", () => {
-  it("defaults new diagrams and preset copies to public", () => {
-    expect(blankDocument().visibility).toBe("public");
+  it("starts new diagrams private and retains the existing preset-copy default", () => {
+    expect(blankDocument().visibility).toBe("private");
     expect(forkDocument(starter).visibility).toBe("public");
   });
   it("does not opt legacy saved diagrams into automatic publication", () => {

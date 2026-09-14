@@ -7,10 +7,56 @@ import { V2Graph, V2Node } from './types';
 import { layoutV2Graph, routeV2Edges, V2_COMPACT_SIZE, V2LayoutResult, V2PositionedNode } from './v2-layout';
 import { hex, reply } from './utils';
 import { validateCustomColors } from './validation';
+import { checkEconomyConventions } from './economy-conventions';
 
 interface RenderedNode {
   sceneNode: SceneNode;
   connectorTarget: SceneNode;
+}
+
+function visibleFeedbackLabel(value: string): string {
+  const words = value.trim().split(/\s+/);
+  const lines: string[] = [];
+  let line = '';
+  words.forEach(originalWord => {
+    let word = originalWord;
+    if (word.length > 25) {
+      if (line) {
+        lines.push(line);
+        line = '';
+      }
+      while (word.length > 25) {
+        lines.push(word.slice(0, 25));
+        word = word.slice(25);
+      }
+      line = word;
+      return;
+    }
+    const next = line ? `${line} ${word}` : word;
+    if (next.length <= 25) line = next;
+    else {
+      if (line) lines.push(line);
+      line = word;
+    }
+  });
+  if (line) lines.push(line);
+  const visible = lines.slice(0, 3);
+  if (lines.length > 3) visible[2] = `${visible[2].slice(0, 24).trim()}…`;
+  return visible.join('\n');
+}
+
+function feedbackLabelPoint(points: Array<{ x: number; y: number }>) {
+  let point = points[Math.floor(points.length / 2)];
+  let longest = -1;
+  for (let index = 0; index < points.length - 1; index++) {
+    const from = points[index], to = points[index + 1];
+    const horizontal = Math.abs(to.x - from.x);
+    if (Math.abs(to.y - from.y) < 0.5 && horizontal > longest) {
+      longest = horizontal;
+      point = { x: (from.x + to.x) / 2, y: from.y };
+    }
+  }
+  return point;
 }
 
 function resolveFinalGoodTarget(node: SceneNode): SceneNode {
@@ -164,15 +210,31 @@ function createConnectorLayer(
       const connector = createConnector(fromNode.connectorTarget, toNode.connectorTarget, {
         startMagnet: 'RIGHT',
         endMagnet: 'LEFT',
-        dashPattern: getEdgeDashPattern(route.edge.type),
+        dashPattern: getEdgeDashPattern(route.edge.type, route.edge.feedback),
         strokeColor: getEdgeStrokeColor(route.edge.type),
         strokeOpacity: getEdgeStrokeOpacity(route.edge.type),
         mode: 'deterministic'
       });
       connector.name = `${TAG} Connector: ${route.from} -> ${route.to}`;
       connector.setPluginData('economyFlowConnector', 'true');
+      connector.setPluginData('feedback', route.edge.feedback ? 'true' : 'false');
+      connector.setPluginData('label', route.edge.label || '');
       figma.currentPage.appendChild(connector);
       connectors.push(connector);
+
+      if (route.edge.feedback && route.edge.label && route.points.length > 1) {
+        const middle = feedbackLabelPoint(route.points);
+        const visibleLabel = visibleFeedbackLabel(route.edge.label);
+        const height = visibleLabel.split('\n').length * 16 + 14;
+        const feedbackLabel = makeBox(`↩ ${visibleLabel}`, 180, height, COLOR.MAIN_WHITE, 'LEFT');
+        feedbackLabel.x = middle.x - 90;
+        feedbackLabel.y = middle.y - height - 8;
+        feedbackLabel.name = `${TAG} Feedback: ${route.edge.label}`;
+        feedbackLabel.setPluginData('economyFlowFeedbackLabel', 'true');
+        feedbackLabel.setPluginData('edgeFrom', route.from);
+        feedbackLabel.setPluginData('edgeTo', route.to);
+        figma.currentPage.appendChild(feedbackLabel);
+      }
     } catch (error) {
       failedEdges.push(`Edge ${index}: ${(error as Error).message}`);
     }
@@ -193,7 +255,8 @@ function getEdgeStrokeOpacity(type?: string): number {
   return 1;
 }
 
-function getEdgeDashPattern(type?: string): number[] | undefined {
+function getEdgeDashPattern(type?: string, feedback?: boolean): number[] | undefined {
+  if (feedback) return [5, 4];
   if (type === 'final') return [10, 10];
   if (type === 'cross-lane') return [6, 4];
   return undefined;
@@ -249,6 +312,14 @@ export async function generateDiagram(
   customColorInput?: { [key: string]: string },
   options: { normalized?: boolean } = {}
 ) {
+  const readiness = checkEconomyConventions(data);
+  if (!readiness.ready) {
+    reply([
+      'Draft not rendered. Fix these economy conventions before final Figma rendering:',
+      ...readiness.violations.map(violation => `• ${violation.message}`)
+    ], false);
+    return;
+  }
   const colors = validateCustomColors(customColorInput);
   const layout = layoutV2Graph(data);
 

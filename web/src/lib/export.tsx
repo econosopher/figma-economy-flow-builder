@@ -2,6 +2,7 @@ import { reportEvent } from "./api";
 import { DiagramSvg } from "../components/DiagramSvg";
 import type { EconomyDocument } from "../core/document";
 import type { Layout } from "../core/layout";
+import { assertReleaseReady, checkReleaseReadiness } from "../core/conventions";
 import regularCss from "@fontsource/inter/400.css?raw";
 import mediumCss from "@fontsource/inter/500.css?raw";
 import semiboldCss from "@fontsource/inter/600.css?raw";
@@ -37,6 +38,7 @@ export async function svgBlob(
   layout: Layout,
   selection?: string[],
 ) {
+  assertReleaseReady(document);
   const { renderToStaticMarkup } = await import("react-dom/server");
   return new Blob(
     [
@@ -101,6 +103,32 @@ export function download(blob: Blob, name: string) {
 }
 export const filename = (name: string, ext: string) =>
   `${name.replace(/[^a-zA-Z0-9 _-]/g, "").trim() || "economy"}.${ext}`;
+
+export function draftBackupJson(document: EconomyDocument): string {
+  const readiness = checkReleaseReadiness(document);
+  const payload = readiness.ready
+    ? document
+    : {
+        ...document,
+        draftStatus: {
+          status: "draft-noncompliant",
+          message:
+            "Backup only. Fix the listed economy conventions before sharing, publishing, or final export.",
+          violations: readiness.violations,
+        },
+      };
+  return JSON.stringify(payload, null, 2);
+}
+
+export function draftBackupBlob(document: EconomyDocument): Blob {
+  return new Blob([draftBackupJson(document)], {
+    type: "application/json",
+  });
+}
+
+export function backupFilename(name: string, ext: string, ready: boolean) {
+  return filename(ready ? name : `${name} DRAFT-NONCOMPLIANT`, ext);
+}
 export async function copyPng(
   d: EconomyDocument,
   l: Layout,

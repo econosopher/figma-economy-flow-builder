@@ -43,15 +43,14 @@ describe('validateGraphData', () => {
     expect(errors.some(e => e.includes("'nonexistent' not found"))).toBe(true);
   });
 
-  it('detects cycles in edges', () => {
+  it('keeps cyclic convention failures structurally editable as drafts', () => {
     const graph = validGraph();
     graph.edges = [
       { from: 'time', to: 'play' },
       { from: 'play', to: 'time' }
     ];
 
-    const errors = validateGraphData(graph);
-    expect(errors.some(e => e.includes('cycle'))).toBe(true);
+    expect(validateGraphData(graph)).toEqual([]);
   });
 
   it('enforces snake_case ids', () => {

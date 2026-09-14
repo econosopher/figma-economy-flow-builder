@@ -103,6 +103,11 @@ describe("private evidence media", () => {
       id === mediaId ? image : null,
     );
     expect(exported.type).toBe("application/json");
+    const packageValue = JSON.parse(await exported.text());
+    expect(packageValue.release).toMatchObject({
+      status: "draft-noncompliant",
+    });
+    expect(packageValue.release.violations.length).toBeGreaterThan(0);
 
     const imported = new Map<string, Blob>();
     const result = await importEvidencePackageUsing(exported, async (blob) => {

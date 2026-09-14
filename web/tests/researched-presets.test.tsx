@@ -10,6 +10,7 @@ import {
 import { DiagramSvg } from "../src/components/DiagramSvg";
 import { PresetTile } from "../src/components/PresetSources";
 import { layoutDocument } from "../src/core/layout";
+import { checkReleaseReadiness } from "../src/core/conventions";
 
 describe("researched public catalog", () => {
   const preset = (id: string) => {
@@ -45,6 +46,17 @@ describe("researched public catalog", () => {
       "PC / console",
     ]);
     expect(starter.research).toBeUndefined();
+  });
+  it("keeps every bundled preset and the starter behind the economy convention gate", () => {
+    for (const { document } of presets)
+      expect(checkReleaseReadiness(document)).toEqual({
+        ready: true,
+        violations: [],
+      });
+    expect(checkReleaseReadiness(starter)).toEqual({
+      ready: true,
+      violations: [],
+    });
   });
   for (const { document: d } of originals)
     it(`accounts for every original card and relationship in ${d.name}`, () => {

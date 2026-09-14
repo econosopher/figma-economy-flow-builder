@@ -4,6 +4,8 @@ export interface Input {
   id: string; 
   label: string; 
   kind: 'initial_sink_node';
+  inputRole?: 'time' | 'money';
+  notes?: string;
 }
 
 export interface Act { 
@@ -52,6 +54,8 @@ export interface V2Node {
   sources?: string[];
   sinks?: string[];
   values?: string[];
+  notes?: string;
+  inputRole?: 'time' | 'money';
 }
 
 export type V2EdgeType = 'normal' | 'value' | 'final' | 'cross-lane';
@@ -60,6 +64,8 @@ export interface V2Edge {
   from: string;
   to: string;
   type?: V2EdgeType;
+  feedback?: boolean;
+  label?: string;
 }
 
 export interface V2Graph {

@@ -59,16 +59,39 @@ describe('v2 graph validation', () => {
     ]));
   });
 
-  it('rejects final goods outside the terminal stage', () => {
+  it('keeps convention violations structurally valid so they can be saved as drafts', () => {
     const graph: V2Graph = {
       ...validV2Graph,
       nodes: [
         { id: 'time', label: 'Spend Time', kind: 'initial_sink_node', stageId: 'inputs', laneId: 'core' },
         { id: 'mastery', label: 'Mastery', kind: 'final_good', stageId: 'actions', laneId: 'core' }
       ],
-      edges: [{ from: 'time', to: 'mastery', type: 'final' }]
+      edges: [
+        { from: 'time', to: 'mastery', type: 'final' },
+        { from: 'mastery', to: 'time', feedback: true, label: 'Replay loop' }
+      ]
     };
 
-    expect(validateGraphData(graph)).toContain("Node 1: final_good nodes must use terminal stage 'outcomes'.");
+    expect(validateGraphData(graph)).toEqual([]);
+  });
+
+  it('validates typed v2 convention metadata', () => {
+    const graph: V2Graph = {
+      ...validV2Graph,
+      nodes: validV2Graph.nodes.map((node, index) => ({
+        ...node,
+        ...(index === 0 ? { inputRole: 'time' as const, notes: 'Player time' } : {}),
+      })),
+      edges: [
+        ...validV2Graph.edges,
+        { from: 'mastery', to: 'play', feedback: true, label: 'Prestige reset' },
+      ],
+    };
+
+    expect(validateGraphData(graph)).toEqual([]);
+    expect(validateGraphData({
+      ...graph,
+      nodes: [{ ...graph.nodes[0], inputRole: 'effort' }],
+    } as any)).toContain("Node 0: inputRole must be 'time' or 'money'.");
   });
 });

@@ -2,6 +2,7 @@ import puppeteer from "@cloudflare/puppeteer";
 import type { AppEnv } from "../worker/env";
 import { HttpError, rest, boundedBytes } from "../worker/helpers";
 import { validateDocument } from "../src/core/document";
+import { assertReleaseReady } from "../src/core/conventions";
 import { requireCapability, type McpIdentity } from "./auth";
 import type { RenderedDiagram } from "../src/render";
 
@@ -12,6 +13,14 @@ export async function renderDiagram(
 ) {
   await requireCapability(env, user, "read");
   const document = validateDocument(input);
+  try {
+    assertReleaseReady(document);
+  } catch (error) {
+    throw new HttpError(
+      400,
+      error instanceof Error ? error.message : "Diagram is not release ready.",
+    );
+  }
   if (!env.BROWSER)
     throw new HttpError(503, "Diagram rendering is not configured.");
   const allowed = await env.EVENT_LIMIT.limit({ key: `render:${user.id}` });

@@ -10,6 +10,8 @@ import {
 } from "../worker/helpers";
 import { requireCapability, requireWebsiteSession } from "./auth";
 import { tokenClaims } from "../worker/catalog";
+import { validateDocument } from "../src/core/document";
+import { assertReleaseReady } from "../src/core/conventions";
 
 export async function mcpAccountRoutes(
   request: Request,
@@ -21,10 +23,15 @@ export async function mcpAccountRoutes(
   if (artifact && request.method === "GET") {
     await requireCapability(env, user, "read");
     const rows = await rest<
-      { svg_path: string; png_path: string; client_id: string }[]
+      {
+        svg_path: string;
+        png_path: string;
+        client_id: string;
+        document: unknown;
+      }[]
     >(
       env,
-      `mcp_previews?id=eq.${artifact[1]}&owner_id=eq.${user.id}&expires_at=gt.${encodeURIComponent(new Date().toISOString())}`,
+      `mcp_previews?id=eq.${artifact[1]}&owner_id=eq.${user.id}&expires_at=gt.${encodeURIComponent(new Date().toISOString())}&select=svg_path,png_path,client_id,document`,
     );
     if (
       !rows[0] ||
@@ -32,6 +39,14 @@ export async function mcpAccountRoutes(
         rows[0].client_id !== tokenClaims(user.token).client_id)
     )
       throw new HttpError(404, "Preview expired or unavailable.");
+    try {
+      assertReleaseReady(validateDocument(rows[0].document));
+    } catch {
+      throw new HttpError(
+        409,
+        "This preview no longer meets the release conventions. Fix the draft and render it again.",
+      );
+    }
     const key = artifact[2] === "png" ? rows[0].png_path : rows[0].svg_path;
     const response = await fetch(
       `${env.SUPABASE_URL}/storage/v1/object/mcp-previews/${key}`,

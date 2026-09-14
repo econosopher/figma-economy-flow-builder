@@ -30,6 +30,7 @@ export const cardSchema = z.object({
   groupId: id,
   order: z.number().finite(),
   kind: z.enum(["action", "initial_sink_node", "final_good"]).default("action"),
+  inputRole: z.enum(["time", "money"]).optional(),
   sources: z.array(label).max(40).default([]),
   sinks: z.array(label).max(40).default([]),
   values: z.array(label).max(40).default([]),
@@ -165,17 +166,11 @@ export function validateDocument(input: unknown): EconomyDocument {
   for (const c of d.cards) {
     if (!stages.has(c.stageId) || !groups.has(c.groupId))
       throw new Error(`“${c.label}” needs an existing stage and group.`);
-    if (c.kind === "final_good" && c.stageId !== d.stages.at(-1)!.id)
-      throw new Error("Final goods belong in the last stage.");
   }
   for (const e of d.edges) {
     const a = cards.get(e.from),
       b = cards.get(e.to);
     if (!a || !b) throw new Error("A pipe refers to a missing card.");
-    if (!e.feedback && stages.get(a.stageId)! >= stages.get(b.stageId)!)
-      throw new Error(
-        `“${a.label}” → “${b.label}” needs an explicit return pipe.`,
-      );
   }
   if (d.evidence) {
     if(new Set(d.evidence.details.map(x=>x.cardId)).size !== d.evidence.details.length) throw new Error("Duplicate card details.");
@@ -190,8 +185,8 @@ export function cardFingerprint(d: EconomyDocument, cardId: string): string {
   const c = d.cards.find(c=>c.id === cardId);
   if(!c) return "";
   const edges = d.edges.filter(e=>e.from === cardId || e.to === cardId).map(({id: _id,...e})=>e).sort((a,b)=>JSON.stringify(a).localeCompare(JSON.stringify(b)));
-  const {label,kind,sources,sinks,values,notes} = c;
-  return JSON.stringify({label,kind,sources,sinks,values,notes,edges});
+  const {label,kind,inputRole,sources,sinks,values,notes} = c;
+  return JSON.stringify({label,kind,inputRole,sources,sinks,values,notes,edges});
 }
 export function evidenceNeedsReview(d: EconomyDocument,cardId: string): boolean {
   const detail = d.evidence?.details.find(x=>x.cardId === cardId);
@@ -209,13 +204,21 @@ const v2Schema = z.object({
       stageId: id,
       laneId: id.optional(),
       kind: z.string().optional(),
+      inputRole: z.enum(["time", "money"]).optional(),
       sources: z.array(label).optional(),
       sinks: z.array(label).optional(),
       values: z.array(label).optional(),
+      notes: z.string().max(3000).optional(),
     }),
   ),
   edges: z.array(
-    z.object({ from: id, to: id, type: edgeSchema.shape.type.optional() }),
+    z.object({
+      from: id,
+      to: id,
+      type: edgeSchema.shape.type.optional(),
+      feedback: z.boolean().optional(),
+      label: z.string().max(160).optional(),
+    }),
   ),
 });
 export function importDocument(input: unknown): {
@@ -250,19 +253,19 @@ export function importDocument(input: unknown): {
         n.kind === "initial_sink_node" || n.kind === "final_good"
           ? n.kind
           : "action",
-      notes: "",
+      notes: n.notes || "",
     })),
     edges: old.edges.map((e, i) => {
       const a = nodes.get(e.from),
         b = nodes.get(e.to);
-      const feedback = !!(
+      const feedback = e.feedback ?? !!(
         a &&
         b &&
         stageIndex.get(a.stageId)! >= stageIndex.get(b.stageId)!
       );
       if (feedback)
         notices.push(`${a!.label} → ${b!.label} will use a return track.`);
-      return { ...e, id: `pipe-${i}`, feedback };
+      return { ...e, id: `pipe-${i}`, feedback, label: e.label || "" };
     }),
     settings: defaultSettings,
   });
@@ -273,7 +276,7 @@ export function blankDocument(): EconomyDocument {
     schemaVersion: 3,
     id: uid(),
     name: "Untitled economy",
-    visibility: "public",
+    visibility: "private",
     stages: [
       { id: "invest", label: "Investment" },
       { id: "play", label: "Core play" },
@@ -281,7 +284,26 @@ export function blankDocument(): EconomyDocument {
       { id: "outcome", label: "Outcomes" },
     ],
     groups: [{ id: "core", label: "Core loop", color: "#f5f8f6" }],
-    cards: [],
+    cards: [
+      {
+        id: "spend_time",
+        label: "Spend Time",
+        stageId: "invest",
+        groupId: "core",
+        order: 0,
+        kind: "initial_sink_node",
+        inputRole: "time",
+      },
+      {
+        id: "spend_money",
+        label: "Spend Money",
+        stageId: "invest",
+        groupId: "core",
+        order: 1,
+        kind: "initial_sink_node",
+        inputRole: "money",
+      },
+    ],
     edges: [],
     settings: defaultSettings,
   });

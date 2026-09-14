@@ -1,10 +1,11 @@
 import { validateDocument, type EconomyDocument } from "./document";
+import { assertReleaseReady } from "./conventions";
 import { presetDocuments } from "./presets.generated";
 export const presets = presetDocuments.map((data) => ({
   id: data.id,
-  document: validateDocument(data),
+  document: assertReleaseReady(validateDocument(data)),
 }));
-export const starter: EconomyDocument = {
+export const starter: EconomyDocument = assertReleaseReady({
   schemaVersion: 3,
   id: "starter",
   name: "The everyday economy",
@@ -22,8 +23,9 @@ export const starter: EconomyDocument = {
   cards: [
     {
       id: "time",
-      label: "Invest time",
+      label: "Spend Time",
       kind: "initial_sink_node",
+      inputRole: "time",
       stageId: "invest",
       groupId: "core",
       order: 0,
@@ -82,8 +84,9 @@ export const starter: EconomyDocument = {
     },
     {
       id: "money",
-      label: "Spend money",
+      label: "Spend Money",
       kind: "initial_sink_node",
+      inputRole: "money",
       stageId: "invest",
       groupId: "premium",
       order: 0,
@@ -132,7 +135,7 @@ export const starter: EconomyDocument = {
     to,
     type: type as "normal" | "value" | "final",
     feedback: i === 7,
-    label: "",
+    label: i === 7 ? "Improved equipment" : "",
   })),
   settings: {
     actionHeader: "#000000",
@@ -144,7 +147,7 @@ export const starter: EconomyDocument = {
     sink: "#d15d44",
     value: "#ba8425",
   },
-};
+});
 export function presetDescription(d: EconomyDocument) {
   return `${d.cards.length} cards · ${d.groups.length} groups · ${d.edges.length} pipes`;
 }

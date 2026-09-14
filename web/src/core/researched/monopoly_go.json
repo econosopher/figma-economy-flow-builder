@@ -9,26 +9,30 @@
     },
     {
       "id": "s1",
-      "label": "Participation"
+      "label": "Access"
     },
     {
       "id": "s2",
-      "label": "Production"
+      "label": "Participation"
     },
     {
       "id": "s3",
-      "label": "Rewards"
+      "label": "Production"
     },
     {
       "id": "s4",
-      "label": "Reinvestment"
+      "label": "Rewards"
     },
     {
       "id": "s5",
-      "label": "Progression"
+      "label": "Reinvestment"
     },
     {
       "id": "s6",
+      "label": "Collection"
+    },
+    {
+      "id": "s7",
       "label": "Outcomes"
     }
   ],
@@ -51,9 +55,24 @@
   ],
   "cards": [
     {
+      "id": "time",
+      "label": "Spend Time",
+      "kind": "initial_sink_node",
+      "inputRole": "time",
+      "stageId": "s0",
+      "groupId": "g0",
+      "order": 0,
+      "sources": [],
+      "sinks": [
+        "Player time"
+      ],
+      "values": [],
+      "notes": ""
+    },
+    {
       "id": "regenerate",
       "label": "Replenish free rolls",
-      "stageId": "s0",
+      "stageId": "s1",
       "groupId": "g0",
       "order": 0,
       "kind": "action",
@@ -67,7 +86,7 @@
     {
       "id": "roll",
       "label": "Roll around the board",
-      "stageId": "s1",
+      "stageId": "s2",
       "groupId": "g0",
       "order": 0,
       "kind": "action",
@@ -83,7 +102,7 @@
     {
       "id": "cash",
       "label": "Collect cash tile rewards",
-      "stageId": "s2",
+      "stageId": "s3",
       "groupId": "g0",
       "order": 0,
       "kind": "action",
@@ -97,7 +116,7 @@
     {
       "id": "rail",
       "label": "Resolve a railroad encounter",
-      "stageId": "s2",
+      "stageId": "s3",
       "groupId": "g0",
       "order": 1,
       "kind": "action",
@@ -111,7 +130,7 @@
     {
       "id": "build",
       "label": "Build and upgrade landmarks",
-      "stageId": "s3",
+      "stageId": "s4",
       "groupId": "g0",
       "order": 0,
       "kind": "action",
@@ -128,7 +147,7 @@
     {
       "id": "next",
       "label": "Complete the board",
-      "stageId": "s4",
+      "stageId": "s5",
       "groupId": "g0",
       "order": 0,
       "kind": "action",
@@ -144,7 +163,7 @@
     {
       "id": "wheel",
       "label": "Complete property sets",
-      "stageId": "s4",
+      "stageId": "s5",
       "groupId": "g0",
       "order": 1,
       "kind": "action",
@@ -158,7 +177,7 @@
     {
       "id": "events",
       "label": "Progress events and tournaments",
-      "stageId": "s2",
+      "stageId": "s3",
       "groupId": "g1",
       "order": 0,
       "kind": "action",
@@ -172,7 +191,7 @@
     {
       "id": "quick",
       "label": "Complete Quick Wins",
-      "stageId": "s2",
+      "stageId": "s3",
       "groupId": "g1",
       "order": 1,
       "kind": "action",
@@ -186,7 +205,7 @@
     {
       "id": "packs",
       "label": "Claim event and task rewards",
-      "stageId": "s3",
+      "stageId": "s4",
       "groupId": "g1",
       "order": 0,
       "kind": "action",
@@ -201,7 +220,7 @@
     {
       "id": "open",
       "label": "Open sticker packs",
-      "stageId": "s4",
+      "stageId": "s5",
       "groupId": "g1",
       "order": 0,
       "kind": "action",
@@ -218,7 +237,7 @@
     {
       "id": "trade",
       "label": "Trade eligible duplicates",
-      "stageId": "s5",
+      "stageId": "s6",
       "groupId": "g1",
       "order": 0,
       "kind": "action",
@@ -234,7 +253,7 @@
     {
       "id": "vault",
       "label": "Exchange duplicate stars",
-      "stageId": "s5",
+      "stageId": "s6",
       "groupId": "g1",
       "order": 1,
       "kind": "action",
@@ -251,7 +270,7 @@
     {
       "id": "album",
       "label": "Complete sets and albums",
-      "stageId": "s5",
+      "stageId": "s6",
       "groupId": "g1",
       "order": 2,
       "kind": "action",
@@ -268,7 +287,7 @@
     },
     {
       "id": "money",
-      "label": "Spend money",
+      "label": "Spend Money",
       "stageId": "s0",
       "groupId": "g2",
       "order": 0,
@@ -278,7 +297,8 @@
         "Real money"
       ],
       "values": [],
-      "notes": ""
+      "notes": "",
+      "inputRole": "money"
     },
     {
       "id": "buy",
@@ -301,7 +321,7 @@
     {
       "id": "empire",
       "label": "Grow a landmark empire",
-      "stageId": "s6",
+      "stageId": "s7",
       "groupId": "g0",
       "order": 0,
       "kind": "final_good",
@@ -313,7 +333,7 @@
     {
       "id": "collection",
       "label": "Complete a collection",
-      "stageId": "s6",
+      "stageId": "s7",
       "groupId": "g1",
       "order": 0,
       "kind": "final_good",
@@ -555,6 +575,14 @@
       "type": "normal",
       "feedback": true,
       "label": "Event and task rolls"
+    },
+    {
+      "id": "time__regenerate",
+      "from": "time",
+      "to": "regenerate",
+      "type": "normal",
+      "feedback": false,
+      "label": "Regeneration time"
     }
   ],
   "settings": {
@@ -701,14 +729,16 @@
           "regenerate",
           "roll",
           "next",
-          "packs"
+          "packs",
+          "time"
         ],
         "edgeIds": [
           "regenerate__roll",
           "next__roll",
           "packs__roll",
           "roll__events",
-          "roll__quick"
+          "roll__quick",
+          "time__regenerate"
         ]
       }
     ],

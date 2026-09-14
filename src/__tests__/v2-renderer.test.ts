@@ -23,7 +23,8 @@ describe('v2 renderer layering', () => {
       ],
       lanes: [{ id: 'core', label: 'Core' }],
       nodes: [
-        { id: 'time', label: 'Spend Time', kind: 'initial_sink_node', stageId: 'inputs', laneId: 'core' },
+        { id: 'time', label: 'Spend Time', kind: 'initial_sink_node', inputRole: 'time', stageId: 'inputs', laneId: 'core' },
+        { id: 'money', label: 'Spend Money', kind: 'initial_sink_node', inputRole: 'money', notes: 'Not applicable: no purchases.', stageId: 'inputs', laneId: 'core' },
         { id: 'play', label: 'Play', stageId: 'actions', laneId: 'core' },
         { id: 'win', label: 'Win', kind: 'final_good', stageId: 'outcomes', laneId: 'core' }
       ],
@@ -64,9 +65,9 @@ describe('v2 renderer layering', () => {
         { id: 'premium', label: 'Premium', color: '#A78BFA' }
       ],
       nodes: [
-        { id: 'time', label: 'Spend Time', kind: 'initial_sink_node', stageId: 'inputs', laneId: 'core' },
+        { id: 'time', label: 'Spend Time', kind: 'initial_sink_node', inputRole: 'time', stageId: 'inputs', laneId: 'core' },
         { id: 'play', label: 'Play', stageId: 'actions', laneId: 'core' },
-        { id: 'money', label: 'Spend Money', kind: 'initial_sink_node', stageId: 'inputs', laneId: 'premium' },
+        { id: 'money', label: 'Spend Money', kind: 'initial_sink_node', inputRole: 'money', stageId: 'inputs', laneId: 'premium' },
         { id: 'shop', label: 'Shop', stageId: 'actions', laneId: 'premium' }
       ],
       edges: [
@@ -107,7 +108,8 @@ describe('v2 renderer layering', () => {
         { id: 'premium', label: 'Premium' }
       ],
       nodes: [
-        { id: 'time', label: 'Spend Time', kind: 'initial_sink_node', stageId: 'inputs', laneId: 'core' },
+        { id: 'time', label: 'Spend Time', kind: 'initial_sink_node', inputRole: 'time', stageId: 'inputs', laneId: 'core' },
+        { id: 'money', label: 'Spend Money', kind: 'initial_sink_node', inputRole: 'money', notes: 'Not applicable: no purchases.', stageId: 'inputs', laneId: 'premium' },
         { id: 'play', label: 'Play', stageId: 'actions', laneId: 'core' },
         { id: 'shop', label: 'Shop', stageId: 'actions', laneId: 'premium' },
         { id: 'win', label: 'Win', kind: 'final_good', stageId: 'outcomes', laneId: 'core' }
@@ -115,7 +117,8 @@ describe('v2 renderer layering', () => {
       edges: [
         { from: 'time', to: 'play', type: 'value' },
         { from: 'time', to: 'shop', type: 'cross-lane' },
-        { from: 'play', to: 'win', type: 'final' }
+        { from: 'play', to: 'win', type: 'final' },
+        { from: 'win', to: 'play', feedback: true, label: 'Prestige reset loop' }
       ]
     };
 
@@ -125,9 +128,33 @@ describe('v2 renderer layering', () => {
     const valueConnector = connectors.find(node => node.name.includes('time -> play'));
     const crossLaneConnector = connectors.find(node => node.name.includes('time -> shop'));
     const finalConnector = connectors.find(node => node.name.includes('play -> win'));
+    const feedbackConnector = connectors.find(node => node.name.includes('win -> play'));
 
     expect(valueConnector.strokes[0].color).toEqual({ r: 236 / 255, g: 159 / 255, b: 83 / 255 });
     expect(crossLaneConnector.strokes[0].color).toEqual({ r: 78 / 255, g: 121 / 255, b: 167 / 255 });
     expect(finalConnector.dashPattern).toEqual([10, 10]);
+    expect(feedbackConnector.dashPattern).toEqual([5, 4]);
+    const feedbackLabel = mockFigma.currentPage.findOne(
+      node => node.getPluginData('economyFlowFeedbackLabel') === 'true'
+    ) as any;
+    expect(feedbackLabel.text.characters).toContain('Prestige reset loop');
+  });
+
+  it('refuses direct final rendering for a convention-breaking draft', async () => {
+    const graph: V2Graph = {
+      schemaVersion: 2,
+      stages: [{ id: 'inputs', label: 'Inputs' }],
+      nodes: [
+        { id: 'time', label: 'Time', kind: 'initial_sink_node', stageId: 'inputs' },
+      ],
+      edges: [],
+    };
+
+    await generateDiagram(graph);
+
+    expect(mockFigma.currentPage.children).toHaveLength(0);
+    expect(mockFigma.ui.postMessage).toHaveBeenCalledWith(
+      expect.objectContaining({ ok: false }),
+    );
   });
 });

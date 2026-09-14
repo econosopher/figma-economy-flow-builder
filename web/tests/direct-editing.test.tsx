@@ -8,7 +8,12 @@ import {
   validateDocument,
 } from "../src/core/document";
 import { layoutDocument, tracksConflict, type Point } from "../src/core/layout";
-import { CardDrawing, DiagramDrawing } from "../src/components/DiagramSvg";
+import {
+  CardDrawing,
+  DiagramDrawing,
+  PipeDrawing,
+} from "../src/components/DiagramSvg";
+import { Inspector } from "../src/components/Inspector";
 
 function fixture() {
   const d = blankDocument();
@@ -219,5 +224,74 @@ describe("direct canvas editing", () => {
     );
     expect(svg.match(/marker-end=/g)).toHaveLength(1);
     expect(svg).not.toContain("card-control");
+  });
+  it("renders the explanation directly on a feedback pipe", () => {
+    const d = fixture();
+    const svg = renderToStaticMarkup(
+      <PipeDrawing
+        settings={d.settings}
+        route={{
+          edge: {
+            id: "return",
+            from: "c2",
+            to: "c1",
+            type: "normal",
+            feedback: true,
+            label: "Prestige reset",
+          },
+          points: [
+            { x: 200, y: 80 },
+            { x: 100, y: 80 },
+          ],
+          path: "M 200 80 L 100 80",
+          bridges: [],
+          unresolved: false,
+        }}
+      />,
+    );
+    expect(svg).toContain("↩ Prestige reset");
+    expect(svg).toContain("translate(150 80)");
+    expect(svg).toContain("Feedback: Prestige reset");
+  });
+  it("exposes typed input roles and feedback explanations in correction controls", () => {
+    const d = fixture();
+    d.cards[0] = {
+      ...d.cards[0],
+      kind: "initial_sink_node",
+      inputRole: "time",
+    };
+    d.edges = [
+      {
+        id: "return",
+        from: "c2",
+        to: "c1",
+        type: "normal",
+        feedback: true,
+        label: "Prestige reset",
+      },
+    ];
+    const cardInspector = renderToStaticMarkup(
+      <Inspector
+        document={d}
+        selection={{ kind: "card", id: "c0" }}
+        onChange={() => {}}
+        onDelete={() => {}}
+        onClose={() => {}}
+      />,
+    );
+    const edgeInspector = renderToStaticMarkup(
+      <Inspector
+        document={d}
+        selection={{ kind: "edge", id: "return" }}
+        onChange={() => {}}
+        onDelete={() => {}}
+        onClose={() => {}}
+      />,
+    );
+
+    expect(cardInspector).toContain("Player input role");
+    expect(cardInspector).toContain('value="time" selected=""');
+    expect(edgeInspector).toContain("Feedback explanation");
+    expect(edgeInspector).toContain('value="Prestige reset"');
   });
 });

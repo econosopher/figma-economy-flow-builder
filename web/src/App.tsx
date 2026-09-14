@@ -55,6 +55,7 @@ import {
   validateDocument,
   type EconomyDocument,
 } from "./core/document";
+import { checkReleaseReadiness } from "./core/conventions";
 import {
   layoutDocument,
   measureCards,
@@ -80,7 +81,13 @@ import {
   storagePrefix,
   type SavedDocument,
 } from "./lib/storage";
-import { download, filename, pngBlob } from "./lib/export";
+import {
+  backupFilename,
+  download,
+  draftBackupJson,
+  filename,
+  pngBlob,
+} from "./lib/export";
 const defaultConfig: AppConfig = {
   cloud: false,
   slack: false,
@@ -135,11 +142,47 @@ export function initial(search = globalThis.location?.search ?? "") {
     presets.find((preset) => preset.id === "wardogs")?.document || starter,
   );
 }
+
+export function accountBootstrap(
+  search: string,
+  routedDocument: EconomyDocument,
+  saved: SavedDocument | null,
+): {
+  document: EconomyDocument;
+  dirty: boolean;
+  cloudRevision?: number;
+  preservePresetRoute: boolean;
+} {
+  const route = editorRoute(search);
+  if (
+    route.kind === "preset" &&
+    presets.some((preset) => preset.id === route.id)
+  )
+    return {
+      document: routedDocument,
+      dirty: true,
+      preservePresetRoute: true,
+    };
+  if (saved)
+    return {
+      document: saved.document,
+      dirty: !!saved.pendingCloud,
+      cloudRevision: saved.cloudRevision,
+      preservePresetRoute: false,
+    };
+  return {
+    document: forkDocument(routedDocument),
+    dirty: true,
+    preservePresetRoute: false,
+  };
+}
 function Editor() {
   const [doc, setDoc] = useState<EconomyDocument>(initial),
     [layout, setLayout] = useState<Layout>(() => layoutDocument(doc)),
     [layoutBusy, setLayoutBusy] = useState(true),
     [layoutError, setLayoutError] = useState("");
+  const readiness = checkReleaseReadiness(doc);
+  const releaseReady = readiness.ready;
   const layoutWorker = useRef<Worker | null>(null),
     layoutRequest = useRef(0);
   const [selection, setSelection] = useState<Selection>(null),
@@ -147,7 +190,8 @@ function Editor() {
     [inspector, setInspector] = useState(false),
     [resourcesOpen, setResourcesOpen] = useState(false),
     [focusTarget, setFocusTarget] = useState<string | null>(null),
-    [fitKey, setFitKey] = useState(0);
+    [fitKey, setFitKey] = useState(0),
+    [readinessOpen, setReadinessOpen] = useState(false);
   const [sourcesDocument, setSourcesDocument] =
     useState<EconomyDocument | null>(null);
   const [evidenceCard, setEvidenceCard] = useState<string | null>(null);
@@ -185,6 +229,7 @@ function Editor() {
   const [pendingConnection, setPendingConnection] = useState<Connection | null>(
       null,
     ),
+    [feedbackLabel, setFeedbackLabel] = useState(""),
     [historyTick, setHistoryTick] = useState(0),
     [report, setReport] = useState(""),
     [moderation, setModeration] = useState<
@@ -210,6 +255,7 @@ function Editor() {
   const lastCommit = useRef(0);
   const lastEditKey = useRef<string | null>(null);
   const bootstrappedOwner = useRef("");
+  const startupSearch = useRef(location.search);
   const requestedAccountDocument = useRef(
     new URLSearchParams(location.search).get("document"),
   );
@@ -410,8 +456,12 @@ function Editor() {
     ) {
       setSaveState(
         session && existingLocal.cloudRevision
-          ? "Saved to your account"
-          : "Saved locally",
+          ? releaseReady
+            ? "Saved to your account"
+            : "Draft saved to your account"
+          : releaseReady
+            ? "Saved locally"
+            : "Draft saved locally",
       );
       return;
     }
@@ -438,7 +488,9 @@ function Editor() {
               {
                 method: "PUT",
                 body: JSON.stringify({
-                  document: doc,
+                  document: releaseReady
+                    ? doc
+                    : { ...doc, visibility: "private" },
                   expectedRevision: cloudRevisions.current.get(doc.id) || 0,
                   isPreset: !!saved.isPreset,
                 }),
@@ -470,9 +522,13 @@ function Editor() {
             setDirty(false);
             setSaveState(
               session && online
-                ? "Saved to your account"
+                ? releaseReady
+                  ? "Saved to your account"
+                  : "Draft saved to your account"
                 : online
-                  ? "Saved locally"
+                  ? releaseReady
+                    ? "Saved locally"
+                    : "Draft saved locally"
                   : "Offline · saved locally",
             );
           }
@@ -497,7 +553,17 @@ function Editor() {
       });
     }, 650);
     return () => clearTimeout(timer);
-  }, [doc, dirty, owner, session, online, readonly, conflict, notify]);
+  }, [
+    doc,
+    dirty,
+    owner,
+    session,
+    online,
+    readonly,
+    conflict,
+    notify,
+    releaseReady,
+  ]);
   useEffect(() => {
     const handler = (e: StorageEvent) => {
       if (e.key !== localKey(doc.id, owner) || !e.newValue) return;
@@ -528,14 +594,25 @@ function Editor() {
       `${storagePrefix}last:${session.user.id}`,
     );
     const saved = last ? readSaved(last, session.user.id) : null;
-    if (saved && !readonly) {
-      setDoc(saved.document);
-      if (saved.cloudRevision)
-        cloudRevisions.current.set(saved.document.id, saved.cloudRevision);
-      setDirty(!!saved.pendingCloud);
-    } else if (!readonly) {
-      setDoc(forkDocument(docRef.current));
-      setDirty(true);
+    if (!readonly) {
+      const bootstrap = accountBootstrap(
+        startupSearch.current,
+        docRef.current,
+        saved,
+      );
+      setDoc(bootstrap.document);
+      if (bootstrap.cloudRevision)
+        cloudRevisions.current.set(
+          bootstrap.document.id,
+          bootstrap.cloudRevision,
+        );
+      setDirty(bootstrap.dirty);
+      if (bootstrap.preservePresetRoute)
+        window.history.replaceState(
+          null,
+          "",
+          `${location.pathname}?local=${encodeURIComponent(bootstrap.document.id)}`,
+        );
     }
     void api<EconomyDocument["settings"] | null>(
       "/settings",
@@ -728,6 +805,7 @@ function Editor() {
         d.stages.findIndex((s) => s.id === a.stageId) >=
         d.stages.findIndex((s) => s.id === b.stageId)
       ) {
+        setFeedbackLabel("");
         setPendingConnection(c);
         return;
       }
@@ -840,30 +918,92 @@ function Editor() {
             )}{" "}
             {readonly ? "Read-only snapshot" : saveState}
           </span>
-          {!readonly && session && doc.evidence?.items.some((item) => item.mediaId) && (
-            <span className="save-status helper">
-              Local screenshots stay on this device.
-            </span>
+          <button
+            className={`release-status ${releaseReady ? "ready" : "draft"}`}
+            aria-expanded={readinessOpen}
+            onClick={() => setReadinessOpen((open) => !open)}
+          >
+            {releaseReady ? (
+              <CheckCircle2 size={12} />
+            ) : (
+              <span className="status-dot warning" />
+            )}
+            {releaseReady
+              ? "Ready to release"
+              : `Draft · ${readiness.violations.length} convention ${readiness.violations.length === 1 ? "fix" : "fixes"}`}
+          </button>
+          {readinessOpen && (
+            <div
+              className="release-panel"
+              role="dialog"
+              aria-label="Release readiness"
+            >
+              <strong>
+                {releaseReady
+                  ? "Release-ready"
+                  : "Fix before sharing or final export"}
+              </strong>
+              {releaseReady ? (
+                <p>This diagram follows the economy flow conventions.</p>
+              ) : (
+                readiness.violations.map((violation) => (
+                  <button
+                    key={`${violation.code}:${violation.cardId || violation.edgeId || violation.message}`}
+                    onClick={() => {
+                      if (violation.cardId)
+                        setSelection({ kind: "card", id: violation.cardId });
+                      else if (violation.edgeId)
+                        setSelection({ kind: "edge", id: violation.edgeId });
+                      if (violation.cardId || violation.edgeId) {
+                        setInspector(true);
+                        setResourcesOpen(false);
+                        setReadinessOpen(false);
+                      }
+                    }}
+                  >
+                    {violation.message}
+                  </button>
+                ))
+              )}
+            </div>
           )}
+          {!readonly &&
+            session &&
+            doc.evidence?.items.some((item) => item.mediaId) && (
+              <span className="save-status helper">
+                Local screenshots stay on this device.
+              </span>
+            )}
         </div>
         <div className="header-actions">
           {!readonly && (
             <button
               className="button visibility-control"
               aria-label={
-                doc.visibility === "public"
-                  ? "Make diagram private"
-                  : "Make diagram public"
+                !releaseReady
+                  ? "Diagram is a private draft"
+                  : doc.visibility === "public"
+                    ? "Make diagram private"
+                    : "Make diagram public"
               }
-              aria-pressed={doc.visibility !== "public"}
+              aria-pressed={!releaseReady || doc.visibility !== "public"}
               title={
-                doc.visibility === "public"
-                  ? session
-                    ? "Public gallery: edits publish with each account save. Click to make private."
-                    : "Local only. Will publish when saved to an account. Click to make private."
-                  : "Private. Click to publish with account saves."
+                !releaseReady
+                  ? "Draft saves are private until the release conventions are fixed."
+                  : doc.visibility === "public"
+                    ? session
+                      ? "Public gallery: edits publish with each account save. Click to make private."
+                      : "Local only. Will publish when saved to an account. Click to make private."
+                    : "Private. Click to publish with account saves."
               }
               onClick={() => {
+                if (doc.visibility !== "public" && !releaseReady) {
+                  setReadinessOpen(true);
+                  notify(
+                    "Fix the release conventions before making this diagram public.",
+                  );
+                  return;
+                }
                 const visibility =
                   doc.visibility === "public" ? "private" : "public";
                 // Privacy is not undone by canvas undo/redo.
@@ -888,17 +1028,19 @@ function Editor() {
                 );
               }}
             >
-              {doc.visibility === "public" ? (
+              {releaseReady && doc.visibility === "public" ? (
                 <LockKeyholeOpen size={15} />
               ) : (
                 <LockKeyhole size={15} />
               )}
               <span>
-                {doc.visibility === "public"
-                  ? session
-                    ? "Public"
-                    : "Public · local only"
-                  : "Private"}
+                {!releaseReady
+                  ? "Private draft"
+                  : doc.visibility === "public"
+                    ? session
+                      ? "Public"
+                      : "Public · local only"
+                    : "Private"}
               </span>
             </button>
           )}
@@ -942,7 +1084,12 @@ function Editor() {
           <span className="header-separator" />
           <button
             className="button"
-            disabled={layoutBusy || !!layoutError}
+            disabled={layoutBusy || !!layoutError || !releaseReady}
+            title={
+              releaseReady
+                ? "Download final PNG"
+                : "Fix release conventions before final export"
+            }
             onClick={() => void quickExport()}
           >
             <Download size={15} />
@@ -960,10 +1107,15 @@ function Editor() {
             <button
               className="button primary"
               disabled={layoutBusy || !!layoutError}
+              title={
+                releaseReady
+                  ? "Share or export this release-ready diagram"
+                  : "Download marked JSON or flowpack backups while this diagram is a draft"
+              }
               onClick={() => setModal("share")}
             >
-              <Share2 size={15} />
-              <span>Share</span>
+              {releaseReady ? <Share2 size={15} /> : <Download size={15} />}
+              <span>{releaseReady ? "Share" : "Backup"}</span>
             </button>
           )}
           <button
@@ -1057,7 +1209,7 @@ function Editor() {
               title="Edit JSON"
               aria-label="Edit JSON"
               onClick={() => {
-                setJsonText(JSON.stringify(doc, null, 2));
+                setJsonText(draftBackupJson(doc));
                 setImportPreview(null);
                 setModal("json");
               }}
@@ -1258,7 +1410,7 @@ function Editor() {
         {inspector && !readonly && (
           <Inspector
             document={doc}
-            selection={null}
+            selection={selection}
             onChange={commit}
             onClose={() => setInspector(false)}
             onDelete={() => remove()}
@@ -1460,7 +1612,7 @@ function Editor() {
                 try {
                   download(
                     await exportEvidencePackage(doc),
-                    `${filename(doc.name, "flowpack")}.json`,
+                    `${backupFilename(doc.name, "flowpack", releaseReady)}.json`,
                   );
                 } catch (error) {
                   notify(
@@ -1478,6 +1630,12 @@ function Editor() {
             <p className="helper">
               Account saves, shares, and ordinary JSON retain screenshot
               references only. Use the diagram package to move local images.
+            </p>
+          )}
+          {!releaseReady && (
+            <p className="draft-backup-notice" role="status">
+              Draft backup only. This package is marked noncompliant and cannot
+              be used as a final export until the release fixes are complete.
             </p>
           )}
           <textarea
@@ -1528,7 +1686,9 @@ function Editor() {
                     );
                     setImportPreview({
                       document: imported,
-                      notices: ["Screenshot attachments restored in this browser."],
+                      notices: [
+                        "Screenshot attachments restored in this browser.",
+                      ],
                     });
                   } else {
                     setImportPreview(importDocument(parsed));
@@ -1705,8 +1865,22 @@ function Editor() {
           description="This connection goes to an earlier or equal stage. It will use its own outside track."
           onClose={() => setPendingConnection(null)}
         >
+          <label className="field">
+            Feedback explanation
+            <input
+              autoFocus
+              value={feedbackLabel}
+              maxLength={160}
+              placeholder="e.g. Reinvest rewards for the next run"
+              onChange={(event) => setFeedbackLabel(event.target.value)}
+            />
+          </label>
+          <p className="helper">
+            This label stays visible on the outside return track.
+          </p>
           <button
             className="button primary full"
+            disabled={!feedbackLabel.trim()}
             onClick={() => {
               const c = pendingConnection;
               lastCommit.current = 0;
@@ -1720,11 +1894,12 @@ function Editor() {
                     to: c.target!,
                     feedback: true,
                     type: "value",
-                    label: "",
+                    label: feedbackLabel.trim(),
                   },
                 ],
               });
               setPendingConnection(null);
+              setFeedbackLabel("");
             }}
           >
             <ArrowLeft size={16} />

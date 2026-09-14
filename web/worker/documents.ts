@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { validateDocument, type EconomyDocument } from "../src/core/document";
+import { assertReleaseReady } from "../src/core/conventions";
 import { HttpError, rest, safeId, type Identity } from "./helpers";
 import type { AppEnv } from "./env";
 export interface DocumentRow {
@@ -34,6 +35,7 @@ export async function saveDocument(
   let document: EconomyDocument;
   try {
     document = validateDocument(input.document);
+    if (document.visibility === "public") assertReleaseReady(document);
   } catch (error) {
     throw new HttpError(
       400,

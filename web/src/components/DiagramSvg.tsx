@@ -135,6 +135,48 @@ export function CardDrawing({
 }
 export const pipeColor = (route: Route, s: Settings) =>
   route.edge.type === "value" ? s.value : "#89978f";
+function feedbackLabel(route: Route) {
+  const source = route.edge.label.trim();
+  const words = source.split(/\s+/);
+  const lines: string[] = [];
+  let line = "";
+  for (let word of words) {
+    if (word.length > 25) {
+      if (line) {
+        lines.push(line);
+        line = "";
+      }
+      while (word.length > 25) {
+        lines.push(word.slice(0, 25));
+        word = word.slice(25);
+      }
+      line = word;
+      continue;
+    }
+    const next = line ? `${line} ${word}` : word;
+    if (next.length <= 25) line = next;
+    else {
+      if (line) lines.push(line);
+      line = word;
+    }
+  }
+  if (line) lines.push(line);
+  const visible = lines.slice(0, 3);
+  if (lines.length > 3) visible[2] = `${visible[2].slice(0, 24).trimEnd()}…`;
+
+  let point = route.points[Math.floor(route.points.length / 2)];
+  let longest = -1;
+  for (let index = 0; index < route.points.length - 1; index++) {
+    const from = route.points[index],
+      to = route.points[index + 1];
+    const horizontal = Math.abs(to.x - from.x);
+    if (Math.abs(to.y - from.y) < 0.5 && horizontal > longest) {
+      longest = horizontal;
+      point = { x: (from.x + to.x) / 2, y: from.y };
+    }
+  }
+  return { lines: visible, point };
+}
 export function PipeDrawing({
   route,
   settings,
@@ -147,6 +189,9 @@ export function PipeDrawing({
   markerId?: string;
 }) {
   const color = selected ? "#b08716" : pipeColor(route, settings);
+  const label =
+    route.edge.feedback && route.edge.label ? feedbackLabel(route) : undefined;
+  const labelHeight = label ? label.lines.length * 13 + 12 : 0;
   return (
     <g>
       <defs>
@@ -181,6 +226,36 @@ export function PipeDrawing({
             : `url(#${markerId}-${route.edge.id})`
         }
       />
+      {label?.point && (
+        <g transform={`translate(${label.point.x} ${label.point.y})`}>
+          <title>{`Feedback: ${route.edge.label}`}</title>
+          <rect
+            x={-90}
+            y={-labelHeight - 8}
+            width={180}
+            height={labelHeight}
+            rx={5}
+            fill="white"
+            stroke={color}
+            strokeWidth={1}
+          />
+          {label.lines.map((line, index) => (
+            <text
+              key={index}
+              x={0}
+              y={-labelHeight + 9 + index * 13}
+              textAnchor="middle"
+              dominantBaseline="central"
+              fontFamily="Inter, Arial, sans-serif"
+              fontSize={10}
+              fontWeight={600}
+              fill={color}
+            >
+              {`${index === 0 ? "↩ " : ""}${line}`}
+            </text>
+          ))}
+        </g>
+      )}
     </g>
   );
 }

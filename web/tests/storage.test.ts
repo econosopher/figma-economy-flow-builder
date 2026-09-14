@@ -1,7 +1,12 @@
 import { beforeEach, describe, it, expect, vi } from "vitest";
 import { blankDocument } from "../src/core/document";
-import { saveLocal, readSaved, listLocal } from "../src/lib/storage";
-import { editorRoute, initial } from "../src/App";
+import {
+  listLocal,
+  readSaved,
+  saveLocal,
+  storagePrefix,
+} from "../src/lib/storage";
+import { accountBootstrap, editorRoute, initial } from "../src/App";
 class MemoryStorage {
   [key: string]: unknown;
   getItem(key: string) {
@@ -73,5 +78,39 @@ describe("local recovery and conflicts", () => {
     expect(editorRoute("?document=mine&preset=wardogs")).toEqual({
       kind: "account",
     });
+  });
+  it("keeps an explicit preset fork when an authenticated owner has a last document", () => {
+    const owner = "authenticated-owner";
+    const oldAccountDocument = {
+      ...blankDocument(),
+      name: "Old private account document",
+    };
+    const saved = saveLocal(oldAccountDocument, 0, owner);
+    localStorage.setItem(
+      `${storagePrefix}last:${owner}`,
+      oldAccountDocument.id,
+    );
+    const routedPreset = initial("?preset=wardogs");
+
+    const result = accountBootstrap(
+      "?preset=wardogs",
+      routedPreset,
+      readSaved(oldAccountDocument.id, owner),
+    );
+
+    expect(result.document.id).toBe(routedPreset.id);
+    expect(result.document.id).not.toBe(saved.document.id);
+    expect(result.document.name).not.toBe(oldAccountDocument.name);
+    expect(result.document.visibility).toBe("private");
+    expect(result.dirty).toBe(true);
+    expect(result.preservePresetRoute).toBe(true);
+
+    const invalid = accountBootstrap(
+      "?preset=missing",
+      routedPreset,
+      readSaved(oldAccountDocument.id, owner),
+    );
+    expect(invalid.document.id).toBe(oldAccountDocument.id);
+    expect(invalid.preservePresetRoute).toBe(false);
   });
 });

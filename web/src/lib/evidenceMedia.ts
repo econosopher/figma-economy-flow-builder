@@ -1,4 +1,5 @@
 import { validateDocument, type EconomyDocument } from "../core/document";
+import { checkReleaseReadiness } from "../core/conventions";
 
 const DATABASE_NAME = "economy-flow-evidence-media";
 const DATABASE_VERSION = 1;
@@ -30,6 +31,11 @@ interface EvidencePackage {
   version: typeof PACKAGE_VERSION;
   document: EconomyDocument;
   assets: EvidencePackageAsset[];
+  release: {
+    status: "ready" | "draft-noncompliant";
+    message: string;
+    violations: ReturnType<typeof checkReleaseReadiness>["violations"];
+  };
 }
 
 const mediaIdPattern = /^media-[0-9a-f]{64}$/;
@@ -325,6 +331,16 @@ export async function exportEvidencePackageUsing(
     version: PACKAGE_VERSION,
     document: validatedDocument,
     assets,
+    release: (() => {
+      const result = checkReleaseReadiness(validatedDocument);
+      return {
+        status: result.ready ? "ready" : "draft-noncompliant",
+        message: result.ready
+          ? "Release-ready economy diagram."
+          : "Backup only. Fix the listed economy conventions before sharing, publishing, or final export.",
+        violations: result.violations,
+      };
+    })(),
   };
   return new Blob([JSON.stringify(payload, null, 2)], {
     type: "application/json",
