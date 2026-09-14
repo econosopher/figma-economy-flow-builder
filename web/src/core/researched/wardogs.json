@@ -1,0 +1,914 @@
+{
+  "schemaVersion": 3,
+  "id": "wardogs",
+  "name": "WARDOGS — how teamwork pays",
+  "stages": [
+    {
+      "id": "s0",
+      "label": "Fund"
+    },
+    {
+      "id": "s1",
+      "label": "Commit"
+    },
+    {
+      "id": "s2",
+      "label": "Contribute"
+    },
+    {
+      "id": "s3",
+      "label": "Settle"
+    },
+    {
+      "id": "s4",
+      "label": "Carry forward"
+    }
+  ],
+  "groups": [
+    {
+      "id": "life",
+      "label": "01  Spend, contribute and carry cash forward",
+      "color": "#edf5f0"
+    },
+    {
+      "id": "team",
+      "label": "02  Services for teammates",
+      "color": "#eef3fa"
+    },
+    {
+      "id": "progress",
+      "label": "03  Access and commercial payments",
+      "color": "#f5f0fa"
+    }
+  ],
+  "cards": [
+    {
+      "id": "cash",
+      "label": "Use account cash",
+      "stageId": "s0",
+      "groupId": "life",
+      "order": 0,
+      "kind": "action",
+      "sources": [],
+      "sinks": [],
+      "values": [
+        "Persistent cash"
+      ],
+      "notes": "$10,000 opening grant. The same cash survives matches."
+    },
+    {
+      "id": "kit",
+      "label": "Buy a loadout",
+      "stageId": "s1",
+      "groupId": "life",
+      "order": 0,
+      "kind": "action",
+      "sources": [],
+      "sinks": [
+        "Vendor cash"
+      ],
+      "values": [
+        "Gear, ammunition, tools"
+      ],
+      "notes": "Pay for equipment now; unlock eligibility is separate."
+    },
+    {
+      "id": "death",
+      "label": "Die, respawn and re-equip",
+      "stageId": "s3",
+      "groupId": "life",
+      "order": 0,
+      "kind": "action",
+      "sources": [],
+      "sinks": [],
+      "values": [
+        "Next loadout decision"
+      ],
+      "notes": "Do not deduct the old kit twice. Refund trigger/rate unresolved."
+    },
+    {
+      "id": "carry",
+      "label": "Continue with the remaining cash",
+      "stageId": "s4",
+      "groupId": "life",
+      "order": 0,
+      "kind": "action",
+      "sources": [],
+      "sinks": [],
+      "values": [
+        "Same account cash"
+      ],
+      "notes": "Opening cash + credits − actual payments = closing cash."
+    },
+    {
+      "id": "revive",
+      "label": "Restore a teammate",
+      "stageId": "s0",
+      "groupId": "team",
+      "order": 0,
+      "kind": "action",
+      "sources": [
+        "System cash reward"
+      ],
+      "sinks": [
+        "Medical supplies / risk"
+      ],
+      "values": [
+        "Teammate resumes play"
+      ],
+      "notes": "Game pays for a revive; no fixed payout asserted."
+    },
+    {
+      "id": "zone",
+      "label": "Hold the Control / Hot Zone",
+      "stageId": "s2",
+      "groupId": "life",
+      "order": 0,
+      "kind": "action",
+      "sources": [
+        "Objective cash"
+      ],
+      "sinks": [
+        "Time and exposure"
+      ],
+      "values": [
+        "Team presence"
+      ],
+      "notes": "Hot Zone: double cash; developer also states double presence."
+    },
+    {
+      "id": "transport",
+      "label": "Deliver teammates",
+      "stageId": "s1",
+      "groupId": "team",
+      "order": 0,
+      "kind": "action",
+      "sources": [
+        "Transport reward"
+      ],
+      "sinks": [
+        "Vehicle / pilot risk"
+      ],
+      "values": [
+        "Teammates at the objective"
+      ],
+      "notes": "System rewards delivery; passengers are not assumed to pay a fare."
+    },
+    {
+      "id": "sale",
+      "label": "Sell stock to teammates",
+      "stageId": "s2",
+      "groupId": "team",
+      "order": 0,
+      "kind": "action",
+      "sources": [],
+      "sinks": [],
+      "values": [
+        "Buyer cash → seller",
+        "Stock → buyer"
+      ],
+      "notes": "Player transfer, not a new cash reward."
+    },
+    {
+      "id": "build",
+      "label": "Spend shared supplies",
+      "stageId": "s3",
+      "groupId": "team",
+      "order": 0,
+      "kind": "action",
+      "sources": [],
+      "sinks": [
+        "Build / Ammo / Fuel / Mechanical"
+      ],
+      "values": [
+        "Structures, rearm, repair"
+      ],
+      "notes": "Pallets feed shared FOB resources for building, rearming and repairs. Older UI; rates unresolved."
+    },
+    {
+      "id": "xp",
+      "label": "Earn Career and role XP",
+      "stageId": "s0",
+      "groupId": "progress",
+      "order": 0,
+      "kind": "action",
+      "sources": [
+        "Career / role XP"
+      ],
+      "sinks": [],
+      "values": [
+        "Progression thresholds"
+      ],
+      "notes": "XP is earned progress, not spendable cash."
+    },
+    {
+      "id": "unlock",
+      "label": "Pay for purchase eligibility",
+      "stageId": "s1",
+      "groupId": "progress",
+      "order": 0,
+      "kind": "action",
+      "sources": [],
+      "sinks": [
+        "Access-unlock cash"
+      ],
+      "values": [
+        "Persistent purchase access"
+      ],
+      "notes": "Large Hammer: Support 8; $75,000 access; $2,400 vendor."
+    },
+    {
+      "id": "commerce",
+      "label": "Buy game access / Supporter extras",
+      "stageId": "s3",
+      "groupId": "progress",
+      "order": 0,
+      "kind": "action",
+      "sources": [],
+      "sinks": [
+        "Real money"
+      ],
+      "values": [
+        "Access / cosmetic entitlements"
+      ],
+      "notes": "Developer policy: no paid cash or gold."
+    }
+  ],
+  "edges": [
+    {
+      "id": "cash__kit",
+      "from": "cash",
+      "to": "kit",
+      "type": "normal",
+      "feedback": false,
+      "label": "Purchase cash"
+    },
+    {
+      "id": "death__kit",
+      "from": "death",
+      "to": "kit",
+      "type": "value",
+      "feedback": true,
+      "label": "Choose / buy replacement"
+    },
+    {
+      "id": "death__carry",
+      "from": "death",
+      "to": "carry",
+      "type": "normal",
+      "feedback": false,
+      "label": "Account remains; adjustments unresolved"
+    },
+    {
+      "id": "carry__cash",
+      "from": "carry",
+      "to": "cash",
+      "type": "value",
+      "feedback": true,
+      "label": "Next match: same wallet"
+    },
+    {
+      "id": "zone__carry",
+      "from": "zone",
+      "to": "carry",
+      "type": "cross-lane",
+      "feedback": false,
+      "label": "System cash"
+    },
+    {
+      "id": "xp__unlock",
+      "from": "xp",
+      "to": "unlock",
+      "type": "normal",
+      "feedback": false,
+      "label": "Eligibility gate"
+    },
+    {
+      "id": "unlock__kit",
+      "from": "unlock",
+      "to": "kit",
+      "type": "cross-lane",
+      "feedback": true,
+      "label": "Access is not an item"
+    },
+    {
+      "id": "kit__zone",
+      "from": "kit",
+      "to": "zone",
+      "type": "normal",
+      "feedback": false,
+      "label": "Kit enables contribution"
+    },
+    {
+      "id": "kit__death",
+      "from": "kit",
+      "to": "death",
+      "type": "normal",
+      "feedback": false,
+      "label": "Equipment exposed"
+    },
+    {
+      "id": "revive__carry",
+      "from": "revive",
+      "to": "carry",
+      "type": "cross-lane",
+      "feedback": false,
+      "label": "System reward"
+    },
+    {
+      "id": "transport__carry",
+      "from": "transport",
+      "to": "carry",
+      "type": "cross-lane",
+      "feedback": false,
+      "label": "System reward"
+    }
+  ],
+  "settings": {
+    "spacing": "comfortable",
+    "showLegend": true,
+    "background": "white",
+    "actionHeader": "#162b24",
+    "finalGood": "#F5C95C",
+    "source": "#21865b",
+    "sink": "#d15d44",
+    "value": "#ba8425"
+  },
+  "visibility": "public",
+  "research": {
+    "presetId": "wardogs",
+    "revision": "2026-09-14-research-2",
+    "category": "PC / console",
+    "summary": "Personal cash pays for roles; the game rewards useful team services. Separate player transfers, shared FOB supplies and permanent access from per-life kit spending.",
+    "scope": "Start here, then open WARDOGS — mechanics and cash settlement in the library for all 26 mechanisms. Launch announcements checked 14 September 2026; August frames are explicitly older. Exact death/refund and player-payment settlement remain open.",
+    "checkedAt": "2026-09-14",
+    "limitations": [
+      "No unsupported 90% refund formula is used.",
+      "Beta screenshot prices are not launch prices.",
+      "Black Market, Vault, gold conversion and reset details are announced systems, not verified live mechanics.",
+      "Player transfer amounts and system rewards must be accounted separately."
+    ],
+    "sources": [
+      {
+        "id": "analysis",
+        "title": "Read the full WARDOGS economy analysis",
+        "url": "https://flow.gameeconomistconsulting.com/research/wardogs/",
+        "publisher": "Game Economist Consulting",
+        "kind": "Independent analysis",
+        "note": "Full analytical report, limitations and controlled verification questions. Primary sources are separately mapped below.",
+        "cardIds": [],
+        "edgeIds": []
+      },
+      {
+        "id": "store",
+        "title": "WARDOGS official Steam description",
+        "url": "https://store.steampowered.com/app/1867240/WARDOGS/",
+        "publisher": "BULKHEAD / Team17",
+        "kind": "Developer",
+        "note": "Current store description checked 14 September 2026.",
+        "cardIds": [
+          "zone",
+          "cash",
+          "kit",
+          "transport",
+          "death",
+          "carry",
+          "revive"
+        ],
+        "edgeIds": []
+      },
+      {
+        "id": "faq",
+        "title": "Developer: mode, cash and roles",
+        "url": "https://steamstore-a.akamaihd.net/news/externalpost/steam_community_announcements/1825093633182385",
+        "publisher": "BULKHEAD",
+        "kind": "Developer",
+        "note": "Pre-release design statement; cash and Hot Zone also confirmed by current store.",
+        "cardIds": [
+          "zone",
+          "xp",
+          "carry",
+          "revive"
+        ],
+        "edgeIds": []
+      },
+      {
+        "id": "launch",
+        "title": "Season 1 launch balance changes",
+        "url": "https://steamstore-a.akamaihd.net/news/externalpost/steam_community_announcements/1843481262690549",
+        "publisher": "BULKHEAD",
+        "kind": "Developer",
+        "note": "9 September 2026; distinguishes vendor prices from track unlock payments.",
+        "cardIds": [
+          "unlock",
+          "xp",
+          "sale"
+        ],
+        "edgeIds": []
+      },
+      {
+        "id": "logistics",
+        "title": "Nova Gaming: supply crates and pallets",
+        "url": "https://www.youtube.com/watch?v=Jm7ogJLKIJo",
+        "publisher": "Nova Gaming",
+        "kind": "Independent analysis",
+        "note": "Uploaded 23 August; inspected UI stamped BETA, Aug 21 2026, CL-491020. Prices are historical.",
+        "cardIds": [
+          "transport",
+          "sale",
+          "build"
+        ],
+        "edgeIds": []
+      },
+      {
+        "id": "fob",
+        "title": "StratzFPS: FOBs, supplies and building",
+        "url": "https://www.youtube.com/watch?v=F5YU7eaQHBU",
+        "publisher": "StratzFPS",
+        "kind": "Independent analysis",
+        "note": "Uploaded 21 August. Inspected beta sandbox demonstration, not current cash payout evidence.",
+        "cardIds": [
+          "build"
+        ],
+        "edgeIds": []
+      },
+      {
+        "id": "gear",
+        "title": "Jackfrags: vendor equipment and unlocks",
+        "url": "https://www.youtube.com/watch?v=eAE9LOV-p3s",
+        "publisher": "Jackfrags",
+        "kind": "Independent analysis",
+        "note": "11 August pre-release footage; visual layout and purchase/access distinction, not launch prices.",
+        "cardIds": [
+          "unlock",
+          "kit",
+          "death"
+        ],
+        "edgeIds": []
+      },
+      {
+        "id": "revive",
+        "title": "Launch-week firsthand medic and bribe report",
+        "url": "https://www.pcgamer.com/games/fps/bribing-medics-to-revive-me-first-in-wardogs-is-one-of-my-favorite-shooter-mechanics-in-ages/",
+        "publisher": "PC Gamer",
+        "kind": "Independent analysis",
+        "note": "11 September firsthand play; extra rescue offers observed, exact debit/cancellation accounting unverified.",
+        "cardIds": [
+          "revive"
+        ],
+        "edgeIds": []
+      },
+      {
+        "id": "policy",
+        "title": "Developer: purchase and monetization policy",
+        "url": "https://steamstore-a.akamaihd.net/news/externalpost/steam_community_announcements/1840310314354505",
+        "publisher": "BULKHEAD",
+        "kind": "Developer",
+        "note": "11 August statement: paid access, optional Supporter cosmetics, no sale of cash or gold.",
+        "cardIds": [
+          "commerce"
+        ],
+        "edgeIds": []
+      }
+    ],
+    "interpretations": [
+      {
+        "cardIds": [
+          "kit",
+          "build",
+          "transport",
+          "cash",
+          "carry",
+          "unlock",
+          "commerce",
+          "sale",
+          "zone",
+          "revive",
+          "death",
+          "xp"
+        ],
+        "edgeIds": [],
+        "note": "Economic implications and discussion prompts are analysis. Edges show causal or resource relationships, not measured numerical conversion rates."
+      }
+    ]
+  },
+  "evidence": {
+    "details": [
+      {
+        "cardId": "cash",
+        "explanation": "One spendable account balance funds kits, access and useful team roles. The official description grants $10,000 at the start of the player journey and says cash survives matches.",
+        "implications": "Account cash is the stock. Match profit is a change in that stock, not another wallet. Cash is not all erased because an attempt ends.",
+        "prompt": "Can a nearly broke player still afford an effective support role?",
+        "status": "current",
+        "uncertainties": [],
+        "reviewFingerprint": "{\"label\":\"Use account cash\",\"kind\":\"action\",\"sources\":[],\"sinks\":[],\"values\":[\"Persistent cash\"],\"notes\":\"$10,000 opening grant. The same cash survives matches.\",\"edges\":[{\"from\":\"carry\",\"to\":\"cash\",\"type\":\"value\",\"feedback\":true,\"label\":\"Next match: same wallet\"},{\"from\":\"cash\",\"to\":\"kit\",\"type\":\"normal\",\"feedback\":false,\"label\":\"Purchase cash\"}]}"
+      },
+      {
+        "cardId": "kit",
+        "explanation": "Vendor purchases exchange personal cash for equipment. Guns, magazines, ammunition and utility choices must be budgeted together. Older inspected screens show access locks separately from cart purchases.",
+        "implications": "Paying for the kit and subsequently losing it must not be recorded as two cash debits. Equipment loss creates the need for a future replacement purchase.",
+        "prompt": "Which part of the ordinary kit is reusable value and which is consumable?",
+        "status": "current",
+        "uncertainties": [
+          "Current item-by-item refund rules remain unverified."
+        ],
+        "reviewFingerprint": "{\"label\":\"Buy a loadout\",\"kind\":\"action\",\"sources\":[],\"sinks\":[\"Vendor cash\"],\"values\":[\"Gear, ammunition, tools\"],\"notes\":\"Pay for equipment now; unlock eligibility is separate.\",\"edges\":[{\"from\":\"cash\",\"to\":\"kit\",\"type\":\"normal\",\"feedback\":false,\"label\":\"Purchase cash\"},{\"from\":\"death\",\"to\":\"kit\",\"type\":\"value\",\"feedback\":true,\"label\":\"Choose / buy replacement\"},{\"from\":\"kit\",\"to\":\"death\",\"type\":\"normal\",\"feedback\":false,\"label\":\"Equipment exposed\"},{\"from\":\"kit\",\"to\":\"zone\",\"type\":\"normal\",\"feedback\":false,\"label\":\"Kit enables contribution\"},{\"from\":\"unlock\",\"to\":\"kit\",\"type\":\"cross-lane\",\"feedback\":true,\"label\":\"Access is not an item\"}]}"
+      },
+      {
+        "cardId": "death",
+        "explanation": "Death ends the active attempt and leads back to equipment decisions. Public guides contradict each other about a 90% refund: death versus surviving to match end. Neither formula is accepted here without a continuous cash ledger. Inspected August footage shows downed state, a respawn countdown and a return to base with a rifle. Its intervening balance change is not itemised, so it cannot establish the cause or refund rate.",
+        "implications": "The measured cost of another attempt is the next actual purchase, adjusted by any verified refunds. Treating total account cash as lost would also be wrong.",
+        "prompt": "What changes on the account balance immediately after give-up, before re-buy?",
+        "status": "unverified",
+        "uncertainties": [
+          "Exact death refund, surviving-kit refund, dropped gear ownership and quit settlement require current continuous footage."
+        ],
+        "reviewFingerprint": "{\"label\":\"Die, respawn and re-equip\",\"kind\":\"action\",\"sources\":[],\"sinks\":[],\"values\":[\"Next loadout decision\"],\"notes\":\"Do not deduct the old kit twice. Refund trigger/rate unresolved.\",\"edges\":[{\"from\":\"death\",\"to\":\"carry\",\"type\":\"normal\",\"feedback\":false,\"label\":\"Account remains; adjustments unresolved\"},{\"from\":\"death\",\"to\":\"kit\",\"type\":\"value\",\"feedback\":true,\"label\":\"Choose / buy replacement\"},{\"from\":\"kit\",\"to\":\"death\",\"type\":\"normal\",\"feedback\":false,\"label\":\"Equipment exposed\"}]}"
+      },
+      {
+        "cardId": "carry",
+        "explanation": "The same account balance carries into another match. The accounting identity includes system rewards, incoming player payments, purchases, outgoing payments and any actual settlement adjustments. There is no assumed extraction checkpoint.",
+        "implications": "Sustainable equipment choices depend on ordinary net earnings across many lives. A profitable session can subsidize an expensive experimental role later.",
+        "prompt": "How many routine support runs finance one high-risk vehicle attempt?",
+        "status": "current",
+        "uncertainties": [],
+        "reviewFingerprint": "{\"label\":\"Continue with the remaining cash\",\"kind\":\"action\",\"sources\":[],\"sinks\":[],\"values\":[\"Same account cash\"],\"notes\":\"Opening cash + credits − actual payments = closing cash.\",\"edges\":[{\"from\":\"carry\",\"to\":\"cash\",\"type\":\"value\",\"feedback\":true,\"label\":\"Next match: same wallet\"},{\"from\":\"death\",\"to\":\"carry\",\"type\":\"normal\",\"feedback\":false,\"label\":\"Account remains; adjustments unresolved\"},{\"from\":\"revive\",\"to\":\"carry\",\"type\":\"cross-lane\",\"feedback\":false,\"label\":\"System reward\"},{\"from\":\"transport\",\"to\":\"carry\",\"type\":\"cross-lane\",\"feedback\":false,\"label\":\"System reward\"},{\"from\":\"zone\",\"to\":\"carry\",\"type\":\"cross-lane\",\"feedback\":false,\"label\":\"System cash\"}]}"
+      },
+      {
+        "cardId": "revive",
+        "explanation": "The developer explicitly names reviving as a cash-rewarded contribution. The rescuer commits time and medical capability; the teammate returns to action.",
+        "implications": "The reward subsidizes a service with benefits beyond the rescuer. Rescue can also preserve position and avoid another deployment journey.",
+        "prompt": "Is the ordinary reward enough without a bribe?",
+        "status": "current",
+        "uncertainties": [],
+        "reviewFingerprint": "{\"label\":\"Restore a teammate\",\"kind\":\"action\",\"sources\":[\"System cash reward\"],\"sinks\":[\"Medical supplies / risk\"],\"values\":[\"Teammate resumes play\"],\"notes\":\"Game pays for a revive; no fixed payout asserted.\",\"edges\":[{\"from\":\"revive\",\"to\":\"carry\",\"type\":\"cross-lane\",\"feedback\":false,\"label\":\"System reward\"}]}"
+      },
+      {
+        "cardId": "zone",
+        "explanation": "Current official description promises double cash in the moving Hot Zone. The developer mode explanation separately doubles contribution to team presence. Majority presence earns team points toward the match win.",
+        "implications": "The moving premium tries to align personal earnings with the team objective. Cash and team score are different ledgers; a bonus to one must not be inferred for every other action.",
+        "prompt": "Does the premium compensate for the extra exposure?",
+        "status": "current",
+        "uncertainties": [
+          "Exact event eligibility, payout ticks and stacking formulas are not established."
+        ],
+        "reviewFingerprint": "{\"label\":\"Hold the Control / Hot Zone\",\"kind\":\"action\",\"sources\":[\"Objective cash\"],\"sinks\":[\"Time and exposure\"],\"values\":[\"Team presence\"],\"notes\":\"Hot Zone: double cash; developer also states double presence.\",\"edges\":[{\"from\":\"kit\",\"to\":\"zone\",\"type\":\"normal\",\"feedback\":false,\"label\":\"Kit enables contribution\"},{\"from\":\"zone\",\"to\":\"carry\",\"type\":\"cross-lane\",\"feedback\":false,\"label\":\"System cash\"}]}"
+      },
+      {
+        "cardId": "transport",
+        "explanation": "The official store explicitly rewards transporting friendlies to the Control Zone. Older gameplay demonstrates passenger transport and logistics delivery.",
+        "implications": "The game purchases a public service from a player: transport capacity benefits teammates who did not buy the vehicle.",
+        "prompt": "What prevents profitable transport routes from becoming unhelpful shuttling?",
+        "status": "current",
+        "uncertainties": [],
+        "reviewFingerprint": "{\"label\":\"Deliver teammates\",\"kind\":\"action\",\"sources\":[\"Transport reward\"],\"sinks\":[\"Vehicle / pilot risk\"],\"values\":[\"Teammates at the objective\"],\"notes\":\"System rewards delivery; passengers are not assumed to pay a fare.\",\"edges\":[{\"from\":\"transport\",\"to\":\"carry\",\"type\":\"cross-lane\",\"feedback\":false,\"label\":\"System reward\"}]}"
+      },
+      {
+        "cardId": "sale",
+        "explanation": "August in-game tutorial explicitly describes teammate purchases. Season 1 launch notes confirm supply-crate sale XP and sharply reduce XP for items sold under $75. Exact current seller proceeds and fees remain unverified.",
+        "implications": "Cash changes hands; any separately paid XP or game subsidy needs a separate entry. The launch adjustment is evidence that rewarding transaction count can invite low-value farming.",
+        "prompt": "Does seller markup compensate useful logistics without pricing teammates out?",
+        "status": "current",
+        "uncertainties": [
+          "Direct two-account sale settlement and any fee are not inspected."
+        ],
+        "reviewFingerprint": "{\"label\":\"Sell stock to teammates\",\"kind\":\"action\",\"sources\":[],\"sinks\":[],\"values\":[\"Buyer cash → seller\",\"Stock → buyer\"],\"notes\":\"Player transfer, not a new cash reward.\",\"edges\":[]}"
+      },
+      {
+        "cardId": "build",
+        "explanation": "The beta FOB screen separates four supply types and an item inventory. The tutorial maps building supplies to construction and fuel/mechanical resources to refill facilities. Hammers determine build options and speed.",
+        "implications": "Separate resource bottlenecks create interdependence: cash alone cannot erect a structure at an empty FOB. Supply allocation affects everyone using the base.",
+        "prompt": "Can a builder deplete shared stocks faster than the team replenishes them?",
+        "status": "older",
+        "uncertainties": [
+          "Exact live build recipes, structure rewards and repair consumption need inspected launch UI."
+        ],
+        "reviewFingerprint": "{\"label\":\"Spend shared supplies\",\"kind\":\"action\",\"sources\":[],\"sinks\":[\"Build / Ammo / Fuel / Mechanical\"],\"values\":[\"Structures, rearm, repair\"],\"notes\":\"Pallets feed shared FOB resources for building, rearming and repairs. Older UI; rates unresolved.\",\"edges\":[]}"
+      },
+      {
+        "cardId": "xp",
+        "explanation": "Developer material describes multiple progression tracks. Launch notes distinguish Career and role gates and rebalance the XP curve away from weekend-beta pacing.",
+        "implications": "A player can have cash without the required access, or access without enough cash. These are separate constraints on role choice.",
+        "prompt": "Does slow access progression delay learning the role?",
+        "status": "current",
+        "uncertainties": [],
+        "reviewFingerprint": "{\"label\":\"Earn Career and role XP\",\"kind\":\"action\",\"sources\":[\"Career / role XP\"],\"sinks\":[],\"values\":[\"Progression thresholds\"],\"notes\":\"XP is earned progress, not spendable cash.\",\"edges\":[{\"from\":\"xp\",\"to\":\"unlock\",\"type\":\"normal\",\"feedback\":false,\"label\":\"Eligibility gate\"}]}"
+      },
+      {
+        "cardId": "unlock",
+        "explanation": "The Season 1 notes put Large Hammer at Support level 8 and list its Support access payment separately from its vendor price. Inspected older unlock-confirmation UI corroborates that access is purchased before an item instance.",
+        "implications": "The $75,000 is an investment in eligibility; treating it as every-use cost would overstate the role’s running expense. Unlocks are not a free issued kit.",
+        "prompt": "How quickly does a useful role make its access investment feel worthwhile?",
+        "status": "current",
+        "uncertainties": [
+          "No claim that access survives an announced future season reset."
+        ],
+        "reviewFingerprint": "{\"label\":\"Pay for purchase eligibility\",\"kind\":\"action\",\"sources\":[],\"sinks\":[\"Access-unlock cash\"],\"values\":[\"Persistent purchase access\"],\"notes\":\"Large Hammer: Support 8; $75,000 access; $2,400 vendor.\",\"edges\":[{\"from\":\"unlock\",\"to\":\"kit\",\"type\":\"cross-lane\",\"feedback\":true,\"label\":\"Access is not an item\"},{\"from\":\"xp\",\"to\":\"unlock\",\"type\":\"normal\",\"feedback\":false,\"label\":\"Eligibility gate\"}]}"
+      },
+      {
+        "cardId": "commerce",
+        "explanation": "The published Early Access policy sells game access with optional Supporter cosmetic content and rejects selling in-game cash or gold. This is a commercial payment outside the match cash loop.",
+        "implications": "Revenue is separated from players’ equipment liquidity. Earned progression remains a design and retention lever without selling replacement cash.",
+        "prompt": "Can the commercial model sustain the expected support cadence?",
+        "status": "current",
+        "uncertainties": [],
+        "reviewFingerprint": "{\"label\":\"Buy game access / Supporter extras\",\"kind\":\"action\",\"sources\":[],\"sinks\":[\"Real money\"],\"values\":[\"Access / cosmetic entitlements\"],\"notes\":\"Developer policy: no paid cash or gold.\",\"edges\":[]}"
+      }
+    ],
+    "items": [
+      {
+        "id": "src-store",
+        "cardIds": [
+          "cash",
+          "kit",
+          "death",
+          "carry",
+          "revive",
+          "zone",
+          "transport"
+        ],
+        "kind": "source",
+        "title": "WARDOGS official Steam description",
+        "url": "https://store.steampowered.com/app/1867240/WARDOGS/",
+        "caption": "Current store description checked 14 September 2026.",
+        "observedAt": "2026-09-14",
+        "build": "Current store description checked 14 September 2026."
+      },
+      {
+        "id": "src-faq",
+        "cardIds": [
+          "carry",
+          "revive",
+          "zone",
+          "xp"
+        ],
+        "kind": "source",
+        "title": "Developer: mode, cash and roles",
+        "url": "https://steamstore-a.akamaihd.net/news/externalpost/steam_community_announcements/1825093633182385",
+        "caption": "Pre-release design statement; cash and Hot Zone also confirmed by current store.",
+        "observedAt": "2026-09-14",
+        "build": "Pre-release design statement; cash and Hot Zone also confirmed by current store."
+      },
+      {
+        "id": "src-launch",
+        "cardIds": [
+          "sale",
+          "xp",
+          "unlock"
+        ],
+        "kind": "source",
+        "title": "Season 1 launch balance changes",
+        "url": "https://steamstore-a.akamaihd.net/news/externalpost/steam_community_announcements/1843481262690549",
+        "caption": "9 September 2026; distinguishes vendor prices from track unlock payments.",
+        "observedAt": "2026-09-14",
+        "build": "9 September 2026; distinguishes vendor prices from track unlock payments."
+      },
+      {
+        "id": "src-logistics",
+        "cardIds": [
+          "transport",
+          "sale",
+          "build"
+        ],
+        "kind": "youtube",
+        "title": "Nova Gaming: supply crates and pallets",
+        "url": "https://www.youtube.com/watch?v=Jm7ogJLKIJo",
+        "caption": "Uploaded 23 August; inspected UI stamped BETA, Aug 21 2026, CL-491020. Prices are historical.",
+        "observedAt": "2026-09-14",
+        "build": "Uploaded 23 August; inspected UI stamped BETA, Aug 21 2026, CL-491020. Prices are historical.",
+        "timestampSeconds": 55,
+        "videoId": "Jm7ogJLKIJo"
+      },
+      {
+        "id": "src-fob",
+        "cardIds": [
+          "build"
+        ],
+        "kind": "youtube",
+        "title": "StratzFPS: FOBs, supplies and building",
+        "url": "https://www.youtube.com/watch?v=F5YU7eaQHBU",
+        "caption": "Uploaded 21 August. Inspected beta sandbox demonstration, not current cash payout evidence.",
+        "observedAt": "2026-09-14",
+        "build": "Uploaded 21 August. Inspected beta sandbox demonstration, not current cash payout evidence.",
+        "timestampSeconds": 88,
+        "videoId": "F5YU7eaQHBU"
+      },
+      {
+        "id": "src-gear",
+        "cardIds": [
+          "kit",
+          "death",
+          "unlock"
+        ],
+        "kind": "youtube",
+        "title": "Jackfrags: vendor equipment and unlocks",
+        "url": "https://www.youtube.com/watch?v=eAE9LOV-p3s",
+        "caption": "11 August pre-release footage; visual layout and purchase/access distinction, not launch prices.",
+        "observedAt": "2026-09-14",
+        "build": "11 August pre-release footage; visual layout and purchase/access distinction, not launch prices.",
+        "timestampSeconds": 115,
+        "videoId": "eAE9LOV-p3s"
+      },
+      {
+        "id": "src-revive",
+        "cardIds": [
+          "revive"
+        ],
+        "kind": "source",
+        "title": "Launch-week firsthand medic and bribe report",
+        "url": "https://www.pcgamer.com/games/fps/bribing-medics-to-revive-me-first-in-wardogs-is-one-of-my-favorite-shooter-mechanics-in-ages/",
+        "caption": "11 September firsthand play; extra rescue offers observed, exact debit/cancellation accounting unverified.",
+        "observedAt": "2026-09-14",
+        "build": "11 September firsthand play; extra rescue offers observed, exact debit/cancellation accounting unverified."
+      },
+      {
+        "id": "src-policy",
+        "cardIds": [
+          "commerce"
+        ],
+        "kind": "source",
+        "title": "Developer: purchase and monetization policy",
+        "url": "https://steamstore-a.akamaihd.net/news/externalpost/steam_community_announcements/1840310314354505",
+        "caption": "11 August statement: paid access, optional Supporter cosmetics, no sale of cash or gold.",
+        "observedAt": "2026-09-14",
+        "build": "11 August statement: paid access, optional Supporter cosmetics, no sale of cash or gold."
+      },
+      {
+        "id": "img-crate-tutorial-jpg",
+        "cardIds": [
+          "sale"
+        ],
+        "kind": "image",
+        "title": "Nova Gaming · 0:55",
+        "url": "https://flow.gameeconomistconsulting.com/evidence/wardogs/crate-tutorial.jpg",
+        "caption": "Beta UI: purchase stock, set markup and sell to teammates. Source video is linked on this card.",
+        "observedAt": "2026-08-21",
+        "build": "Older beta / pre-release; not launch price proof.",
+        "timestampSeconds": 55
+      },
+      {
+        "id": "clip-crate-tutorial-jpg",
+        "cardIds": [
+          "sale"
+        ],
+        "kind": "youtube",
+        "title": "Nova Gaming · supporting clip",
+        "url": "https://www.youtube.com/watch?v=Jm7ogJLKIJo&t=55s",
+        "caption": "Beta UI: purchase stock, set markup and sell to teammates.",
+        "build": "Older beta / pre-release",
+        "timestampSeconds": 55,
+        "endSeconds": 75,
+        "videoId": "Jm7ogJLKIJo"
+      },
+      {
+        "id": "img-crate-stock-jpg",
+        "cardIds": [
+          "sale"
+        ],
+        "kind": "image",
+        "title": "Nova Gaming · 1:18",
+        "url": "https://flow.gameeconomistconsulting.com/evidence/wardogs/crate-stock.jpg",
+        "caption": "Beta UI: stocked crate, slots, markup and potential-profit controls. Source video is linked on this card.",
+        "observedAt": "2026-08-21",
+        "build": "Older beta / pre-release; not launch price proof.",
+        "timestampSeconds": 78
+      },
+      {
+        "id": "clip-crate-stock-jpg",
+        "cardIds": [
+          "sale"
+        ],
+        "kind": "youtube",
+        "title": "Nova Gaming · supporting clip",
+        "url": "https://www.youtube.com/watch?v=Jm7ogJLKIJo&t=78s",
+        "caption": "Beta UI: stocked crate, slots, markup and potential-profit controls.",
+        "build": "Older beta / pre-release",
+        "timestampSeconds": 78,
+        "endSeconds": 98,
+        "videoId": "Jm7ogJLKIJo"
+      },
+      {
+        "id": "img-fob-stores-jpg",
+        "cardIds": [
+          "build"
+        ],
+        "kind": "image",
+        "title": "StratzFPS · 1:28",
+        "url": "https://flow.gameeconomistconsulting.com/evidence/wardogs/fob-stores.jpg",
+        "caption": "Beta sandbox: four FOB resource counters plus an item inventory. Source video is linked on this card.",
+        "observedAt": "2026-08-21",
+        "build": "Older beta / pre-release; not launch price proof.",
+        "timestampSeconds": 88
+      },
+      {
+        "id": "clip-fob-stores-jpg",
+        "cardIds": [
+          "build"
+        ],
+        "kind": "youtube",
+        "title": "StratzFPS · supporting clip",
+        "url": "https://www.youtube.com/watch?v=F5YU7eaQHBU&t=88s",
+        "caption": "Beta sandbox: four FOB resource counters plus an item inventory.",
+        "build": "Older beta / pre-release",
+        "timestampSeconds": 88,
+        "endSeconds": 108,
+        "videoId": "F5YU7eaQHBU"
+      },
+      {
+        "id": "img-jack-115-png",
+        "cardIds": [
+          "kit",
+          "unlock"
+        ],
+        "kind": "image",
+        "title": "Jackfrags · 1:55",
+        "url": "https://flow.gameeconomistconsulting.com/evidence/wardogs/jack-115.png",
+        "caption": "Older vendor: weapon prices beside separate access gates. Source video is linked on this card.",
+        "observedAt": "2026-08-11",
+        "build": "Older beta / pre-release; not launch price proof.",
+        "timestampSeconds": 115
+      },
+      {
+        "id": "clip-jack-115-png",
+        "cardIds": [
+          "kit",
+          "unlock"
+        ],
+        "kind": "youtube",
+        "title": "Jackfrags · supporting clip",
+        "url": "https://www.youtube.com/watch?v=eAE9LOV-p3s&t=115s",
+        "caption": "Older vendor: weapon prices beside separate access gates.",
+        "build": "Older beta / pre-release",
+        "timestampSeconds": 115,
+        "endSeconds": 135,
+        "videoId": "eAE9LOV-p3s"
+      },
+      {
+        "id": "img-jack-125-png",
+        "cardIds": [
+          "kit"
+        ],
+        "kind": "image",
+        "title": "Jackfrags · 2:05",
+        "url": "https://flow.gameeconomistconsulting.com/evidence/wardogs/jack-125.png",
+        "caption": "Older loadout screen: magazines and ammunition are separate purchases. Source video is linked on this card.",
+        "observedAt": "2026-08-11",
+        "build": "Older beta / pre-release; not launch price proof.",
+        "timestampSeconds": 125
+      },
+      {
+        "id": "clip-jack-125-png",
+        "cardIds": [
+          "kit"
+        ],
+        "kind": "youtube",
+        "title": "Jackfrags · supporting clip",
+        "url": "https://www.youtube.com/watch?v=eAE9LOV-p3s&t=125s",
+        "caption": "Older loadout screen: magazines and ammunition are separate purchases.",
+        "build": "Older beta / pre-release",
+        "timestampSeconds": 125,
+        "endSeconds": 145,
+        "videoId": "eAE9LOV-p3s"
+      },
+      {
+        "id": "img-beta-respawning-hd-05m00-jpg",
+        "cardIds": [
+          "death"
+        ],
+        "kind": "image",
+        "title": "Beta: respawn countdown",
+        "url": "https://flow.gameeconomistconsulting.com/evidence/wardogs/beta-respawning-hd-05m00.jpg",
+        "caption": "Riotmaker650 beta footage: visible interface, not proof of wallet settlement.",
+        "observedAt": "2026-08-21",
+        "build": "Older beta, CL-491020",
+        "timestampSeconds": 300
+      },
+      {
+        "id": "clip-beta-respawning-hd-05m00-jpg",
+        "cardIds": [
+          "death"
+        ],
+        "kind": "youtube",
+        "title": "Riotmaker650 · beta evidence",
+        "url": "https://www.youtube.com/watch?v=7CiP1XHiLN0&t=300s",
+        "caption": "Riotmaker650 beta footage: visible interface, not proof of wallet settlement.",
+        "build": "21 August 2026 beta; uploaded 25 August",
+        "timestampSeconds": 300,
+        "endSeconds": 315,
+        "videoId": "7CiP1XHiLN0"
+      },
+      {
+        "id": "img-pcgamer-revive-ui-jpg",
+        "cardIds": [
+          "revive"
+        ],
+        "kind": "image",
+        "title": "Launch-week rescue interface",
+        "url": "https://flow.gameeconomistconsulting.com/evidence/wardogs/pcgamer-revive-ui.jpg",
+        "caption": "BULKHEAD image reproduced in PC Gamer, 11 September. $100 rescue marker and revive action; not a completed payment.",
+        "observedAt": "2026-09-11",
+        "build": "Launch-week report; image build not identified"
+      }
+    ]
+  }
+}
