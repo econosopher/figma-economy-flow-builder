@@ -1,0 +1,244 @@
+{
+  "id": "mcp_verification",
+  "name": "MCP verification example",
+  "cards": [
+    {
+      "id": "time",
+      "kind": "initial_sink_node",
+      "label": "Invest time",
+      "notes": "",
+      "order": 0,
+      "sinks": [
+        "Player time"
+      ],
+      "values": [],
+      "groupId": "core",
+      "sources": [],
+      "stageId": "invest"
+    },
+    {
+      "id": "play",
+      "kind": "action",
+      "label": "Complete a mission",
+      "notes": "",
+      "order": 0,
+      "sinks": [
+        "Energy"
+      ],
+      "values": [
+        "Player XP"
+      ],
+      "groupId": "core",
+      "sources": [
+        "Coins",
+        "Crafting materials"
+      ],
+      "stageId": "play"
+    },
+    {
+      "id": "rewards",
+      "kind": "action",
+      "label": "Collect rewards",
+      "notes": "",
+      "order": 0,
+      "sinks": [],
+      "values": [],
+      "groupId": "core",
+      "sources": [
+        "Coins",
+        "Equipment"
+      ],
+      "stageId": "earn"
+    },
+    {
+      "id": "upgrade",
+      "kind": "action",
+      "label": "Upgrade equipment",
+      "notes": "",
+      "order": 0,
+      "sinks": [
+        "Coins",
+        "Crafting materials"
+      ],
+      "values": [
+        "Power"
+      ],
+      "groupId": "core",
+      "sources": [],
+      "stageId": "spend"
+    },
+    {
+      "id": "mastery",
+      "kind": "final_good",
+      "label": "Master the game",
+      "notes": "",
+      "order": 0,
+      "sinks": [],
+      "values": [
+        "Mastery",
+        "Self-expression"
+      ],
+      "groupId": "core",
+      "sources": [],
+      "stageId": "outcomes"
+    },
+    {
+      "id": "money",
+      "kind": "initial_sink_node",
+      "label": "Spend money",
+      "notes": "",
+      "order": 0,
+      "sinks": [
+        "Real money"
+      ],
+      "values": [],
+      "groupId": "premium",
+      "sources": [],
+      "stageId": "invest"
+    },
+    {
+      "id": "premium",
+      "kind": "action",
+      "label": "Buy premium currency",
+      "notes": "",
+      "order": 0,
+      "sinks": [
+        "Real money"
+      ],
+      "values": [],
+      "groupId": "premium",
+      "sources": [
+        "Gems"
+      ],
+      "stageId": "play"
+    },
+    {
+      "id": "cosmetics",
+      "kind": "action",
+      "label": "Choose cosmetics",
+      "notes": "",
+      "order": 0,
+      "sinks": [
+        "Gems"
+      ],
+      "values": [],
+      "groupId": "premium",
+      "sources": [
+        "Cosmetics"
+      ],
+      "stageId": "spend"
+    }
+  ],
+  "edges": [
+    {
+      "id": "e0",
+      "to": "play",
+      "from": "time",
+      "type": "normal",
+      "label": "",
+      "feedback": false
+    },
+    {
+      "id": "e1",
+      "to": "rewards",
+      "from": "play",
+      "type": "normal",
+      "label": "",
+      "feedback": false
+    },
+    {
+      "id": "e2",
+      "to": "upgrade",
+      "from": "rewards",
+      "type": "normal",
+      "label": "",
+      "feedback": false
+    },
+    {
+      "id": "e3",
+      "to": "mastery",
+      "from": "upgrade",
+      "type": "final",
+      "label": "",
+      "feedback": false
+    },
+    {
+      "id": "e4",
+      "to": "premium",
+      "from": "money",
+      "type": "normal",
+      "label": "",
+      "feedback": false
+    },
+    {
+      "id": "e5",
+      "to": "cosmetics",
+      "from": "premium",
+      "type": "normal",
+      "label": "",
+      "feedback": false
+    },
+    {
+      "id": "e6",
+      "to": "mastery",
+      "from": "cosmetics",
+      "type": "final",
+      "label": "",
+      "feedback": false
+    },
+    {
+      "id": "e7",
+      "to": "play",
+      "from": "upgrade",
+      "type": "value",
+      "label": "",
+      "feedback": true
+    }
+  ],
+  "groups": [
+    {
+      "id": "core",
+      "color": "#f3f7f4",
+      "label": "The core loop"
+    },
+    {
+      "id": "premium",
+      "color": "#faf6f0",
+      "label": "Monetization"
+    }
+  ],
+  "stages": [
+    {
+      "id": "invest",
+      "label": "Investment"
+    },
+    {
+      "id": "play",
+      "label": "Core play"
+    },
+    {
+      "id": "earn",
+      "label": "Rewards"
+    },
+    {
+      "id": "spend",
+      "label": "Reinvestment"
+    },
+    {
+      "id": "outcomes",
+      "label": "Outcomes"
+    }
+  ],
+  "settings": {
+    "sink": "#d15d44",
+    "value": "#ba8425",
+    "source": "#21865b",
+    "spacing": "comfortable",
+    "finalGood": "#F5C95C",
+    "background": "white",
+    "showLegend": true,
+    "actionHeader": "#000000"
+  },
+  "visibility": "public",
+  "schemaVersion": 3
+}

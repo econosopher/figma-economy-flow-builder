@@ -22,5 +22,9 @@
   {
     "id": "apex_legends",
     "file": "apex_legends.json"
+  },
+  {
+    "id": "mcp_verification",
+    "file": "mcp_verification.json"
   }
 ]
