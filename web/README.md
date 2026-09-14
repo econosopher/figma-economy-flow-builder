@@ -56,7 +56,7 @@ Research uses only the user's supplied Gemini, OpenAI or Claude API key. The enc
 
 The hosted MCP reads and edits account diagrams, validates JSON, renders private previews and submits preset pull requests. Both public browse tabs default to Most viewed, with the starter pinned. See [MCP.md](MCP.md) for tools, connection settings, OAuth activation, view-count semantics and operational checks.
 
-Authenticated browser API requests go directly to `API_ORIGIN`, bypassing the Netlify gateway. The backend remains disabled until its service configuration and live acceptance checks are complete.
+Authenticated browser API requests go directly to `API_ORIGIN`, bypassing the Netlify gateway. The hosted staging and production account backends are active. Slack and provider-backed research remain separately disabled.
 
 ## Deployments
 
@@ -99,6 +99,6 @@ Worker request logging and structured categorical failure events are enabled. Cl
 
 Automated tests cover public and anonymized private routing fixtures, long text/headings, fan-in/fan-out, parallel relationships, feedback, independent tracks, group bounds, deterministic output, semantic import, atomic deletion, stale revisions, RLS isolation, immutable snapshots, revocation, moderation, invalid provider output, credential encryption/cancellation, and duplicate/uncertain Slack sends. A 100-card/300-edge fixture enforces a one-second layout budget locally. PGlite executes the migration and exercises database roles in an isolated Postgres runtime.
 
-Local database backup/restore behavior is exercised with fixture data. A live Supabase backup restoration has not been verified. Before account release, enable the chosen backup policy, restore a backup to a dedicated isolated project, run `ops/restore-check.sql` and the two-account isolation checks, compare row counts and sample document hashes, and record the restore time. Database backups do not contain Storage object bytes; back up or regenerate published thumbnails separately. Keep integration jobs disabled in the restore target.
+The staging application schema and data were dumped from live Supabase and restored into an isolated local PostgreSQL 17 instance on 14 September 2026. Document hashes, owner filtering and denial of unapproved OAuth clients survived restoration. Auth credentials were excluded; this verifies application-data restoration, not full Supabase Auth disaster recovery. Configure a recurring protected backup policy and periodically restore to an isolated target using `ops/restore-check.sql`. Database backups do not contain Storage object bytes; back up or regenerate published thumbnails separately. Keep integration jobs disabled in the restore target.
 
 See `DELIVERY.md` for the current live checks and remaining activation gates. The browser regression runners in `tests/browser/direct-canvas.js`, `tests/browser/public-catalog.js`, and `tests/browser/researched-presets.js` run inside the approved Aside session and never send Slack messages or consumes provider keys.

@@ -310,3 +310,37 @@ describe("catalog and repository boundaries", () => {
     ).rejects.toMatchObject({ status: 403 });
   });
 });
+
+it("accepts opaque Supabase authorization IDs and verifies their client before granting access", async () => {
+  const { mcpAccountRoutes } = await import("../mcp/accounts");
+  const authorizationId = "opaque_supabase-request-identifier";
+  const fetcher = vi.fn(async (url: string) => {
+    if (url.includes(`/oauth/authorizations/${authorizationId}`))
+      return Response.json({ client: { id: "verified-client" } });
+    return Response.json({});
+  });
+  vi.stubGlobal("fetch", fetcher);
+  const response = await mcpAccountRoutes(
+    new Request("https://flow.test.workers.dev/api/mcp/connections", {
+      method: "PUT",
+      body: JSON.stringify({
+        authorizationId,
+        canRead: true,
+        canEdit: true,
+        canSubmit: false,
+      }),
+    }),
+    env(),
+    { ...principal, token: token({ aud: "authenticated" }) },
+    "/mcp/connections",
+  );
+  expect(response.status).toBe(200);
+  const grant = fetcher.mock.calls.find(([url]) => url.includes("mcp_grants"));
+  expect(grant).toBeDefined();
+  const calls = fetcher.mock.calls as unknown as [string, RequestInit][];
+  expect(
+    JSON.parse(
+      calls.find(([url]) => url.includes("mcp_grants"))![1].body as string,
+    ).client_id,
+  ).toBe("verified-client");
+});

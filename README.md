@@ -30,7 +30,7 @@ You can also export your own JSON, fork this repository and submit a pull reques
 
 ## Browse and edit with an AI client
 
-Public browsing defaults to **Most viewed**, with the starter pinned and private diagrams kept in your recent-edit library. Counts become available when the Supabase backend is activated; offline browsing retains the bundled presets.
+Public browsing defaults to **Most viewed**, with the starter pinned and private diagrams kept in your recent-edit library. Live counts start at zero and deduplicate public opens by browser visitor and UTC day; offline browsing retains the bundled presets.
 
 The included hosted MCP can read, create, edit and validate JSON diagrams, render private SVG/PNG previews, and submit public preset pull requests. It uses account consent and the same revision and ownership checks as the website. See [MCP setup and tools](web/MCP.md).
 

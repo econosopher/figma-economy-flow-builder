@@ -62,7 +62,11 @@ export async function mcpAccountRoutes(
   if (path === "/mcp/connections" && request.method === "PUT") {
     const input = z
       .object({
-        authorizationId: z.string().uuid(),
+        authorizationId: z
+          .string()
+          .min(1)
+          .max(512)
+          .regex(/^[A-Za-z0-9_-]+$/),
         canRead: z.literal(true),
         canEdit: z.boolean(),
         canSubmit: z.boolean(),

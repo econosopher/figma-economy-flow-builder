@@ -7,18 +7,18 @@ The hosted server uses the same document validator, layout and save transaction 
 | Staging | `https://economy-flow-staging.twig-transcripts-mcp.workers.dev/mcp` |
 | Production | `https://economy-flow.twig-transcripts-mcp.workers.dev/mcp` |
 
-An endpoint returns 503 until its accounts and OAuth configuration are activated. Deployment alone is not proof that account access works. See `DELIVERY.md` for the current verification record.
+Both hosted environments have separate active Supabase accounts and OAuth configuration. See `DELIVERY.md` for live verification and operational limits. Self-hosted endpoints return 503 until configured.
 
 ## Connect
 
 Add the URL as a Streamable HTTP MCP server in your client. Complete Economy Flow sign-in and consent. Reading diagrams is required; editing is selected by default, and GitHub submissions are an optional separate permission. Revoke a connection at `/connections`. Revocation takes effect at the API and database even while an OAuth token remains unexpired.
 
-For Codex, add this to its MCP configuration after activation, then run `codex mcp login economy-flow`. Keep `enabled = false` while account activation is pending. See [OpenAI's MCP configuration documentation](https://learn.chatgpt.com/docs/extend/mcp?surface=cli).
+For Codex, add this to its MCP configuration, then run `codex mcp login economy-flow`. See [OpenAI's MCP configuration documentation](https://learn.chatgpt.com/docs/extend/mcp?surface=cli).
 
 ```toml
 [mcp_servers.economy-flow]
 url = "https://economy-flow.twig-transcripts-mcp.workers.dev/mcp"
-enabled = false
+enabled = true
 tool_timeout_sec = 120
 ```
 

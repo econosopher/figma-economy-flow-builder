@@ -1,4 +1,29 @@
-# Hosted MCP implementation and public catalog: 14 September 2026
+# Account and MCP activation: 14 September 2026
+
+Production is active at https://flow.gameeconomistconsulting.com. Codex completed OAuth sign-in to the direct production MCP, and the staging MCP has its own verified connection. Separate Supabase projects run the three migrations, the asymmetric OAuth token hook and scoped consent. The production editor uses the same static build previously verified on staging.
+
+## Live verification
+
+- Real staging OAuth registration, PKCE, resource audience, read/edit grants and immediate revocation passed. Two accounts were isolated; read-only clients were denied by both the Worker and direct database writes. Revision conflicts and idempotent saves passed.
+- Production MCP read the starter, created a private document, previewed and saved a rename to revision 2, rendered it with zero routing issues, and downloaded a valid 277,884-byte PNG. The verification client was revoked afterward; the Codex connection remains active. The private test diagram is named `MCP connection verified`.
+- Staging catalog tests passed for daily deduplication, owner and MCP exclusions, ranking before pagination and immediate removal after a private visibility change. Production catalog readback returned six game presets with analytics available and zero initial counts. The starter remains separately pinned. No historical views were invented.
+- The repository-scoped GitHub App created [verification PR #1](https://github.com/econosopher/figma-economy-flow-builder/pull/1). A retry returned the same PR. The bot changed only a new preset JSON and its manifest entry; main remained at `0897a8a` during this test. The PR is unmerged.
+- Real email sign-in succeeded in both environments through separately stored Resend SMTP credentials. The verified sender domain is `mail.flow.gameeconomistconsulting.com`; only its dedicated DNS records were added. The GEC account has moderation access in both environments.
+- All 96 local automated tests, TypeScript checking and the production build passed. Existing browser/PNG/performance verification for this unchanged frontend is recorded below. The OAuth activation exposed an opaque authorization-ID format; the validator and a regression test now accept it without treating it as a UUID.
+- A live staging public-schema/data dump restored into isolated local PostgreSQL 17. Both document hashes and revisions matched for the two documents captured at backup time; owner filtering and denial of an unapproved OAuth client survived. Auth credentials were excluded. This verifies application-data restoration, not full Supabase Auth or Storage disaster recovery.
+- Production observability received the health request and a deliberately generated zero-card `client_export_failed` verification event. Structured save, routing, render, MCP and GitHub failures are enabled; hourly cleanup and database operational queries are configured. No outbound alert subscription was created.
+
+Production Worker after moderator-secret activation: `b7282612-b9bc-4c2a-a633-1771db9c105d`. Staging: `8393fe15-06f8-4af9-8eeb-224fcd9e27ea`. Both use app `main-slMr4qmE.js`. Credentials are in 1Password and Worker/Supabase secrets; none were supplied to Netlify or committed to GitHub.
+
+## Remaining operations
+
+GitHub Actions is still blocked by the account billing restriction; the local checks above are separate evidence. Recurring protected backups and full Auth/Storage recovery need an operational policy beyond the verified application restore. Operator alert delivery has not been activated. Slack and provider-backed research remain separate and disabled.
+
+The entries below are historical release records; their earlier account-activation gates are superseded by this entry.
+
+---
+
+# Hosted MCP implementation before activation: 14 September 2026
 
 The source adds the Cloudflare Streamable HTTP MCP endpoint, stable-ID atomic edits, revision and retry protection, shared previews, scoped account consent, repository-only GitHub App contribution flow, and a manifest-driven preset bundle. The public browsing UI defaults to Most viewed, pins the starter, and supports server search, pagination and sorting. Personal diagrams keep their recent-edit order.
 
