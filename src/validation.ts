@@ -44,10 +44,6 @@ export function validateGraphData(data: Partial<V2Graph> | any): string[] {
   if (!Array.isArray(data.nodes)) {
     errors.push("'nodes' property must be an array.");
   } else {
-    const terminalStageId = Array.isArray(data.stages) && data.stages.length > 0
-      ? data.stages[data.stages.length - 1]?.id
-      : undefined;
-
     data.nodes.forEach((node: V2Node, i: number) => {
       validateId(node?.id, `Node ${i}`, errors, nodeIds);
       if (typeof node?.label !== 'string') errors.push(`Node ${i}: 'label' is missing or not a string.`);
@@ -59,6 +55,10 @@ export function validateGraphData(data: Partial<V2Graph> | any): string[] {
       if (node.sources && !Array.isArray(node.sources)) errors.push(`Node ${i}: 'sources' must be an array of strings.`);
       if (node.sinks && !Array.isArray(node.sinks)) errors.push(`Node ${i}: 'sinks' must be an array of strings.`);
       if (node.values && !Array.isArray(node.values)) errors.push(`Node ${i}: 'values' must be an array of strings.`);
+      if (node.notes !== undefined && typeof node.notes !== 'string') errors.push(`Node ${i}: 'notes' must be a string when provided.`);
+      if (node.inputRole !== undefined && !['time', 'money'].includes(node.inputRole)) {
+        errors.push(`Node ${i}: inputRole must be 'time' or 'money'.`);
+      }
 
       if (node.laneId !== undefined && typeof node.laneId !== 'string') {
         errors.push(`Node ${i}: 'laneId' must be a string when provided.`);
@@ -66,9 +66,6 @@ export function validateGraphData(data: Partial<V2Graph> | any): string[] {
         errors.push(`Node ${i}: laneId '${node.laneId}' not found in lanes.`);
       }
 
-      if (node.kind === 'final_good' && terminalStageId && node.stageId !== terminalStageId) {
-        errors.push(`Node ${i}: final_good nodes must use terminal stage '${terminalStageId}'.`);
-      }
     });
   }
 
@@ -87,63 +84,13 @@ export function validateGraphData(data: Partial<V2Graph> | any): string[] {
       if (edge.type && !['normal', 'value', 'final', 'cross-lane'].includes(edge.type)) {
         errors.push(`Edge ${i}: type '${edge.type}' is not supported.`);
       }
-    });
-  }
-
-  if (Array.isArray(data.edges)) {
-    const allIds = Array.from(nodeIds);
-    const adj = new Map<string, string[]>(allIds.map(id => [id, []]));
-    data.edges.forEach((edge: any) => {
-      if (edge && typeof edge.from === 'string' && typeof edge.to === 'string' && adj.has(edge.from)) {
-        adj.get(edge.from)!.push(edge.to);
+      if (edge.feedback !== undefined && typeof edge.feedback !== 'boolean') {
+        errors.push(`Edge ${i}: 'feedback' must be a boolean when provided.`);
+      }
+      if (edge.label !== undefined && typeof edge.label !== 'string') {
+        errors.push(`Edge ${i}: 'label' must be a string when provided.`);
       }
     });
-
-    const visited = new Set<string>();
-    const onStack = new Set<string>();
-    const parent = new Map<string, string>();
-    let cycle: string[] | null = null;
-
-    const buildCycle = (u: string, v: string): string[] => {
-      const path: string[] = [u];
-      let cur = u;
-      while (cur !== v && parent.has(cur)) {
-        cur = parent.get(cur)!;
-        path.push(cur);
-      }
-      path.reverse();
-      path.push(v);
-      return path;
-    };
-
-    const dfs = (u: string) => {
-      if (cycle) return; // early exit once found
-      visited.add(u);
-      onStack.add(u);
-      for (const v of adj.get(u) || []) {
-        if (!visited.has(v)) {
-          parent.set(v, u);
-          dfs(v);
-          if (cycle) return;
-        } else if (onStack.has(v)) {
-          cycle = buildCycle(u, v);
-          return;
-        }
-      }
-      onStack.delete(u);
-    };
-
-    for (const id of allIds) {
-      if (!visited.has(id)) {
-        dfs(id);
-        if (cycle) break;
-      }
-    }
-
-    if (cycle) {
-      const cyclePath: string[] = cycle;
-      errors.push(`Graph contains a cycle: ${cyclePath.join(' -> ')}`);
-    }
   }
 
   return errors;

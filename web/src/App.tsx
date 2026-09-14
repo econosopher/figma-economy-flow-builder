@@ -1,5 +1,10 @@
 import { PublicCatalog } from "./components/PublicCatalog";
 import { recordDiagramView } from "./lib/api";
+import { EvidencePanel } from "./components/CardEvidence";
+import {
+  exportEvidencePackage,
+  importEvidencePackage,
+} from "./lib/evidenceMedia";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ReactFlowProvider, type Connection } from "@xyflow/react";
 import {
@@ -50,13 +55,14 @@ import {
   validateDocument,
   type EconomyDocument,
 } from "./core/document";
+import { checkReleaseReadiness } from "./core/conventions";
 import {
   layoutDocument,
   measureCards,
   measureHeadings,
   type Layout,
 } from "./core/layout";
-import { starter, presetDescription } from "./core/presets";
+import { presets, starter, presetDescription } from "./core/presets";
 import {
   api,
   ApiError,
@@ -75,7 +81,13 @@ import {
   storagePrefix,
   type SavedDocument,
 } from "./lib/storage";
-import { download, filename, pngBlob } from "./lib/export";
+import {
+  backupFilename,
+  download,
+  draftBackupJson,
+  filename,
+  pngBlob,
+} from "./lib/export";
 const defaultConfig: AppConfig = {
   cloud: false,
   slack: false,
@@ -89,19 +101,88 @@ type RemoteDocument = {
   is_preset: boolean;
 };
 
-function initial() {
+export type EditorRoute =
+  | { kind: "snapshot" }
+  | { kind: "account" }
+  | { kind: "local"; id: string }
+  | { kind: "preset"; id: string }
+  | { kind: "default" };
+
+export function editorRoute(search: string): EditorRoute {
+  const params = new URLSearchParams(search);
+  if (params.has("share") || params.has("gallery")) return { kind: "snapshot" };
+  if (params.has("document")) return { kind: "account" };
+  const local = params.get("local");
+  if (local) return { kind: "local", id: local };
+  const preset = params.get("preset");
+  if (preset) return { kind: "preset", id: preset };
+  return { kind: "default" };
+}
+
+function privateFork(document: EconomyDocument) {
+  return { ...forkDocument(document), visibility: "private" as const };
+}
+
+export function initial(search = globalThis.location?.search ?? "") {
+  const route = editorRoute(search);
   try {
+    if (route.kind === "local") {
+      const saved = readSaved(route.id);
+      if (saved) return saved.document;
+    }
+    if (route.kind === "preset") {
+      const preset = presets.find((entry) => entry.id === route.id);
+      if (preset) return privateFork(preset.document);
+    }
     const id = localStorage.getItem(`${storagePrefix}last:guest`);
     const saved = id && readSaved(id);
     if (saved) return saved.document;
   } catch {}
-  return forkDocument(starter);
+  return privateFork(
+    presets.find((preset) => preset.id === "wardogs")?.document || starter,
+  );
+}
+
+export function accountBootstrap(
+  search: string,
+  routedDocument: EconomyDocument,
+  saved: SavedDocument | null,
+): {
+  document: EconomyDocument;
+  dirty: boolean;
+  cloudRevision?: number;
+  preservePresetRoute: boolean;
+} {
+  const route = editorRoute(search);
+  if (
+    route.kind === "preset" &&
+    presets.some((preset) => preset.id === route.id)
+  )
+    return {
+      document: routedDocument,
+      dirty: true,
+      preservePresetRoute: true,
+    };
+  if (saved)
+    return {
+      document: saved.document,
+      dirty: !!saved.pendingCloud,
+      cloudRevision: saved.cloudRevision,
+      preservePresetRoute: false,
+    };
+  return {
+    document: forkDocument(routedDocument),
+    dirty: true,
+    preservePresetRoute: false,
+  };
 }
 function Editor() {
   const [doc, setDoc] = useState<EconomyDocument>(initial),
     [layout, setLayout] = useState<Layout>(() => layoutDocument(doc)),
     [layoutBusy, setLayoutBusy] = useState(true),
     [layoutError, setLayoutError] = useState("");
+  const readiness = checkReleaseReadiness(doc);
+  const releaseReady = readiness.ready;
   const layoutWorker = useRef<Worker | null>(null),
     layoutRequest = useRef(0);
   const [selection, setSelection] = useState<Selection>(null),
@@ -109,9 +190,11 @@ function Editor() {
     [inspector, setInspector] = useState(false),
     [resourcesOpen, setResourcesOpen] = useState(false),
     [focusTarget, setFocusTarget] = useState<string | null>(null),
-    [fitKey, setFitKey] = useState(0);
+    [fitKey, setFitKey] = useState(0),
+    [readinessOpen, setReadinessOpen] = useState(false);
   const [sourcesDocument, setSourcesDocument] =
     useState<EconomyDocument | null>(null);
+  const [evidenceCard, setEvidenceCard] = useState<string | null>(null);
   const consumeFocus = useCallback(() => setFocusTarget(null), []);
   const [modal, setModal] = useState<string | null>(null),
     [libraryTab, setLibraryTab] = useState("presets"),
@@ -146,6 +229,7 @@ function Editor() {
   const [pendingConnection, setPendingConnection] = useState<Connection | null>(
       null,
     ),
+    [feedbackLabel, setFeedbackLabel] = useState(""),
     [historyTick, setHistoryTick] = useState(0),
     [report, setReport] = useState(""),
     [moderation, setModeration] = useState<
@@ -171,6 +255,7 @@ function Editor() {
   const lastCommit = useRef(0);
   const lastEditKey = useRef<string | null>(null);
   const bootstrappedOwner = useRef("");
+  const startupSearch = useRef(location.search);
   const requestedAccountDocument = useRef(
     new URLSearchParams(location.search).get("document"),
   );
@@ -337,6 +422,7 @@ function Editor() {
       setReadonly(false);
       setPublicationId(null);
       setSelection(null);
+      setEvidenceCard(null);
       setInspector(false);
       setResourcesOpen(false);
       setConflict(false);
@@ -346,7 +432,11 @@ function Editor() {
       setHistoryTick((k) => k + 1);
       if (cloudRevision !== undefined)
         cloudRevisions.current.set(next.id, cloudRevision);
-      window.history.replaceState(null, "", location.pathname);
+      window.history.replaceState(
+        null,
+        "",
+        `${location.pathname}?local=${encodeURIComponent(next.id)}`,
+      );
       return next.id;
     },
     [],
@@ -366,8 +456,12 @@ function Editor() {
     ) {
       setSaveState(
         session && existingLocal.cloudRevision
-          ? "Saved to your account"
-          : "Saved locally",
+          ? releaseReady
+            ? "Saved to your account"
+            : "Draft saved to your account"
+          : releaseReady
+            ? "Saved locally"
+            : "Draft saved locally",
       );
       return;
     }
@@ -394,7 +488,9 @@ function Editor() {
               {
                 method: "PUT",
                 body: JSON.stringify({
-                  document: doc,
+                  document: releaseReady
+                    ? doc
+                    : { ...doc, visibility: "private" },
                   expectedRevision: cloudRevisions.current.get(doc.id) || 0,
                   isPreset: !!saved.isPreset,
                 }),
@@ -426,9 +522,13 @@ function Editor() {
             setDirty(false);
             setSaveState(
               session && online
-                ? "Saved to your account"
+                ? releaseReady
+                  ? "Saved to your account"
+                  : "Draft saved to your account"
                 : online
-                  ? "Saved locally"
+                  ? releaseReady
+                    ? "Saved locally"
+                    : "Draft saved locally"
                   : "Offline · saved locally",
             );
           }
@@ -453,7 +553,17 @@ function Editor() {
       });
     }, 650);
     return () => clearTimeout(timer);
-  }, [doc, dirty, owner, session, online, readonly, conflict, notify]);
+  }, [
+    doc,
+    dirty,
+    owner,
+    session,
+    online,
+    readonly,
+    conflict,
+    notify,
+    releaseReady,
+  ]);
   useEffect(() => {
     const handler = (e: StorageEvent) => {
       if (e.key !== localKey(doc.id, owner) || !e.newValue) return;
@@ -484,14 +594,25 @@ function Editor() {
       `${storagePrefix}last:${session.user.id}`,
     );
     const saved = last ? readSaved(last, session.user.id) : null;
-    if (saved && !readonly) {
-      setDoc(saved.document);
-      if (saved.cloudRevision)
-        cloudRevisions.current.set(saved.document.id, saved.cloudRevision);
-      setDirty(!!saved.pendingCloud);
-    } else if (!readonly) {
-      setDoc(forkDocument(docRef.current));
-      setDirty(true);
+    if (!readonly) {
+      const bootstrap = accountBootstrap(
+        startupSearch.current,
+        docRef.current,
+        saved,
+      );
+      setDoc(bootstrap.document);
+      if (bootstrap.cloudRevision)
+        cloudRevisions.current.set(
+          bootstrap.document.id,
+          bootstrap.cloudRevision,
+        );
+      setDirty(bootstrap.dirty);
+      if (bootstrap.preservePresetRoute)
+        window.history.replaceState(
+          null,
+          "",
+          `${location.pathname}?local=${encodeURIComponent(bootstrap.document.id)}`,
+        );
     }
     void api<EconomyDocument["settings"] | null>(
       "/settings",
@@ -602,7 +723,7 @@ function Editor() {
       const editable = (e.target as HTMLElement)?.closest(
         "input,textarea,select,[contenteditable=true]",
       );
-      if (editable || modal) return;
+      if (editable || modal || evidenceCard) return;
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z") {
         e.preventDefault();
         e.shiftKey ? redo() : undo();
@@ -622,7 +743,7 @@ function Editor() {
     };
     window.addEventListener("keydown", handle);
     return () => window.removeEventListener("keydown", handle);
-  }, [undo, redo, remove, modal]);
+  }, [undo, redo, remove, modal, evidenceCard]);
   useEffect(() => {
     const unload = (e: BeforeUnloadEvent) => {
       if (dirty || conflict) {
@@ -684,6 +805,7 @@ function Editor() {
         d.stages.findIndex((s) => s.id === a.stageId) >=
         d.stages.findIndex((s) => s.id === b.stageId)
       ) {
+        setFeedbackLabel("");
         setPendingConnection(c);
         return;
       }
@@ -796,25 +918,92 @@ function Editor() {
             )}{" "}
             {readonly ? "Read-only snapshot" : saveState}
           </span>
+          <button
+            className={`release-status ${releaseReady ? "ready" : "draft"}`}
+            aria-expanded={readinessOpen}
+            onClick={() => setReadinessOpen((open) => !open)}
+          >
+            {releaseReady ? (
+              <CheckCircle2 size={12} />
+            ) : (
+              <span className="status-dot warning" />
+            )}
+            {releaseReady
+              ? "Ready to release"
+              : `Draft · ${readiness.violations.length} convention ${readiness.violations.length === 1 ? "fix" : "fixes"}`}
+          </button>
+          {readinessOpen && (
+            <div
+              className="release-panel"
+              role="dialog"
+              aria-label="Release readiness"
+            >
+              <strong>
+                {releaseReady
+                  ? "Release-ready"
+                  : "Fix before sharing or final export"}
+              </strong>
+              {releaseReady ? (
+                <p>This diagram follows the economy flow conventions.</p>
+              ) : (
+                readiness.violations.map((violation) => (
+                  <button
+                    key={`${violation.code}:${violation.cardId || violation.edgeId || violation.message}`}
+                    onClick={() => {
+                      if (violation.cardId)
+                        setSelection({ kind: "card", id: violation.cardId });
+                      else if (violation.edgeId)
+                        setSelection({ kind: "edge", id: violation.edgeId });
+                      if (violation.cardId || violation.edgeId) {
+                        setInspector(true);
+                        setResourcesOpen(false);
+                        setReadinessOpen(false);
+                      }
+                    }}
+                  >
+                    {violation.message}
+                  </button>
+                ))
+              )}
+            </div>
+          )}
+          {!readonly &&
+            session &&
+            doc.evidence?.items.some((item) => item.mediaId) && (
+              <span className="save-status helper">
+                Local screenshots stay on this device.
+              </span>
+            )}
         </div>
         <div className="header-actions">
           {!readonly && (
             <button
               className="button visibility-control"
               aria-label={
-                doc.visibility === "public"
-                  ? "Make diagram private"
-                  : "Make diagram public"
+                !releaseReady
+                  ? "Diagram is a private draft"
+                  : doc.visibility === "public"
+                    ? "Make diagram private"
+                    : "Make diagram public"
               }
-              aria-pressed={doc.visibility !== "public"}
+              aria-pressed={!releaseReady || doc.visibility !== "public"}
               title={
-                doc.visibility === "public"
-                  ? session
-                    ? "Public gallery: edits publish with each account save. Click to make private."
-                    : "Local only. Will publish when saved to an account. Click to make private."
-                  : "Private. Click to publish with account saves."
+                !releaseReady
+                  ? "Draft saves are private until the release conventions are fixed."
+                  : doc.visibility === "public"
+                    ? session
+                      ? "Public gallery: edits publish with each account save. Click to make private."
+                      : "Local only. Will publish when saved to an account. Click to make private."
+                    : "Private. Click to publish with account saves."
               }
               onClick={() => {
+                if (doc.visibility !== "public" && !releaseReady) {
+                  setReadinessOpen(true);
+                  notify(
+                    "Fix the release conventions before making this diagram public.",
+                  );
+                  return;
+                }
                 const visibility =
                   doc.visibility === "public" ? "private" : "public";
                 // Privacy is not undone by canvas undo/redo.
@@ -839,17 +1028,19 @@ function Editor() {
                 );
               }}
             >
-              {doc.visibility === "public" ? (
+              {releaseReady && doc.visibility === "public" ? (
                 <LockKeyholeOpen size={15} />
               ) : (
                 <LockKeyhole size={15} />
               )}
               <span>
-                {doc.visibility === "public"
-                  ? session
-                    ? "Public"
-                    : "Public · local only"
-                  : "Private"}
+                {!releaseReady
+                  ? "Private draft"
+                  : doc.visibility === "public"
+                    ? session
+                      ? "Public"
+                      : "Public · local only"
+                    : "Private"}
               </span>
             </button>
           )}
@@ -893,7 +1084,12 @@ function Editor() {
           <span className="header-separator" />
           <button
             className="button"
-            disabled={layoutBusy || !!layoutError}
+            disabled={layoutBusy || !!layoutError || !releaseReady}
+            title={
+              releaseReady
+                ? "Download final PNG"
+                : "Fix release conventions before final export"
+            }
             onClick={() => void quickExport()}
           >
             <Download size={15} />
@@ -911,10 +1107,15 @@ function Editor() {
             <button
               className="button primary"
               disabled={layoutBusy || !!layoutError}
+              title={
+                releaseReady
+                  ? "Share or export this release-ready diagram"
+                  : "Download marked JSON or flowpack backups while this diagram is a draft"
+              }
               onClick={() => setModal("share")}
             >
-              <Share2 size={15} />
-              <span>Share</span>
+              {releaseReady ? <Share2 size={15} /> : <Download size={15} />}
+              <span>{releaseReady ? "Share" : "Backup"}</span>
             </button>
           )}
           <button
@@ -1008,7 +1209,7 @@ function Editor() {
               title="Edit JSON"
               aria-label="Edit JSON"
               onClick={() => {
-                setJsonText(JSON.stringify(doc, null, 2));
+                setJsonText(draftBackupJson(doc));
                 setImportPreview(null);
                 setModal("json");
               }}
@@ -1111,6 +1312,7 @@ function Editor() {
               onRemoveSelection={(s) => remove(undefined, s)}
               focusTarget={focusTarget}
               onFocusConsumed={consumeFocus}
+              onOpenEvidence={setEvidenceCard}
             />
           )}
           {!doc.cards.length && (
@@ -1195,10 +1397,20 @@ function Editor() {
             />
           )}
         </main>
+        {evidenceCard && doc.cards.some((card) => card.id === evidenceCard) && (
+          <EvidencePanel
+            key={`${doc.id}:${evidenceCard}`}
+            document={doc}
+            cardId={evidenceCard}
+            onChange={commit}
+            onClose={() => setEvidenceCard(null)}
+            readOnly={readonly}
+          />
+        )}
         {inspector && !readonly && (
           <Inspector
             document={doc}
-            selection={null}
+            selection={selection}
             onChange={commit}
             onClose={() => setInspector(false)}
             onDelete={() => remove()}
@@ -1393,6 +1605,39 @@ function Editor() {
           onClose={() => setModal(null)}
           wide
         >
+          <div className="modal-actions">
+            <button
+              className="button"
+              onClick={async () => {
+                try {
+                  download(
+                    await exportEvidencePackage(doc),
+                    `${backupFilename(doc.name, "flowpack", releaseReady)}.json`,
+                  );
+                } catch (error) {
+                  notify(
+                    error instanceof Error
+                      ? error.message
+                      : "Could not export screenshot attachments.",
+                  );
+                }
+              }}
+            >
+              Download diagram with screenshots
+            </button>
+          </div>
+          {doc.evidence?.items.some((item) => item.mediaId) && (
+            <p className="helper">
+              Account saves, shares, and ordinary JSON retain screenshot
+              references only. Use the diagram package to move local images.
+            </p>
+          )}
+          {!releaseReady && (
+            <p className="draft-backup-notice" role="status">
+              Draft backup only. This package is marked noncompliant and cannot
+              be used as a final export until the release fixes are complete.
+            </p>
+          )}
           <textarea
             className="json-editor"
             aria-label="Diagram JSON"
@@ -1413,8 +1658,8 @@ function Editor() {
                 onChange={async (e) => {
                   const file = e.target.files?.[0];
                   if (file) {
-                    if (file.size > 2_000_000) {
-                      notify("JSON files must be smaller than 2 MB.");
+                    if (file.size > 200_000_000) {
+                      notify("Diagram packages must be smaller than 200 MB.");
                       return;
                     }
                     setJsonText(await file.text());
@@ -1432,9 +1677,22 @@ function Editor() {
             </button>
             <button
               className="button primary"
-              onClick={() => {
+              onClick={async () => {
                 try {
-                  setImportPreview(importDocument(JSON.parse(jsonText)));
+                  const parsed = JSON.parse(jsonText);
+                  if (parsed?.format === "economy-flow-evidence-package") {
+                    const imported = await importEvidencePackage(
+                      new Blob([jsonText], { type: "application/json" }),
+                    );
+                    setImportPreview({
+                      document: imported,
+                      notices: [
+                        "Screenshot attachments restored in this browser.",
+                      ],
+                    });
+                  } else {
+                    setImportPreview(importDocument(parsed));
+                  }
                 } catch (e) {
                   notify(e instanceof Error ? e.message : "Invalid JSON.");
                 }
@@ -1607,8 +1865,22 @@ function Editor() {
           description="This connection goes to an earlier or equal stage. It will use its own outside track."
           onClose={() => setPendingConnection(null)}
         >
+          <label className="field">
+            Feedback explanation
+            <input
+              autoFocus
+              value={feedbackLabel}
+              maxLength={160}
+              placeholder="e.g. Reinvest rewards for the next run"
+              onChange={(event) => setFeedbackLabel(event.target.value)}
+            />
+          </label>
+          <p className="helper">
+            This label stays visible on the outside return track.
+          </p>
           <button
             className="button primary full"
+            disabled={!feedbackLabel.trim()}
             onClick={() => {
               const c = pendingConnection;
               lastCommit.current = 0;
@@ -1622,11 +1894,12 @@ function Editor() {
                     to: c.target!,
                     feedback: true,
                     type: "value",
-                    label: "",
+                    label: feedbackLabel.trim(),
                   },
                 ],
               });
               setPendingConnection(null);
+              setFeedbackLabel("");
             }}
           >
             <ArrowLeft size={16} />

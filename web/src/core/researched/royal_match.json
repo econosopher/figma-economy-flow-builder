@@ -51,9 +51,24 @@
   ],
   "cards": [
     {
+      "id": "time",
+      "label": "Spend Time",
+      "kind": "initial_sink_node",
+      "inputRole": "time",
+      "stageId": "s0",
+      "groupId": "g0",
+      "order": 0,
+      "sources": [],
+      "sinks": [
+        "Player time"
+      ],
+      "values": [],
+      "notes": ""
+    },
+    {
       "id": "regen",
       "label": "Replenish lives over time",
-      "stageId": "s0",
+      "stageId": "s1",
       "groupId": "g0",
       "order": 0,
       "kind": "action",
@@ -67,7 +82,7 @@
     {
       "id": "attempt",
       "label": "Attempt a level",
-      "stageId": "s1",
+      "stageId": "s2",
       "groupId": "g0",
       "order": 0,
       "kind": "action",
@@ -81,7 +96,7 @@
     {
       "id": "win",
       "label": "Beat the level",
-      "stageId": "s2",
+      "stageId": "s3",
       "groupId": "g0",
       "order": 0,
       "kind": "action",
@@ -98,7 +113,7 @@
     {
       "id": "fail",
       "label": "Fail without continuing",
-      "stageId": "s2",
+      "stageId": "s3",
       "groupId": "g0",
       "order": 1,
       "kind": "action",
@@ -112,7 +127,7 @@
     {
       "id": "tasks",
       "label": "Complete area tasks",
-      "stageId": "s3",
+      "stageId": "s4",
       "groupId": "g0",
       "order": 0,
       "kind": "action",
@@ -128,7 +143,7 @@
     {
       "id": "chest",
       "label": "Finish the area",
-      "stageId": "s4",
+      "stageId": "s5",
       "groupId": "g0",
       "order": 0,
       "kind": "action",
@@ -144,7 +159,7 @@
     {
       "id": "team",
       "label": "Request teammate lives",
-      "stageId": "s0",
+      "stageId": "s1",
       "groupId": "g1",
       "order": 0,
       "kind": "action",
@@ -158,7 +173,7 @@
     {
       "id": "boost",
       "label": "Use a booster",
-      "stageId": "s1",
+      "stageId": "s5",
       "groupId": "g1",
       "order": 0,
       "kind": "action",
@@ -174,7 +189,7 @@
     {
       "id": "moves",
       "label": "Buy extra moves",
-      "stageId": "s3",
+      "stageId": "s4",
       "groupId": "g1",
       "order": 0,
       "kind": "action",
@@ -190,7 +205,7 @@
     {
       "id": "lives",
       "label": "Buy extra lives",
-      "stageId": "s3",
+      "stageId": "s4",
       "groupId": "g1",
       "order": 1,
       "kind": "action",
@@ -206,7 +221,7 @@
     {
       "id": "buyboost",
       "label": "Buy boosters",
-      "stageId": "s3",
+      "stageId": "s4",
       "groupId": "g1",
       "order": 2,
       "kind": "action",
@@ -236,7 +251,7 @@
     {
       "id": "keys",
       "label": "Advance Royal Pass",
-      "stageId": "s3",
+      "stageId": "s4",
       "groupId": "g2",
       "order": 0,
       "kind": "action",
@@ -263,7 +278,7 @@
     },
     {
       "id": "money",
-      "label": "Spend money",
+      "label": "Spend Money",
       "stageId": "s0",
       "groupId": "g2",
       "order": 0,
@@ -273,7 +288,8 @@
         "Real money"
       ],
       "values": [],
-      "notes": ""
+      "notes": "",
+      "inputRole": "money"
     },
     {
       "id": "shop",
@@ -294,7 +310,7 @@
     {
       "id": "pass",
       "label": "Activate Royal Pass",
-      "stageId": "s2",
+      "stageId": "s1",
       "groupId": "g2",
       "order": 0,
       "kind": "action",
@@ -450,7 +466,7 @@
       "id": "buyboost__boost",
       "to": "boost",
       "type": "normal",
-      "feedback": true,
+      "feedback": false,
       "label": "Boosters",
       "from": "buyboost"
     },
@@ -541,6 +557,30 @@
       "feedback": false,
       "label": "Player value",
       "from": "win"
+    },
+    {
+      "id": "time__regen",
+      "from": "time",
+      "to": "regen",
+      "type": "normal",
+      "feedback": false,
+      "label": "Time replenishes lives"
+    },
+    {
+      "id": "time__team",
+      "from": "time",
+      "to": "team",
+      "type": "normal",
+      "feedback": false,
+      "label": "Social participation"
+    },
+    {
+      "id": "win__events",
+      "from": "win",
+      "to": "events",
+      "type": "normal",
+      "feedback": false,
+      "label": "Eligible event play"
     }
   ],
   "settings": {
@@ -577,13 +617,16 @@
           "regen",
           "attempt",
           "fail",
-          "team"
+          "team",
+          "time"
         ],
         "edgeIds": [
           "regen__attempt",
           "team__attempt",
           "attempt__fail",
-          "fail__attempt"
+          "fail__attempt",
+          "time__regen",
+          "time__team"
         ]
       },
       {
@@ -615,7 +658,8 @@
           "events__moves",
           "money__shop",
           "shop__moves",
-          "shop__buyboost"
+          "shop__buyboost",
+          "win__events"
         ]
       },
       {

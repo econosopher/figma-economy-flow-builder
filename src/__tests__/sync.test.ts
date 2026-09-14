@@ -245,13 +245,14 @@ describe('syncFromCanvas', () => {
       ],
       lanes: [{ id: 'core', label: 'Core' }],
       nodes: [
-        { id: 'time', label: 'Spend Time', kind: 'initial_sink_node', stageId: 'inputs', laneId: 'core', sources: [], sinks: [], values: [] },
-        { id: 'play', label: 'Play Game', kind: 'action', stageId: 'actions', laneId: 'core', sources: ['XP'], sinks: [], values: [] },
+        { id: 'time', label: 'Spend Time', kind: 'initial_sink_node', inputRole: 'time' as const, notes: 'Player attention.', stageId: 'inputs', laneId: 'core', sources: [], sinks: [], values: [] },
+        { id: 'play', label: 'Play Game', kind: 'action', notes: 'Core session.', stageId: 'actions', laneId: 'core', sources: ['XP'], sinks: [], values: [] },
         { id: 'win', label: 'Win', kind: 'final_good', stageId: 'outcomes', laneId: 'core', sources: [], sinks: [], values: [] }
       ],
       edges: [
         { from: 'time', to: 'play' },
-        { from: 'play', to: 'win', type: 'final' as const }
+        { from: 'play', to: 'win', type: 'final' as const },
+        { from: 'win', to: 'play', feedback: true, label: 'Prestige reset' }
       ]
     };
     mockFigma.clientStorage.values.set('economyFlowState', {
@@ -311,8 +312,14 @@ describe('syncFromCanvas', () => {
     finalConnector.connectorStart = { endpointNodeId: actionMain.id } as any;
     finalConnector.connectorEnd = { endpointNodeId: finalBody.id } as any;
 
+    const feedbackConnector = new MockConnectorNode();
+    feedbackConnector.setPluginData('economyFlowConnector', 'true');
+    feedbackConnector.connectorStart = { endpointNodeId: finalBody.id } as any;
+    feedbackConnector.connectorEnd = { endpointNodeId: actionMain.id } as any;
+
     nodeGroup.appendChild(firstConnector);
     nodeGroup.appendChild(finalConnector);
+    nodeGroup.appendChild(feedbackConnector);
     mockFigma.currentPage.appendChild(nodeGroup);
 
     await syncFromCanvas();
@@ -329,7 +336,12 @@ describe('syncFromCanvas', () => {
       label: 'Play Game Edited',
       stageId: 'actions',
       laneId: 'core',
-      sources: ['Player XP']
+      sources: ['Player XP'],
+      notes: 'Core session.'
+    });
+    expect(result.nodes.find((node: any) => node.id === 'time')).toMatchObject({
+      inputRole: 'time',
+      notes: 'Player attention.'
     });
     expect(result.nodes.find((node: any) => node.id === 'win')).toMatchObject({
       label: 'Win Edited',
@@ -338,5 +350,11 @@ describe('syncFromCanvas', () => {
     });
     expect(result.edges).toContainEqual({ from: 'time', to: 'play' });
     expect(result.edges).toContainEqual({ from: 'play', to: 'win', type: 'final' });
+    expect(result.edges).toContainEqual({
+      from: 'win',
+      to: 'play',
+      feedback: true,
+      label: 'Prestige reset'
+    });
   });
 });

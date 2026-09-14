@@ -9,26 +9,34 @@
     },
     {
       "id": "s1",
-      "label": "Participation"
+      "label": "Entry"
     },
     {
       "id": "s2",
-      "label": "Production"
+      "label": "Match Economy"
     },
     {
       "id": "s3",
-      "label": "Rewards"
+      "label": "Tactical Spend"
     },
     {
       "id": "s4",
-      "label": "Reinvestment"
+      "label": "Combat"
     },
     {
       "id": "s5",
-      "label": "Progression"
+      "label": "Progress"
     },
     {
       "id": "s6",
+      "label": "Rewards"
+    },
+    {
+      "id": "s7",
+      "label": "Reinvestment"
+    },
+    {
+      "id": "s8",
       "label": "Outcomes"
     }
   ],
@@ -51,9 +59,24 @@
   ],
   "cards": [
     {
+      "id": "time",
+      "label": "Spend Time",
+      "kind": "initial_sink_node",
+      "inputRole": "time",
+      "stageId": "s0",
+      "groupId": "g0",
+      "order": 0,
+      "sources": [],
+      "sinks": [
+        "Player time"
+      ],
+      "values": [],
+      "notes": ""
+    },
+    {
       "id": "drop",
       "label": "Enter a Battle Royale match",
-      "stageId": "s0",
+      "stageId": "s1",
       "groupId": "g0",
       "order": 0,
       "kind": "action",
@@ -67,7 +90,7 @@
     {
       "id": "loot",
       "label": "Loot and complete contracts",
-      "stageId": "s1",
+      "stageId": "s2",
       "groupId": "g0",
       "order": 0,
       "kind": "action",
@@ -82,7 +105,7 @@
     {
       "id": "buy",
       "label": "Spend cash at Buy Stations",
-      "stageId": "s2",
+      "stageId": "s3",
       "groupId": "g0",
       "order": 0,
       "kind": "action",
@@ -99,7 +122,7 @@
     {
       "id": "redeploy",
       "label": "Buy back an eligible squadmate",
-      "stageId": "s2",
+      "stageId": "s3",
       "groupId": "g0",
       "order": 1,
       "kind": "action",
@@ -115,7 +138,7 @@
     {
       "id": "fight",
       "label": "Fight and survive",
-      "stageId": "s3",
+      "stageId": "s4",
       "groupId": "g0",
       "order": 0,
       "kind": "action",
@@ -145,7 +168,7 @@
     {
       "id": "xp",
       "label": "Earn player and weapon XP",
-      "stageId": "s2",
+      "stageId": "s5",
       "groupId": "g1",
       "order": 0,
       "kind": "action",
@@ -160,7 +183,7 @@
     {
       "id": "level",
       "label": "Reach player level unlocks",
-      "stageId": "s3",
+      "stageId": "s6",
       "groupId": "g1",
       "order": 0,
       "kind": "action",
@@ -174,7 +197,7 @@
     {
       "id": "weapon",
       "label": "Level weapons",
-      "stageId": "s3",
+      "stageId": "s6",
       "groupId": "g1",
       "order": 1,
       "kind": "action",
@@ -189,7 +212,7 @@
     {
       "id": "loadout",
       "label": "Configure a loadout",
-      "stageId": "s4",
+      "stageId": "s7",
       "groupId": "g1",
       "order": 0,
       "kind": "action",
@@ -203,7 +226,7 @@
     {
       "id": "challenges",
       "label": "Complete eligible challenges",
-      "stageId": "s4",
+      "stageId": "s5",
       "groupId": "g1",
       "order": 1,
       "kind": "action",
@@ -218,7 +241,7 @@
     {
       "id": "prestige",
       "label": "Choose to Prestige",
-      "stageId": "s5",
+      "stageId": "s7",
       "groupId": "g1",
       "order": 0,
       "kind": "action",
@@ -231,7 +254,7 @@
     },
     {
       "id": "money",
-      "label": "Spend money",
+      "label": "Spend Money",
       "stageId": "s0",
       "groupId": "g2",
       "order": 0,
@@ -241,7 +264,8 @@
         "Real money"
       ],
       "values": [],
-      "notes": ""
+      "notes": "",
+      "inputRole": "money"
     },
     {
       "id": "points",
@@ -295,7 +319,7 @@
     {
       "id": "passprogress",
       "label": "Progress the seasonal pass",
-      "stageId": "s3",
+      "stageId": "s5",
       "groupId": "g2",
       "order": 1,
       "kind": "action",
@@ -309,7 +333,7 @@
     {
       "id": "rewards",
       "label": "Claim eligible pass rewards",
-      "stageId": "s4",
+      "stageId": "s6",
       "groupId": "g2",
       "order": 0,
       "kind": "action",
@@ -325,7 +349,7 @@
     {
       "id": "victory",
       "label": "Win through squad play",
-      "stageId": "s6",
+      "stageId": "s8",
       "groupId": "g0",
       "order": 0,
       "kind": "final_good",
@@ -337,7 +361,7 @@
     {
       "id": "mastery",
       "label": "Demonstrate mastery",
-      "stageId": "s6",
+      "stageId": "s8",
       "groupId": "g1",
       "order": 0,
       "kind": "final_good",
@@ -349,7 +373,7 @@
     {
       "id": "identity",
       "label": "Express a preferred identity",
-      "stageId": "s6",
+      "stageId": "s8",
       "groupId": "g2",
       "order": 0,
       "kind": "final_good",
@@ -412,7 +436,7 @@
       "id": "fight__xp",
       "to": "xp",
       "type": "normal",
-      "feedback": true,
+      "feedback": false,
       "label": "Eligible play",
       "from": "fight"
     },
@@ -468,7 +492,7 @@
       "id": "challenges__level",
       "to": "level",
       "type": "normal",
-      "feedback": true,
+      "feedback": false,
       "label": "Challenge XP",
       "from": "challenges"
     },
@@ -516,7 +540,7 @@
       "id": "fight__passprogress",
       "to": "passprogress",
       "type": "normal",
-      "feedback": true,
+      "feedback": false,
       "label": "Eligible play",
       "from": "fight"
     },
@@ -591,6 +615,14 @@
       "feedback": false,
       "label": "Player value",
       "from": "rewards"
+    },
+    {
+      "id": "time__drop",
+      "from": "time",
+      "to": "drop",
+      "type": "normal",
+      "feedback": false,
+      "label": "Match participation"
     }
   ],
   "settings": {
@@ -632,7 +664,8 @@
           "fight",
           "end",
           "loadout",
-          "passprogress"
+          "passprogress",
+          "time"
         ],
         "edgeIds": [
           "drop__loot",
@@ -642,7 +675,8 @@
           "redeploy__fight",
           "fight__end",
           "loadout__buy",
-          "fight__passprogress"
+          "fight__passprogress",
+          "time__drop"
         ]
       },
       {

@@ -84,8 +84,32 @@ export function PublicCatalog({
   const showStarter =
     offset === 0 &&
     (!search || starter.name.toLowerCase().includes(search.toLowerCase()));
+  const featured = presets.find((preset) => preset.id === "wardogs");
+  const wardogsMechanics = presets.find(
+    (preset) => preset.id === "wardogs_mechanics",
+  );
+  const showFeatured =
+    offset === 0 &&
+    featured &&
+    (!search ||
+      `${featured.document.name} ${featured.document.research?.summary || ""}`
+        .toLowerCase()
+        .includes(search.toLowerCase()));
   function openPreset(document: EconomyDocument) {
     onPreset(document);
+  }
+  function companionFor(document: EconomyDocument) {
+    if (document.id === "wardogs" && wardogsMechanics)
+      return {
+        label: "Open detailed mechanics map",
+        onOpen: () => openPreset(wardogsMechanics.document),
+      };
+    if (document.id === "wardogs_mechanics" && featured)
+      return {
+        label: "Open Wardogs overview map",
+        onOpen: () => openPreset(featured.document),
+      };
+    return undefined;
   }
   return (
     <section aria-label="Public diagrams">
@@ -112,6 +136,15 @@ export function PublicCatalog({
       </div>
       {error && <p className="error-box">{error}</p>}
       <div className="preset-grid" aria-busy={loading}>
+        {showFeatured && (
+          <PresetTile
+            doc={featured.document}
+            preview={preview(featured.document)}
+            onOpen={() => openPreset(featured.document)}
+            onSources={() => onSources(featured.document)}
+            companion={companionFor(featured.document)}
+          />
+        )}
         {showStarter && (
           <PresetTile
             doc={starter}
@@ -123,6 +156,7 @@ export function PublicCatalog({
         {!loading &&
           page?.items.map((item) => {
             if (item.source === "preset") {
+              if (item.source_id === "wardogs") return null;
               const preset = presets.find((p) => p.id === item.source_id);
               if (!preset) return null;
               return (
@@ -132,6 +166,7 @@ export function PublicCatalog({
                   preview={preview(preset.document)}
                   onOpen={() => openPreset(preset.document)}
                   onSources={() => onSources(preset.document)}
+                  companion={companionFor(preset.document)}
                   views={item.views}
                 />
               );

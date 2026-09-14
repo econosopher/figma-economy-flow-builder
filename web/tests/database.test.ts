@@ -12,7 +12,7 @@ async function asUser(id: string) {
 beforeAll(async () => {
   db = new PGlite();
   await db.exec(
-    `create role anon;create role authenticated;create schema auth;create schema storage;create table auth.users(id uuid primary key);insert into auth.users values('${alice}'),('${bob}');create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;grant usage on schema auth to authenticated,anon;grant execute on function auth.uid() to authenticated,anon;create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);create table storage.objects(id uuid,bucket_id text);alter table storage.objects enable row level security;`,
+    `create role anon;create role authenticated;create role service_role bypassrls;create schema auth;create schema storage;create table auth.users(id uuid primary key);insert into auth.users values('${alice}'),('${bob}');create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;grant usage on schema auth to authenticated,anon;grant execute on function auth.uid() to authenticated,anon;create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);create table storage.objects(id uuid,bucket_id text);alter table storage.objects enable row level security;`,
   );
   await db.exec(
     readFileSync(
@@ -27,6 +27,15 @@ beforeAll(async () => {
     readFileSync(
       new URL(
         "../supabase/migrations/202609140001_diagram_visibility.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    ),
+  );
+  await db.exec(
+    readFileSync(
+      new URL(
+        "../supabase/migrations/202609140003_release_gate.sql",
         import.meta.url,
       ),
       "utf8",
@@ -60,16 +69,16 @@ describe("database authorization and snapshot boundaries", () => {
       ]),
     ).rejects.toThrow("Revision conflict");
   });
-  it("exposes published snapshots, not private documents or credentials", async () => {
+  it("routes published snapshots through the Worker and keeps owner access", async () => {
     await db.exec("reset role");
     await db.query(
       `insert into public.publications(owner_id,document_id,title,author,snapshot) values($1,'diagram-a','Published version','Alice',$2)`,
       [alice, { name: "Snapshot" }],
     );
     await db.exec("set role anon");
-    expect(
-      (await db.query("select title,snapshot from public.publications")).rows,
-    ).toHaveLength(1);
+    await expect(
+      db.query("select title,snapshot from public.publications"),
+    ).rejects.toThrow();
     await expect(db.query("select * from public.documents")).rejects.toThrow();
     await expect(
       db.query("select * from public.job_credentials"),
@@ -77,6 +86,18 @@ describe("database authorization and snapshot boundaries", () => {
     await expect(
       db.query("select * from public.slack_installations"),
     ).rejects.toThrow();
+    await asUser(alice);
+    expect(
+      (await db.query("select title,snapshot from public.publications")).rows,
+    ).toHaveLength(1);
+    await asUser(bob);
+    expect(
+      (await db.query("select title,snapshot from public.publications")).rows,
+    ).toHaveLength(0);
+    await db.exec("reset role;set role service_role");
+    expect(
+      (await db.query("select title,snapshot from public.publications")).rows,
+    ).toHaveLength(1);
   });
   it("private edits do not alter published snapshots; users cannot bypass moderation", async () => {
     await asUser(alice);
@@ -97,9 +118,9 @@ describe("database authorization and snapshot boundaries", () => {
     await db.exec(
       "reset role;update public.publications set hidden=true;set role anon;select set_config('request.jwt.claim.sub','',false);",
     );
-    expect(
-      (await db.query("select * from public.publications")).rows,
-    ).toHaveLength(0);
+    await expect(
+      db.query("select * from public.publications"),
+    ).rejects.toThrow();
   });
   it("revokes share access without altering the source diagram", async () => {
     await db.exec("reset role");
@@ -165,9 +186,7 @@ describe("automatic gallery visibility", () => {
       "automatic-a",
       doc("public"),
     ]);
-    await db.exec(
-      "reset role;set role anon;select set_config('request.jwt.claim.sub','',false)",
-    );
+    await db.exec("reset role");
     const rows = (
       await db.query<{ id: string; snapshot: { name: string } }>(
         "select id,snapshot from publications where document_id='automatic-a'",
@@ -209,13 +228,11 @@ describe("automatic gallery visibility", () => {
         doc("public"),
       ]),
     ).rejects.toThrow("Revision conflict");
-    await db.exec(
-      "reset role;set role anon;select set_config('request.jwt.claim.sub','',false)",
-    );
+    await db.exec("reset role");
     expect(
       (
         await db.query(
-          "select * from publications where document_id='automatic-a'",
+          "select * from publications where document_id='automatic-a' and listed",
         )
       ).rows,
     ).toHaveLength(0);
@@ -245,13 +262,11 @@ describe("automatic gallery visibility", () => {
       "automatic-a",
       doc("public"),
     ]);
-    await db.exec(
-      "reset role;set role anon;select set_config('request.jwt.claim.sub','',false)",
-    );
+    await db.exec("reset role");
     expect(
       (
         await db.query(
-          "select * from publications where document_id='automatic-a'",
+          "select * from publications where document_id='automatic-a' and not hidden",
         )
       ).rows,
     ).toHaveLength(0);
@@ -274,5 +289,15 @@ describe("automatic gallery visibility", () => {
         )
       ).rows,
     ).toHaveLength(0);
+  });
+  it("keeps final-artifact storage buckets private", async () => {
+    await db.exec("reset role");
+    expect(
+      (
+        await db.query<{ public: boolean }>(
+          "select public from storage.buckets where id in ('gallery-thumbnails','mcp-previews','slack-previews')",
+        )
+      ).rows.every((row) => row.public === false),
+    ).toBe(true);
   });
 });

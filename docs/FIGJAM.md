@@ -7,13 +7,13 @@ Generate compact economy flow charts in FigJam from a structured JSON spec. The 
 *   **Two-Way Sync:** Regenerate from JSON, then edit plugin-created cards and sync labels/resources/edges back into the stored v2 schema.
 *   **Compact Stage/Lane Layout:** Render only the active lane regions needed for readability, with terminal outcomes kept in the final stage.
 *   **Customizable Colors:** Use the UI color pickers to customize the colors for inputs, sinks, sources, and other node types to match your theme.
-*   **Pre-built Templates:** Load migrated v2 examples such as Apex Legends, Rainbow Six Siege, Helldivers, and Dice Throne Digital.
+*   **Release-gated Templates:** Only examples explicitly listed in `templates.manifest.json` and accepted by the shared economy-convention checker are bundled as defaults.
 *   **In-depth Validation:** Receive clear, specific error messages for invalid JSON structure, ensuring your data is correct before generation.
 *   **Routed Connectors:** Typed connector styles, deterministic port slots, and shared junction routes reduce line/card overlap and fan-out clutter.
 *   **Provider-Aware Research:** The Research tab can call a local API backed by Gemini, OpenAI, or Claude/Anthropic and request v2 JSON output.
 *   **FigJam-Optimized:** Designed and built exclusively for FigJam.
 
-An example `helldivers.json` can be found in the `/examples` directory.
+Reference diagrams remain in `/examples` for review and migration. They are not bundled as defaults until their mechanics and forward pathways satisfy the release convention. The bundled `Illustrative Economy (Not Researched)` starter demonstrates the required structure without claiming to describe a real game.
 
 ---
 
@@ -128,7 +128,7 @@ Note: Source of truth is `src/` TypeScript; `code.js` is the build output.
 ## 3  Usage
 
 1.  **Open the plugin:** In any FigJam file, run **Plugins → Development → Economy‑Flow Builder**.
-2.  **Choose a Template (Optional):** Select a migrated v2 example from the template dropdown to pre-fill the JSON. A confirmation will appear if you have existing JSON.
+2.  **Choose a Template (Optional):** Select a release-gated example from the template dropdown to pre-fill the JSON. A confirmation will appear if you have existing JSON.
 3.  **Customize Colors (Optional):** Use the color pickers to change the default colors for different node types.
 4.  **Provide JSON:** Write or paste your flowchart definition into the main text area.
 5.  **Validate JSON (Optional):** Click "Validate JSON" to check formatting and references without drawing.
@@ -223,20 +223,23 @@ Supported node fields:
 - `label`: card label, usually an action phrase beginning with "To".
 - `stageId`: required stage id.
 - `laneId`: optional lane id.
-- `kind`: set to `"final_good"` for terminal outcomes.
+- `kind`: `"initial_sink_node"` for the two player inputs, `"final_good"` for terminal outcomes, otherwise `"action"`.
+- `inputRole`: `"time"` or `"money"`; only valid on the matching initial input.
+- `notes`: optional explanation. For a game with no real-money spending, begin the disconnected Spend Money note with `Not applicable:`.
 - `sources`: optional spendable resources gained, rendered as green chips.
 - `sinks`: optional resources consumed, rendered as red chips.
 - `values`: optional stores of value/progress, rendered as orange chips.
 
 ### `edges`
 
-Edges are objects with `from`, `to`, and optional `type`.
+Edges are objects with `from`, `to`, and optional `type`. Ordinary edges must move to a strictly later stage. A same-stage or backward return must set `feedback: true` and include a visible, non-empty `label`.
 
 ```json
 "edges": [
-  { "from": "spend_time", "to": "play_ranked_matches", "type": "normal" },
-  { "from": "play_ranked_matches", "to": "increase_rank", "type": "value" },
-  { "from": "increase_rank", "to": "prove_skill", "type": "final" }
+    { "from": "spend_time", "to": "play_ranked_matches", "type": "normal" },
+    { "from": "play_ranked_matches", "to": "increase_rank", "type": "value" },
+    { "from": "increase_rank", "to": "prove_skill", "type": "final" },
+    { "from": "increase_rank", "to": "play_ranked_matches", "feedback": true, "label": "Higher-tier replay" }
 ]
 ```
 
@@ -262,8 +265,8 @@ Supported edge types:
     { "id": "monetization", "label": "Monetization" }
   ],
   "nodes": [
-    { "id": "spend_time", "label": "Spend Time", "stageId": "entry", "laneId": "core", "kind": "initial_sink_node" },
-    { "id": "spend_money", "label": "Spend Money", "stageId": "entry", "laneId": "monetization", "kind": "initial_sink_node" },
+    { "id": "spend_time", "label": "Spend Time", "stageId": "entry", "laneId": "core", "kind": "initial_sink_node", "inputRole": "time" },
+    { "id": "spend_money", "label": "Spend Money", "stageId": "entry", "laneId": "monetization", "kind": "initial_sink_node", "inputRole": "money" },
     { "id": "play_matches", "label": "To Play Matches", "stageId": "play", "laneId": "core", "sources": ["Soft Currency"], "values": ["Account XP"] },
     { "id": "buy_cosmetics", "label": "To Buy Cosmetics", "stageId": "play", "laneId": "monetization", "sinks": ["Premium Currency"] },
     { "id": "show_identity", "label": "To Show Identity", "stageId": "terminal", "kind": "final_good" }
@@ -281,11 +284,15 @@ Supported edge types:
 
 Use `LLM_INSTRUCTIONS.md` or the Research tab for the current v2 prompt. The important constraints are:
 - Output a single raw JSON object with `schemaVersion: 2`.
+- Put exactly `Spend Time` and `Spend Money` in the first stage, with matching `initial_sink_node` kinds and `inputRole` values. Money means real-world spending.
 - Preserve explicit `stages` and `lanes`; do not use legacy `inputs` or `subsections`.
 - Assign every node to a real `stageId`, and use semantic stage/lane labels.
+- Make every other node reachable through strictly forward, non-feedback edges from an applicable input.
+- Mark every same-stage or backward return as feedback and give it a visible label.
 - Keep final-good nodes in a terminal stage.
 - Use object-form edges and choose `normal`, `value`, `final`, or `cross-lane` when the relationship is clear.
 - Keep currency names consistent across `sources`, `sinks`, and `values`.
+- Run the shared `checkEconomyConventions` checker after schema validation. A graph with violations remains a draft and must not be rendered or released.
 
 ### Persistence
 
@@ -301,7 +308,7 @@ The plugin stores the most recent rendered v2 JSON and chosen colors in Figma cl
 | `ui.html` | UI layout, styling, and client-side script |
 | `tsconfig.json` | Compiler config with Figma typings |
 | `.gitignore` | Ignores `node_modules/` and `code.js` |
-| `/examples` | Example preset JSON files (include `name`). |
+| `/examples` | Reference JSON files; root `templates.manifest.json` controls bundled defaults. |
 
 ---
 

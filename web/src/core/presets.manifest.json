@@ -1,5 +1,13 @@
 [
   {
+    "id": "wardogs",
+    "file": "wardogs.json"
+  },
+  {
+    "id": "wardogs_mechanics",
+    "file": "wardogs_mechanics.json"
+  },
+  {
     "id": "gossip_harbor",
     "file": "gossip_harbor.json"
   },

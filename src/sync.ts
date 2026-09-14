@@ -420,6 +420,8 @@ function mergeCanvasIntoV2Graph(base: V2Graph, canvas: Graph): V2Graph {
       id: input.id,
       label: input.label,
       kind: 'initial_sink_node',
+      inputRole: existing?.inputRole,
+      notes: existing?.notes,
       stageId: existing?.stageId || fallbackStageId,
       laneId: existing?.laneId || fallbackLaneId,
       sources: [],
@@ -439,7 +441,8 @@ function mergeCanvasIntoV2Graph(base: V2Graph, canvas: Graph): V2Graph {
       laneId: existing?.laneId || fallbackLaneId,
       sources: node.sources || [],
       sinks: node.sinks || [],
-      values: node.values || []
+      values: node.values || [],
+      notes: existing?.notes
     };
   });
 
@@ -450,7 +453,13 @@ function mergeCanvasIntoV2Graph(base: V2Graph, canvas: Graph): V2Graph {
       const existing = baseEdges.get(`${from}->${to}`);
       const target = [...inputNodes, ...actionNodes].find(node => node.id === to);
       const type = existing?.type || (target?.kind === 'final_good' ? 'final' : undefined);
-      return type ? { from, to, type } : { from, to };
+      return {
+        from,
+        to,
+        ...(type ? { type } : {}),
+        ...(existing?.feedback ? { feedback: true } : {}),
+        ...(existing?.label ? { label: existing.label } : {})
+      };
     });
 
   return {

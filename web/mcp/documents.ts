@@ -7,6 +7,10 @@ import {
   type EconomyDocument,
 } from "../src/core/document";
 import {
+  assertReleaseReady,
+  checkReleaseReadiness,
+} from "../src/core/conventions";
+import {
   approximateMeasure,
   layoutDocument,
   measureCards,
@@ -54,6 +58,7 @@ export async function readDiagram(
     const document =
       id === "starter" ? starter : presets.find((p) => p.id === id)?.document;
     if (!document) throw new HttpError(404, "Preset not found.");
+    assertReleaseReady(document);
     return { document, revision: 0, source: "preset" };
   }
   if (reference.startsWith("publication:")) {
@@ -61,12 +66,19 @@ export async function readDiagram(
     const rows = await rest<{ snapshot: EconomyDocument }[]>(
       env,
       `publications?id=eq.${id}&listed=eq.true&hidden=eq.false&select=snapshot`,
-      {},
-      String(env.SUPABASE_ANON_KEY),
     );
     if (!rows[0]) throw new HttpError(404, "Publication not found.");
+    const document = validateDocument(rows[0].snapshot);
+    try {
+      assertReleaseReady(document);
+    } catch (error) {
+      throw new HttpError(
+        409,
+        error instanceof Error ? error.message : "Publication is not release ready.",
+      );
+    }
     return {
-      document: validateDocument(rows[0].snapshot),
+      document,
       revision: 0,
       source: "community",
     };
@@ -83,6 +95,7 @@ export function validateDraft(input: unknown) {
   return {
     document,
     notices,
+    releaseReadiness: checkReleaseReadiness(document),
     routingIssues: layout.issues,
     measurement: "approximate; render_diagram checks actual font metrics",
   };
@@ -99,7 +112,7 @@ export async function previewChange(
       409,
       "Revision conflict. Read the latest diagram before editing.",
     );
-  const document = input.edits
+  let document = input.edits
     ? applyEdits(current.document, input.edits)
     : validateDocument({
         ...validateDocument(input.replacement),
@@ -107,8 +120,21 @@ export async function previewChange(
       });
   if (document.id !== current.id)
     throw new HttpError(400, "Replacement must preserve the document ID.");
+  const becamePrivate =
+    document.visibility === "public" &&
+    !checkReleaseReadiness(document).ready;
+  if (becamePrivate) document = { ...document, visibility: "private" };
+  const validated = validateDraft(document);
   return {
-    ...validateDraft(document),
+    ...validated,
+    notices: [
+      ...validated.notices,
+      ...(becamePrivate
+        ? [
+            "The edited diagram no longer meets release conventions, so it will be saved as a private draft.",
+          ]
+        : []),
+    ],
     diff: documentDiff(current.document, document),
     isPreset: current.is_preset,
   };
@@ -165,6 +191,7 @@ export async function editDiagram(
     ...result(env, saved),
     diff: draft.diff,
     routingIssues: draft.routingIssues,
+    notices: draft.notices,
   };
 }
 export async function createDiagram(
@@ -188,7 +215,7 @@ export async function createDiagram(
     ...imported.document,
     id: input.operationId,
     name: input.name || imported.document.name,
-    visibility: input.visibility || imported.document.visibility || "public",
+    visibility: input.visibility || imported.document.visibility || "private",
   });
   return {
     ...result(

@@ -1,4 +1,5 @@
-export const RESEARCH_PROMPT_VERSION = '2.0';
+export const RESEARCH_PROMPT_VERSION = '3.0';
+export const RELEASE_CONVENTION_CHECKER = 'checkEconomyConventions';
 
 export function buildEconomyGraphJsonSchema() {
   return {
@@ -50,7 +51,9 @@ export function buildEconomyGraphJsonSchema() {
             sources: { type: 'array', items: { type: 'string' } },
             sinks: { type: 'array', items: { type: 'string' } },
             values: { type: 'array', items: { type: 'string' } },
-            kind: { type: 'string', enum: ['action', 'initial_sink_node', 'final_good'] }
+            kind: { type: 'string', enum: ['action', 'initial_sink_node', 'final_good'] },
+            inputRole: { type: 'string', enum: ['time', 'money'] },
+            notes: { type: 'string' }
           }
         }
       },
@@ -64,7 +67,9 @@ export function buildEconomyGraphJsonSchema() {
           properties: {
             from: { type: 'string' },
             to: { type: 'string' },
-            type: { type: 'string', enum: ['normal', 'value', 'final', 'cross-lane'] }
+            type: { type: 'string', enum: ['normal', 'value', 'final', 'cross-lane'] },
+            feedback: { type: 'boolean' },
+            label: { type: 'string' }
           }
         }
       }
@@ -112,11 +117,18 @@ export function createEconomyJsonPrompt(gameName: string, depth: number): string
     '- Define ordered left-to-right "stages" and assign every node to a stageId.',
     '- Define ordered vertical "lanes" when they clarify the graph, and assign laneId when useful.',
     '- Every node must include arrays for "sources", "sinks", and "values", even if empty.',
-    '- Player inputs such as time or money are nodes with kind = "initial_sink_node".',
+    '- The first stage contains exactly two nodes and no activities: "Spend Time" and "Spend Money".',
+    '- Set kind = "initial_sink_node" and inputRole = "time" on Spend Time.',
+    '- Set kind = "initial_sink_node" and inputRole = "money" on Spend Money; this means real-world spending, not earned currency.',
+    '- If the game has no real-money spending, keep Spend Money disconnected and add a notes explanation beginning "Not applicable:"; never invent a paid mechanic.',
     '- Final goals may use kind = "final_good".',
     '- Final-good nodes must be assigned to the last/terminal stage.',
     '- Every edge must be an object with "from" and "to" referencing existing node ids.',
+    '- Every non-input node must be reachable from an applicable input using only non-feedback edges.',
+    '- Every non-feedback edge must move to a strictly later stage.',
+    '- A same-stage or backward edge must set feedback = true and have a short, visible, non-empty label.',
     '- Prefer a compact, high-signal graph over exhaustive low-value detail.',
+    `- Treat ${RELEASE_CONVENTION_CHECKER} as a release hard gate after schema validation; repair every violation before release or export.`,
     '',
     'Semantic rules:',
     '- "sources" are spendable outputs created by a system.',

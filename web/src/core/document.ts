@@ -30,6 +30,7 @@ export const cardSchema = z.object({
   groupId: id,
   order: z.number().finite(),
   kind: z.enum(["action", "initial_sink_node", "final_good"]).default("action"),
+  inputRole: z.enum(["time", "money"]).optional(),
   sources: z.array(label).max(40).default([]),
   sinks: z.array(label).max(40).default([]),
   values: z.array(label).max(40).default([]),
@@ -86,6 +87,44 @@ export const researchSchema = z.object({
     .max(30),
 });
 export type PresetResearch = z.infer<typeof researchSchema>;
+const evidenceUrl = z.string().max(3000).url().refine(s => /^https:\/\//.test(s), "Evidence must use HTTPS.");
+export const cardDetailSchema = z.object({
+  cardId: id,
+  explanation: z.string().max(5000).default(""),
+  implications: z.string().max(3000).default(""),
+  prompt: z.string().max(1000).default(""),
+  status: z.enum(["current", "older", "announced", "inference", "unverified"]).default("unverified"),
+  uncertainties: z.array(z.string().max(1500)).max(20).default([]),
+  reviewFingerprint: z.string().max(30000).optional(),
+});
+export const evidenceItemSchema = z.object({
+  id,
+  cardIds: z.array(id).min(1).max(200),
+  kind: z.enum(["image", "youtube", "source"]),
+  title: z.string().min(1).max(300),
+  url: evidenceUrl,
+  caption: z.string().max(3000).default(""),
+  observedAt: z.string().max(80).optional(),
+  build: z.string().max(300).optional(),
+  timestampSeconds: z.number().int().min(0).max(604800).optional(),
+  endSeconds: z.number().int().min(1).max(604800).optional(),
+  videoId: z.string().regex(/^[A-Za-z0-9_-]{11}$/).optional(),
+  mediaId: z.string().regex(/^media-[a-f0-9]{64}$/).optional(),
+}).superRefine((item,ctx) => {
+  if(item.kind === "image" && !item.mediaId && !item.url) ctx.addIssue({code:"custom",message:"A screenshot needs a local attachment or public HTTPS image URL."});
+  if(item.kind === "youtube") {
+    const u = new URL(item.url);
+    const linkedId = u.hostname === "youtu.be" ? u.pathname.slice(1) : ["www.youtube.com","youtube.com","m.youtube.com"].includes(u.hostname) ? (u.searchParams.get("v") || u.pathname.match(/^\/(?:shorts|embed|live)\/([A-Za-z0-9_-]{11})/)?.[1]) : null;
+    if(!item.videoId || linkedId !== item.videoId) ctx.addIssue({code:"custom",message:"Video URL and YouTube ID must refer to the same video."});
+  }
+  if(item.endSeconds !== undefined && item.endSeconds <= (item.timestampSeconds ?? 0)) ctx.addIssue({code:"custom",message:"Clip end must follow its start."});
+});
+export type EvidenceItem = z.infer<typeof evidenceItemSchema>;
+export type CardDetail = z.infer<typeof cardDetailSchema>;
+export const evidenceSchema = z.object({
+  details: z.array(cardDetailSchema).max(200).default([]),
+  items: z.array(evidenceItemSchema).max(600).default([]),
+});
 export const documentSchema = z.object({
   schemaVersion: z.literal(3),
   id,
@@ -102,6 +141,7 @@ export const documentSchema = z.object({
   visibility: z.enum(["public", "private"]).optional(),
   // Historical evidence for the original preset, retained even after user edits.
   research: researchSchema.optional(),
+  evidence: evidenceSchema.optional(),
 });
 export type EconomyDocument = z.infer<typeof documentSchema>;
 export type Card = z.infer<typeof cardSchema>;
@@ -126,19 +166,31 @@ export function validateDocument(input: unknown): EconomyDocument {
   for (const c of d.cards) {
     if (!stages.has(c.stageId) || !groups.has(c.groupId))
       throw new Error(`“${c.label}” needs an existing stage and group.`);
-    if (c.kind === "final_good" && c.stageId !== d.stages.at(-1)!.id)
-      throw new Error("Final goods belong in the last stage.");
   }
   for (const e of d.edges) {
     const a = cards.get(e.from),
       b = cards.get(e.to);
     if (!a || !b) throw new Error("A pipe refers to a missing card.");
-    if (!e.feedback && stages.get(a.stageId)! >= stages.get(b.stageId)!)
-      throw new Error(
-        `“${a.label}” → “${b.label}” needs an explicit return pipe.`,
-      );
+  }
+  if (d.evidence) {
+    if(new Set(d.evidence.details.map(x=>x.cardId)).size !== d.evidence.details.length) throw new Error("Duplicate card details.");
+    if(new Set(d.evidence.items.map(x=>x.id)).size !== d.evidence.items.length) throw new Error("Duplicate evidence IDs.");
+    for(const detail of d.evidence.details) if(!cards.has(detail.cardId)) throw new Error("Details refer to a missing card.");
+    for(const item of d.evidence.items) for(const cardId of item.cardIds) if(!cards.has(cardId)) throw new Error("Evidence refers to a missing card.");
   }
   return d;
+}
+/** Stored content snapshot: moving a card does not invalidate its evidence. */
+export function cardFingerprint(d: EconomyDocument, cardId: string): string {
+  const c = d.cards.find(c=>c.id === cardId);
+  if(!c) return "";
+  const edges = d.edges.filter(e=>e.from === cardId || e.to === cardId).map(({id: _id,...e})=>e).sort((a,b)=>JSON.stringify(a).localeCompare(JSON.stringify(b)));
+  const {label,kind,inputRole,sources,sinks,values,notes} = c;
+  return JSON.stringify({label,kind,inputRole,sources,sinks,values,notes,edges});
+}
+export function evidenceNeedsReview(d: EconomyDocument,cardId: string): boolean {
+  const detail = d.evidence?.details.find(x=>x.cardId === cardId);
+  return !!detail && detail.reviewFingerprint !== cardFingerprint(d,cardId);
 }
 const v2Schema = z.object({
   schemaVersion: z.literal(2),
@@ -152,13 +204,21 @@ const v2Schema = z.object({
       stageId: id,
       laneId: id.optional(),
       kind: z.string().optional(),
+      inputRole: z.enum(["time", "money"]).optional(),
       sources: z.array(label).optional(),
       sinks: z.array(label).optional(),
       values: z.array(label).optional(),
+      notes: z.string().max(3000).optional(),
     }),
   ),
   edges: z.array(
-    z.object({ from: id, to: id, type: edgeSchema.shape.type.optional() }),
+    z.object({
+      from: id,
+      to: id,
+      type: edgeSchema.shape.type.optional(),
+      feedback: z.boolean().optional(),
+      label: z.string().max(160).optional(),
+    }),
   ),
 });
 export function importDocument(input: unknown): {
@@ -193,19 +253,19 @@ export function importDocument(input: unknown): {
         n.kind === "initial_sink_node" || n.kind === "final_good"
           ? n.kind
           : "action",
-      notes: "",
+      notes: n.notes || "",
     })),
     edges: old.edges.map((e, i) => {
       const a = nodes.get(e.from),
         b = nodes.get(e.to);
-      const feedback = !!(
+      const feedback = e.feedback ?? !!(
         a &&
         b &&
         stageIndex.get(a.stageId)! >= stageIndex.get(b.stageId)!
       );
       if (feedback)
         notices.push(`${a!.label} → ${b!.label} will use a return track.`);
-      return { ...e, id: `pipe-${i}`, feedback };
+      return { ...e, id: `pipe-${i}`, feedback, label: e.label || "" };
     }),
     settings: defaultSettings,
   });
@@ -216,7 +276,7 @@ export function blankDocument(): EconomyDocument {
     schemaVersion: 3,
     id: uid(),
     name: "Untitled economy",
-    visibility: "public",
+    visibility: "private",
     stages: [
       { id: "invest", label: "Investment" },
       { id: "play", label: "Core play" },
@@ -224,7 +284,26 @@ export function blankDocument(): EconomyDocument {
       { id: "outcome", label: "Outcomes" },
     ],
     groups: [{ id: "core", label: "Core loop", color: "#f5f8f6" }],
-    cards: [],
+    cards: [
+      {
+        id: "spend_time",
+        label: "Spend Time",
+        stageId: "invest",
+        groupId: "core",
+        order: 0,
+        kind: "initial_sink_node",
+        inputRole: "time",
+      },
+      {
+        id: "spend_money",
+        label: "Spend Money",
+        stageId: "invest",
+        groupId: "core",
+        order: 1,
+        kind: "initial_sink_node",
+        inputRole: "money",
+      },
+    ],
     edges: [],
     settings: defaultSettings,
   });
@@ -244,6 +323,10 @@ export function deleteCard(d: EconomyDocument, id: string): EconomyDocument {
   return {
     ...d,
     cards: d.cards.filter((c) => c.id !== id),
+    ...(d.evidence ? {evidence: {
+      details: d.evidence.details.filter(x=>x.cardId !== id),
+      items: d.evidence.items.map(x=>({...x,cardIds:x.cardIds.filter(c=>c !== id)})).filter(x=>x.cardIds.length),
+    }} : {}),
     edges: d.edges.filter((e) => e.from !== id && e.to !== id),
   };
 }

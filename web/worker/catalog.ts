@@ -2,6 +2,8 @@ import { z } from "zod";
 import { presets } from "../src/core/presets";
 import type { AppEnv } from "./env";
 import { authenticate, cloudReady, HttpError, rest } from "./helpers";
+import { checkReleaseReadiness } from "../src/core/conventions";
+import { validateDocument } from "../src/core/document";
 
 export const catalogQuery = z.object({
   search: z.string().max(200).default(""),
@@ -46,7 +48,7 @@ export async function browseCatalog(
   const query = catalogQuery.parse(input);
   if (cloudReady(env)) {
     try {
-      return await rest<CatalogPage>(env, "rpc/browse_catalog", {
+      const page = await rest<CatalogPage>(env, "rpc/browse_catalog", {
         method: "POST",
         body: JSON.stringify({
           p_presets: seedItems.map((item) => ({ ...item, id: item.source_id })),
@@ -57,6 +59,33 @@ export async function browseCatalog(
           p_limit: query.limit,
         }),
       });
+      const communityIds = page.items
+        .filter((item) => item.source === "community")
+        .map((item) => item.source_id);
+      if (!communityIds.length) return page;
+      const snapshots = await rest<{ id: string; snapshot: unknown }[]>(
+        env,
+        `publications?id=in.(${communityIds.join(",")})&listed=eq.true&hidden=eq.false&select=id,snapshot`,
+      );
+      const ready = new Set(
+        snapshots.flatMap((row) => {
+          try {
+            return checkReleaseReadiness(validateDocument(row.snapshot)).ready
+              ? [row.id]
+              : [];
+          } catch {
+            return [];
+          }
+        }),
+      );
+      const items = page.items.filter(
+        (item) => item.source !== "community" || ready.has(item.source_id),
+      );
+      return {
+        ...page,
+        items,
+        total: Math.max(0, page.total - (page.items.length - items.length)),
+      };
     } catch {
       console.error(JSON.stringify({ event: "catalog_unavailable" }));
       // Fall through to bundled diagrams; no invented counts or partial popularity ranking.

@@ -180,6 +180,7 @@ export function routeV2Edges(graph: V2Graph, layout: V2LayoutResult): V2EdgeRout
     const end = leftPort(to.rect, incomingIndexes.get(edge.to)?.indexOf(edge) || 0, incomingIndexes.get(edge.to)?.length || 1);
     const direct = buildSegments([start, end]);
     const needsExternalRoute =
+      edge.feedback === true ||
       edge.type === 'cross-lane' ||
       from.laneId !== to.laneId ||
       routeIntersectsNonEndpoint(direct, layout, edge.from, edge.to);

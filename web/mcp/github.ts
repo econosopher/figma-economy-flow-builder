@@ -7,6 +7,7 @@ import {
   sha256,
 } from "../worker/helpers";
 import { importDocument, type EconomyDocument } from "../src/core/document";
+import { assertReleaseReady } from "../src/core/conventions";
 import { documentDiff } from "../src/core/edits";
 import { requireCapability, type McpIdentity } from "./auth";
 
@@ -133,13 +134,15 @@ export async function repositoryPresets(id?: string) {
   if (!id) return { repository, baseSha: sha, presets: manifest };
   const entry = manifest.find((e) => e.id === id);
   if (!entry) throw new HttpError(404, "Preset not in the public manifest.");
+  const document = importDocument(
+    await fileAt(`${prefix}researched/${entry.file}`, sha),
+  ).document;
+  assertReleaseReady(document);
   return {
     repository,
     baseSha: sha,
     file: entry.file,
-    document: importDocument(
-      await fileAt(`${prefix}researched/${entry.file}`, sha),
-    ).document,
+    document,
   };
 }
 interface Submission {
@@ -186,6 +189,14 @@ export async function previewSubmission(
       "This document is private. Provide a public copy for a repository contribution.",
     );
   document.visibility = "public";
+  try {
+    assertReleaseReady(document);
+  } catch (error) {
+    throw new HttpError(
+      400,
+      error instanceof Error ? error.message : "Diagram is not release ready.",
+    );
+  }
   const ref = await github<{ object: { sha: string } }>(
     `repos/${repository}/git/ref/heads/main`,
   );
@@ -257,6 +268,14 @@ export async function submitPreset(
   if (!item)
     throw new HttpError(404, "Preview the contribution before submitting it.");
   if (item.pr_url) return { pullRequest: item.pr_url, status: item.status };
+  try {
+    assertReleaseReady(item.payload.document);
+  } catch (error) {
+    throw new HttpError(
+      400,
+      error instanceof Error ? error.message : "Diagram is not release ready.",
+    );
+  }
   const token = await installationToken(env);
   const branch = `mcp/preset-${item.id}`;
   const findPr = () =>

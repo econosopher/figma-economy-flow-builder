@@ -17,18 +17,22 @@
     },
     {
       "id": "s3",
-      "label": "Rewards"
+      "label": "Merging"
     },
     {
       "id": "s4",
-      "label": "Reinvestment"
+      "label": "Rewards"
     },
     {
       "id": "s5",
-      "label": "Progression"
+      "label": "Reinvestment"
     },
     {
       "id": "s6",
+      "label": "Progression"
+    },
+    {
+      "id": "s7",
       "label": "Outcomes"
     }
   ],
@@ -51,9 +55,24 @@
   ],
   "cards": [
     {
+      "id": "time",
+      "label": "Spend Time",
+      "kind": "initial_sink_node",
+      "inputRole": "time",
+      "stageId": "s0",
+      "groupId": "g0",
+      "order": 0,
+      "sources": [],
+      "sinks": [
+        "Player time"
+      ],
+      "values": [],
+      "notes": ""
+    },
+    {
       "id": "wait",
       "label": "Wait for energy",
-      "stageId": "s0",
+      "stageId": "s1",
       "groupId": "g0",
       "order": 0,
       "kind": "action",
@@ -67,7 +86,7 @@
     {
       "id": "generate",
       "label": "Use an active generator",
-      "stageId": "s1",
+      "stageId": "s2",
       "groupId": "g0",
       "order": 0,
       "kind": "action",
@@ -83,7 +102,7 @@
     {
       "id": "merge",
       "label": "Merge matching items",
-      "stageId": "s2",
+      "stageId": "s3",
       "groupId": "g0",
       "order": 0,
       "kind": "action",
@@ -99,7 +118,7 @@
     {
       "id": "orders",
       "label": "Serve customer orders",
-      "stageId": "s3",
+      "stageId": "s4",
       "groupId": "g0",
       "order": 0,
       "kind": "action",
@@ -115,7 +134,7 @@
     {
       "id": "renovate",
       "label": "Complete restaurant tasks",
-      "stageId": "s4",
+      "stageId": "s5",
       "groupId": "g0",
       "order": 0,
       "kind": "action",
@@ -131,7 +150,7 @@
     {
       "id": "story",
       "label": "Reveal the next story",
-      "stageId": "s5",
+      "stageId": "s6",
       "groupId": "g0",
       "order": 0,
       "kind": "action",
@@ -159,7 +178,7 @@
     {
       "id": "parts",
       "label": "Collect generator parts",
-      "stageId": "s2",
+      "stageId": "s1",
       "groupId": "g1",
       "order": 0,
       "kind": "action",
@@ -173,7 +192,7 @@
     {
       "id": "upgrade",
       "label": "Merge generator parts",
-      "stageId": "s3",
+      "stageId": "s2",
       "groupId": "g1",
       "order": 0,
       "kind": "action",
@@ -189,7 +208,7 @@
     {
       "id": "drops",
       "label": "Merge and collect drops",
-      "stageId": "s3",
+      "stageId": "s1",
       "groupId": "g1",
       "order": 1,
       "kind": "action",
@@ -206,7 +225,7 @@
     },
     {
       "id": "money",
-      "label": "Spend money",
+      "label": "Spend Money",
       "stageId": "s0",
       "groupId": "g2",
       "order": 0,
@@ -216,7 +235,8 @@
         "Real money"
       ],
       "values": [],
-      "notes": ""
+      "notes": "",
+      "inputRole": "money"
     },
     {
       "id": "gems",
@@ -254,7 +274,7 @@
     {
       "id": "space",
       "label": "Expand inventory",
-      "stageId": "s4",
+      "stageId": "s5",
       "groupId": "g2",
       "order": 0,
       "kind": "action",
@@ -270,7 +290,7 @@
     {
       "id": "shortcut",
       "label": "Skip timers or buy items",
-      "stageId": "s3",
+      "stageId": "s2",
       "groupId": "g2",
       "order": 0,
       "kind": "action",
@@ -286,7 +306,7 @@
     {
       "id": "discovery",
       "label": "Discover the story",
-      "stageId": "s6",
+      "stageId": "s7",
       "groupId": "g0",
       "order": 0,
       "kind": "final_good",
@@ -298,7 +318,7 @@
     {
       "id": "expression",
       "label": "Create a personal restaurant",
-      "stageId": "s6",
+      "stageId": "s7",
       "groupId": "g1",
       "order": 0,
       "kind": "final_good",
@@ -377,7 +397,7 @@
       "id": "drops__generate",
       "to": "generate",
       "type": "normal",
-      "feedback": true,
+      "feedback": false,
       "label": "Energy",
       "from": "drops"
     },
@@ -401,7 +421,7 @@
       "id": "gems__generate",
       "to": "generate",
       "type": "normal",
-      "feedback": true,
+      "feedback": false,
       "label": "Bundle energy",
       "from": "gems"
     },
@@ -460,6 +480,38 @@
       "feedback": false,
       "label": "Player value",
       "from": "renovate"
+    },
+    {
+      "id": "time__wait",
+      "from": "time",
+      "to": "wait",
+      "type": "normal",
+      "feedback": false,
+      "label": "Regeneration time"
+    },
+    {
+      "id": "time__auto",
+      "from": "time",
+      "to": "auto",
+      "type": "normal",
+      "feedback": false,
+      "label": "Automatic production time"
+    },
+    {
+      "id": "time__parts",
+      "from": "time",
+      "to": "parts",
+      "type": "normal",
+      "feedback": false,
+      "label": "Play and event participation"
+    },
+    {
+      "id": "time__drops",
+      "from": "time",
+      "to": "drops",
+      "type": "normal",
+      "feedback": false,
+      "label": "Collection and merging time"
     }
   ],
   "settings": {
@@ -535,7 +587,8 @@
           "gems__space",
           "gems__shortcut",
           "shortcut__merge",
-          "space__merge"
+          "space__merge",
+          "time__parts"
         ]
       },
       {
@@ -550,13 +603,17 @@
           "generate",
           "auto",
           "drops",
-          "refill"
+          "refill",
+          "time"
         ],
         "edgeIds": [
           "wait__generate",
           "auto__merge",
           "drops__generate",
-          "refill__generate"
+          "refill__generate",
+          "time__wait",
+          "time__auto",
+          "time__drops"
         ]
       },
       {

@@ -1,3 +1,4 @@
+import { exportEvidencePackage } from "../lib/evidenceMedia";
 import { useEffect, useState } from "react";
 import {
   Copy,
@@ -13,8 +14,17 @@ import {
 import { Modal } from "./Modal";
 import type { EconomyDocument } from "../core/document";
 import type { Layout } from "../core/layout";
+import { checkReleaseReadiness } from "../core/conventions";
 import { api, type AppConfig } from "../lib/api";
-import { pngBlob, download, filename, copyPng, svgBlob } from "../lib/export";
+import {
+  backupFilename,
+  copyPng,
+  download,
+  draftBackupBlob,
+  filename,
+  pngBlob,
+  svgBlob,
+} from "../lib/export";
 interface Installation {
   id: string;
   team_name: string;
@@ -39,6 +49,7 @@ export function ShareDialog({
   onSignIn: () => void;
   notify: (s: string) => void;
 }) {
+  const readiness = checkReleaseReadiness(d);
   const [tab, setTab] = useState("export"),
     [blob, setBlob] = useState<Blob | null>(null),
     [preview, setPreview] = useState(""),
@@ -67,6 +78,10 @@ export function ShareDialog({
   useEffect(() => {
     let active = true,
       localUrl = "";
+    setBlob(null);
+    setPreview("");
+    setError("");
+    if (!readiness.ready) return;
     pngBlob(d, layout)
       .then((b) => {
         if (active) {
@@ -80,7 +95,7 @@ export function ShareDialog({
       active = false;
       if (localUrl) URL.revokeObjectURL(localUrl);
     };
-  }, [d, layout]);
+  }, [d, layout, readiness.ready]);
   useEffect(() => {
     if (!signedIn) return;
     api<Installation[]>("/slack/installations")
@@ -150,6 +165,24 @@ export function ShareDialog({
       </button>
     </div>
   ) : null;
+  const releaseGate = !readiness.ready ? (
+    <div className="release-gate">
+      <h3>Draft blocked from release</h3>
+      <p>
+        Keep editing and saving this draft. Sharing, publication, Slack sending,
+        and final image exports unlock when every convention fix is complete.
+      </p>
+      <ul>
+        {readiness.violations.map((violation) => (
+          <li
+            key={`${violation.code}:${violation.cardId || violation.edgeId || violation.message}`}
+          >
+            {violation.message}
+          </li>
+        ))}
+      </ul>
+    </div>
+  ) : null;
   return (
     <Modal
       title="Share your economy"
@@ -177,6 +210,8 @@ export function ShareDialog({
         <div className="share-preview">
           {preview ? (
             <img src={preview} alt="Exact PNG sharing preview" />
+          ) : !readiness.ready ? (
+            <span>Draft preview · final export locked</span>
           ) : (
             <span>Preparing preview…</span>
           )}
@@ -188,14 +223,20 @@ export function ShareDialog({
         <div className="share-options">
           {tab === "export" ? (
             <>
-              <h3>Ready for the conversation.</h3>
+              <h3>
+                {readiness.ready
+                  ? "Ready for the conversation."
+                  : "Draft backup and recovery"}
+              </h3>
               <p className="helper">
-                Export the full diagram, including its groups, notes, and
-                resource key.
+                {readiness.ready
+                  ? "Export the full diagram, including its groups, notes, and resource key."
+                  : "Final PNG, SVG, and clipboard exports are locked. Download an editable backup to keep working elsewhere."}
               </p>
+              {!readiness.ready && releaseGate}
               <button
                 className="button primary full"
-                disabled={!blob}
+                disabled={!blob || !readiness.ready}
                 onClick={() => blob && download(blob, filename(d.name, "png"))}
               >
                 <Download size={16} />
@@ -203,6 +244,7 @@ export function ShareDialog({
               </button>
               <button
                 className="button full"
+                disabled={!readiness.ready}
                 onClick={() =>
                   run(async () => {
                     await copyPng(d, layout);
@@ -216,6 +258,7 @@ export function ShareDialog({
               {selection.length > 0 && (
                 <button
                   className="button full"
+                  disabled={!readiness.ready}
                   onClick={() =>
                     run(async () =>
                       download(
@@ -232,6 +275,7 @@ export function ShareDialog({
               <div className="divider" />
               <button
                 className="text-button"
+                disabled={!readiness.ready}
                 onClick={() =>
                   run(async () =>
                     download(await svgBlob(d, layout), filename(d.name, "svg")),
@@ -244,17 +288,40 @@ export function ShareDialog({
                 className="text-button"
                 onClick={() =>
                   download(
-                    new Blob([JSON.stringify(d, null, 2)], {
-                      type: "application/json",
-                    }),
-                    filename(d.name, "json"),
+                    draftBackupBlob(d),
+                    backupFilename(d.name, "json", readiness.ready),
                   )
                 }
               >
-                Download editable JSON
+                Download editable {readiness.ready ? "JSON" : "draft JSON"}
               </button>
+              <button
+                className="button"
+                disabled={busy}
+                onClick={() =>
+                  void run(async () => {
+                    download(
+                      await exportEvidencePackage(d),
+                      `${backupFilename(d.name, "flowpack", readiness.ready)}.json`,
+                    );
+                  })
+                }
+              >
+                <Download size={15} /> Download{" "}
+                {readiness.ready
+                  ? "with screenshots"
+                  : "draft with screenshots"}
+              </button>
+              {!!d.evidence?.items.some((i) => i.mediaId) && (
+                <p className="helper">
+                  Editable JSON and shared snapshots contain references only.
+                  Screenshot attachments stay in this browser; use Download with
+                  screenshots to transfer them.
+                </p>
+              )}
             </>
           ) : (
+            releaseGate ||
             accountGate || (
               <>
                 {tab === "link" && (

@@ -1,3 +1,24 @@
+# Time and money release gate: 14 September 2026
+
+Deployed the shared convention checker across web v3 and Figma v2. Spend Time and Spend Money are required first-stage inputs; normal pipes advance stages, all mechanics require forward reachability, returns require visible explanations, and final goods occupy the last stage. Structural validity remains separate: old diagrams open and save as drafts, with marked JSON/package backups, while final export, publication, sharing, server and MCP release routes reject violations.
+
+All eight researched presets and the web/Figma starters pass. Both Wardogs maps were rebuilt (overview 16 cards/24 pipes; mechanics 30/49), preserving evidence and uncertainty. The original private 26-card map was reopened unchanged as a draft; the revised private package restored 11 screenshots and reopened on production at local ID `d0aca9a6-d01b-4cd4-be9a-24afa9ce7bc6`. This production copy is saved locally, not an account-cloud-save claim. The overview package restores seven screenshots. Native package roundtrips preserve the documents exactly. Corrected report figures, report PDF, shared diagram PDF and portable backup replace their prior versions at the existing links.
+
+Verification: 163 plugin tests and 132 web tests passed, along with typechecks and builds. Both Wardogs layouts report zero routing issues. Staging verified draft export blocking, clickable violations, edit/undo readiness, signed-in explicit preset selection, account save/reload and package screenshot restoration. Production verified preserved legacy drafts, corrected preset selection, private package import/reload and a loaded local screenshot blob. The detailed canvas needs zooming for individual cards; the overview remains the discussion entry point.
+
+Migration `202609140003_release_gate.sql` was applied manually through the authenticated Supabase SQL editor in staging and production, with success receipts. Anonymous direct publication reads now fail with 401/42501; Worker health, catalog and gallery remain 200. Public reads use the server-side checker. Storage preview buckets remain private. Do not roll back to an older Worker that depends on anonymous publication reads; retain the policy and fix forward.
+
+- Production Worker: `8b6b9d98-96cc-4fed-8b9d-0e050930de9a`
+- Staging Worker: `5ee56f23-9998-48bb-9db3-987e763e896b`
+- Live overview: https://flow.gameeconomistconsulting.com/?preset=wardogs
+- Detailed reference: https://flow.gameeconomistconsulting.com/?preset=wardogs_mechanics
+- Report: https://flow.gameeconomistconsulting.com/research/wardogs/
+- Shared portable backup: https://drive.google.com/file/d/1Hg-Yrj4PIBGx-3WMWfT0jwrv336j92Uc/view
+
+Prior release records follow; version IDs and readiness counts below are historical.
+
+---
+
 # Account and MCP activation: 14 September 2026
 
 Production is active at https://flow.gameeconomistconsulting.com. Codex completed OAuth sign-in to the direct production MCP, and the staging MCP has its own verified connection. Separate Supabase projects run the three migrations, the asymmetric OAuth token hook and scoped consent. The production editor uses the same static build previously verified on staging.

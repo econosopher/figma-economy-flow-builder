@@ -63,10 +63,20 @@ describe('Research Bridge', () => {
       // Should return fallback cache
       expect(result.game).toBe('Test Game');
       expect(result.depth).toBe(1);
-      expect(result.prompt_version).toBe('2.0');
+      expect(result.prompt_version).toBe('3.0');
       expect(result.instructions).toContain('Research the economy and progression systems');
       expect(result.conversion_prompt).toContain('Output requirements:');
+      expect(result.conversion_prompt).toContain('exactly two nodes and no activities');
+      expect(result.conversion_prompt).toContain('checkEconomyConventions');
+      expect(result.conversion_prompt).toContain('strictly later stage');
       expect(result.json_schema).toBeDefined();
+      const jsonSchema = result.json_schema as any;
+      expect(
+        jsonSchema.properties.nodes.items.properties.inputRole.enum,
+      ).toEqual(['time', 'money']);
+      expect(
+        jsonSchema.properties.edges.items.properties.feedback.type,
+      ).toBe('boolean');
     });
 
     it('should handle network errors', async () => {
@@ -182,8 +192,10 @@ describe('Research Bridge', () => {
       expect(parsedBody.depth).toBe(2);
       expect(parsedBody.provider).toBe('gemini');
       expect(parsedBody.apiKey).toBe('test-key');
-      expect(parsedBody.promptVersion).toBe('2.0');
+      expect(parsedBody.promptVersion).toBe('3.0');
       expect(parsedBody.conversionPrompt).toContain('Always set "schemaVersion": 2');
+      expect(parsedBody.conversionPrompt).toContain('checkEconomyConventions');
+      expect(parsedBody.conversionPrompt).toContain('real-world spending');
       expect(parsedBody.responseJsonSchema).toBeDefined();
     });
 
