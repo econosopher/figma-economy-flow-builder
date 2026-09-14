@@ -84,6 +84,14 @@ export function PublicCatalog({
   const showStarter =
     offset === 0 &&
     (!search || starter.name.toLowerCase().includes(search.toLowerCase()));
+  const featured = presets.find((preset) => preset.id === "wardogs");
+  const showFeatured =
+    offset === 0 &&
+    featured &&
+    (!search ||
+      `${featured.document.name} ${featured.document.research?.summary || ""}`
+        .toLowerCase()
+        .includes(search.toLowerCase()));
   function openPreset(document: EconomyDocument) {
     onPreset(document);
   }
@@ -112,6 +120,14 @@ export function PublicCatalog({
       </div>
       {error && <p className="error-box">{error}</p>}
       <div className="preset-grid" aria-busy={loading}>
+        {showFeatured && (
+          <PresetTile
+            doc={featured.document}
+            preview={preview(featured.document)}
+            onOpen={() => openPreset(featured.document)}
+            onSources={() => onSources(featured.document)}
+          />
+        )}
         {showStarter && (
           <PresetTile
             doc={starter}
@@ -123,6 +139,7 @@ export function PublicCatalog({
         {!loading &&
           page?.items.map((item) => {
             if (item.source === "preset") {
+              if (item.source_id === "wardogs") return null;
               const preset = presets.find((p) => p.id === item.source_id);
               if (!preset) return null;
               return (

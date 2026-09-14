@@ -1,6 +1,7 @@
 import { beforeEach, describe, it, expect, vi } from "vitest";
 import { blankDocument } from "../src/core/document";
 import { saveLocal, readSaved, listLocal } from "../src/lib/storage";
+import { initial } from "../src/App";
 class MemoryStorage {
   [key: string]: unknown;
   getItem(key: string) {
@@ -37,5 +38,11 @@ describe("local recovery and conflicts", () => {
     expect(readSaved(d.id, "bob")).toBeNull();
     expect(listLocal("alice")).toHaveLength(1);
     expect(listLocal("bob")).toHaveLength(0);
+  });
+  it("opens the existing guest document before choosing a fresh-user default", () => {
+    const saved = { ...blankDocument(), name: "Returning guest diagram" };
+    saveLocal(saved, 0);
+    expect(initial().id).toBe(saved.id);
+    expect(initial().name).toBe("Returning guest diagram");
   });
 });

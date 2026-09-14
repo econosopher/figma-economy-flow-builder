@@ -61,7 +61,7 @@ import {
   measureHeadings,
   type Layout,
 } from "./core/layout";
-import { starter, presetDescription } from "./core/presets";
+import { presets, starter, presetDescription } from "./core/presets";
 import {
   api,
   ApiError,
@@ -94,13 +94,15 @@ type RemoteDocument = {
   is_preset: boolean;
 };
 
-function initial() {
+export function initial() {
   try {
     const id = localStorage.getItem(`${storagePrefix}last:guest`);
     const saved = id && readSaved(id);
     if (saved) return saved.document;
   } catch {}
-  return forkDocument(starter);
+  return forkDocument(
+    presets.find((preset) => preset.id === "wardogs")?.document || starter,
+  );
 }
 function Editor() {
   const [doc, setDoc] = useState<EconomyDocument>(initial),
