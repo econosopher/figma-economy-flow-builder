@@ -1,5 +1,10 @@
 import { PublicCatalog } from "./components/PublicCatalog";
 import { recordDiagramView } from "./lib/api";
+import { EvidencePanel } from "./components/CardEvidence";
+import {
+  exportEvidencePackage,
+  importEvidencePackage,
+} from "./lib/evidenceMedia";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ReactFlowProvider, type Connection } from "@xyflow/react";
 import {
@@ -112,6 +117,7 @@ function Editor() {
     [fitKey, setFitKey] = useState(0);
   const [sourcesDocument, setSourcesDocument] =
     useState<EconomyDocument | null>(null);
+  const [evidenceCard, setEvidenceCard] = useState<string | null>(null);
   const consumeFocus = useCallback(() => setFocusTarget(null), []);
   const [modal, setModal] = useState<string | null>(null),
     [libraryTab, setLibraryTab] = useState("presets"),
@@ -337,6 +343,7 @@ function Editor() {
       setReadonly(false);
       setPublicationId(null);
       setSelection(null);
+      setEvidenceCard(null);
       setInspector(false);
       setResourcesOpen(false);
       setConflict(false);
@@ -602,7 +609,7 @@ function Editor() {
       const editable = (e.target as HTMLElement)?.closest(
         "input,textarea,select,[contenteditable=true]",
       );
-      if (editable || modal) return;
+      if (editable || modal || evidenceCard) return;
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z") {
         e.preventDefault();
         e.shiftKey ? redo() : undo();
@@ -622,7 +629,7 @@ function Editor() {
     };
     window.addEventListener("keydown", handle);
     return () => window.removeEventListener("keydown", handle);
-  }, [undo, redo, remove, modal]);
+  }, [undo, redo, remove, modal, evidenceCard]);
   useEffect(() => {
     const unload = (e: BeforeUnloadEvent) => {
       if (dirty || conflict) {
@@ -796,6 +803,11 @@ function Editor() {
             )}{" "}
             {readonly ? "Read-only snapshot" : saveState}
           </span>
+          {!readonly && session && doc.evidence?.items.some((item) => item.mediaId) && (
+            <span className="save-status helper">
+              Local screenshots stay on this device.
+            </span>
+          )}
         </div>
         <div className="header-actions">
           {!readonly && (
@@ -1111,6 +1123,7 @@ function Editor() {
               onRemoveSelection={(s) => remove(undefined, s)}
               focusTarget={focusTarget}
               onFocusConsumed={consumeFocus}
+              onOpenEvidence={setEvidenceCard}
             />
           )}
           {!doc.cards.length && (
@@ -1195,6 +1208,16 @@ function Editor() {
             />
           )}
         </main>
+        {evidenceCard && doc.cards.some((card) => card.id === evidenceCard) && (
+          <EvidencePanel
+            key={`${doc.id}:${evidenceCard}`}
+            document={doc}
+            cardId={evidenceCard}
+            onChange={commit}
+            onClose={() => setEvidenceCard(null)}
+            readOnly={readonly}
+          />
+        )}
         {inspector && !readonly && (
           <Inspector
             document={doc}
@@ -1393,6 +1416,33 @@ function Editor() {
           onClose={() => setModal(null)}
           wide
         >
+          <div className="modal-actions">
+            <button
+              className="button"
+              onClick={async () => {
+                try {
+                  download(
+                    await exportEvidencePackage(doc),
+                    `${filename(doc.name, "flowpack")}.json`,
+                  );
+                } catch (error) {
+                  notify(
+                    error instanceof Error
+                      ? error.message
+                      : "Could not export screenshot attachments.",
+                  );
+                }
+              }}
+            >
+              Download diagram with screenshots
+            </button>
+          </div>
+          {doc.evidence?.items.some((item) => item.mediaId) && (
+            <p className="helper">
+              Account saves, shares, and ordinary JSON retain screenshot
+              references only. Use the diagram package to move local images.
+            </p>
+          )}
           <textarea
             className="json-editor"
             aria-label="Diagram JSON"
@@ -1413,8 +1463,8 @@ function Editor() {
                 onChange={async (e) => {
                   const file = e.target.files?.[0];
                   if (file) {
-                    if (file.size > 2_000_000) {
-                      notify("JSON files must be smaller than 2 MB.");
+                    if (file.size > 200_000_000) {
+                      notify("Diagram packages must be smaller than 200 MB.");
                       return;
                     }
                     setJsonText(await file.text());
@@ -1432,9 +1482,20 @@ function Editor() {
             </button>
             <button
               className="button primary"
-              onClick={() => {
+              onClick={async () => {
                 try {
-                  setImportPreview(importDocument(JSON.parse(jsonText)));
+                  const parsed = JSON.parse(jsonText);
+                  if (parsed?.format === "economy-flow-evidence-package") {
+                    const imported = await importEvidencePackage(
+                      new Blob([jsonText], { type: "application/json" }),
+                    );
+                    setImportPreview({
+                      document: imported,
+                      notices: ["Screenshot attachments restored in this browser."],
+                    });
+                  } else {
+                    setImportPreview(importDocument(parsed));
+                  }
                 } catch (e) {
                   notify(e instanceof Error ? e.message : "Invalid JSON.");
                 }

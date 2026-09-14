@@ -1,3 +1,4 @@
+import { EvidenceBadge } from "./CardEvidence";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ReactFlow,
@@ -40,6 +41,8 @@ export type Selection = {
 type CardNode = Node<
   {
     placed: PlacedCard;
+    document: EconomyDocument;
+    openEvidence: (id: string) => void;
     settings: Settings;
     highlight: boolean;
     readOnly: boolean;
@@ -101,6 +104,7 @@ function EconomyCard({ data, selected }: NodeProps<CardNode>) {
       }}
       style={{ width: c.width, height: c.height }}
     >
+      <EvidenceBadge document={data.document} cardId={c.card.id} onOpen={() => data.openEvidence(c.card.id)} />
       <Handle
         type="target"
         position={Position.Left}
@@ -436,6 +440,7 @@ export function Canvas({
   onRemoveSelection,
   focusTarget,
   onFocusConsumed,
+  onOpenEvidence,
 }: {
   document: EconomyDocument;
   layout: Layout;
@@ -453,6 +458,7 @@ export function Canvas({
   onRemoveSelection: (s: NonNullable<Selection>) => void;
   focusTarget: string | null;
   onFocusConsumed: () => void;
+  onOpenEvidence: (id: string) => void;
 }) {
   const flow = useReactFlow();
   const activeDrag = useRef(false);
@@ -597,6 +603,8 @@ export function Canvas({
         position: { x: c.x, y: c.y },
         data: {
           placed: c,
+          document: d,
+          openEvidence: onOpenEvidence,
           settings: d.settings,
           highlight: linked.has(c.card.id),
           readOnly,
@@ -657,6 +665,7 @@ export function Canvas({
       openMenu,
       focusTarget,
       onFocusConsumed,
+      onOpenEvidence,
     ],
   );
   const edges: Edge[] = useMemo(

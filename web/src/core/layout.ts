@@ -140,7 +140,7 @@ export function measureCards(
         c.id,
         {
           width: CARD_WIDTH,
-          height: Math.max(
+          height: 32 + Math.max(
             header + 4,
             (rows.length ? y + 8 : y) +
               (notes.length ? notes.length * 16 + 26 : 0),
