@@ -32,6 +32,7 @@ import {
   type EvidenceItem,
 } from "../core/document";
 import { getMedia, putMedia } from "../lib/evidenceMedia";
+import { resolveEvidenceImageUrl } from "../lib/evidenceImageUrl";
 import "./card-evidence.css";
 
 type EvidenceStatus = CardDetail["status"];
@@ -144,7 +145,9 @@ function EvidenceImage({
 }) {
   const image = useStoredImage(item.mediaId);
   const publicImageUrl =
-    !item.mediaId && isHttpsUrl(item.url) ? item.url : undefined;
+    !item.mediaId && isHttpsUrl(item.url)
+      ? resolveEvidenceImageUrl(item.url)
+      : undefined;
   const source = image.url || publicImageUrl;
   const [brokenSource, setBrokenSource] = useState<string>();
   if (source && brokenSource !== source)

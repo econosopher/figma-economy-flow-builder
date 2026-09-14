@@ -9,6 +9,7 @@ export function PresetTile({
   preview,
   onOpen,
   onSources,
+  companion,
   views,
 }: {
   views?: number | null;
@@ -16,6 +17,7 @@ export function PresetTile({
   preview: ReactNode;
   onOpen: () => void;
   onSources: () => void;
+  companion?: { label: string; onOpen: () => void };
 }) {
   return (
     <article className="preset-card">
@@ -54,6 +56,17 @@ export function PresetTile({
             onClick={onSources}
           >
             <BookOpen size={13} /> Sources
+          </button>
+        </div>
+      )}
+      {companion && (
+        <div className="preset-evidence">
+          <button
+            className="text-button"
+            aria-label={companion.label}
+            onClick={companion.onOpen}
+          >
+            {companion.label}
           </button>
         </div>
       )}

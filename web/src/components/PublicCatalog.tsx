@@ -85,6 +85,9 @@ export function PublicCatalog({
     offset === 0 &&
     (!search || starter.name.toLowerCase().includes(search.toLowerCase()));
   const featured = presets.find((preset) => preset.id === "wardogs");
+  const wardogsMechanics = presets.find(
+    (preset) => preset.id === "wardogs_mechanics",
+  );
   const showFeatured =
     offset === 0 &&
     featured &&
@@ -94,6 +97,19 @@ export function PublicCatalog({
         .includes(search.toLowerCase()));
   function openPreset(document: EconomyDocument) {
     onPreset(document);
+  }
+  function companionFor(document: EconomyDocument) {
+    if (document.id === "wardogs" && wardogsMechanics)
+      return {
+        label: "Open detailed mechanics map",
+        onOpen: () => openPreset(wardogsMechanics.document),
+      };
+    if (document.id === "wardogs_mechanics" && featured)
+      return {
+        label: "Open Wardogs overview map",
+        onOpen: () => openPreset(featured.document),
+      };
+    return undefined;
   }
   return (
     <section aria-label="Public diagrams">
@@ -126,6 +142,7 @@ export function PublicCatalog({
             preview={preview(featured.document)}
             onOpen={() => openPreset(featured.document)}
             onSources={() => onSources(featured.document)}
+            companion={companionFor(featured.document)}
           />
         )}
         {showStarter && (
@@ -149,6 +166,7 @@ export function PublicCatalog({
                   preview={preview(preset.document)}
                   onOpen={() => openPreset(preset.document)}
                   onSources={() => onSources(preset.document)}
+                  companion={companionFor(preset.document)}
                   views={item.views}
                 />
               );
