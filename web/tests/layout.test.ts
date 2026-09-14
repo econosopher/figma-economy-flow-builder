@@ -1,5 +1,6 @@
 import { textEditKey } from "../src/core/history";
 import { presets } from "../src/core/presets";
+import manifest from "../src/core/presets.manifest.json";
 import { describe, it, expect } from "vitest";
 import { readFileSync, readdirSync } from "node:fs";
 import {
@@ -78,9 +79,9 @@ describe("economy layout", () => {
   });
 
   it("bundles the approved public presets", () => {
-    expect(presets.length).toBe(6);
-    expect(presets.map((p) => p.id)).toContain("apex_legends");
-    expect(presets.map((p) => p.id)).toContain("royal_match");
+    expect(presets.map((p) => p.id)).toEqual(manifest.map((p) => p.id));
+    expect(presets.map((p) => p.id)).toContain("wardogs");
+    expect(presets.map((p) => p.id)).toContain("wardogs_mechanics");
   });
   for (const { document: doc } of presets)
     it(`routes researched ${doc.name} without content collisions or merged pipes`, () =>
