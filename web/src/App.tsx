@@ -1,3 +1,4 @@
+import { GEC_HOME, useGecEmbed } from "./lib/embed";
 import { PublicCatalog } from "./components/PublicCatalog";
 import { recordDiagramView } from "./lib/api";
 import { EvidencePanel } from "./components/CardEvidence";
@@ -177,6 +178,7 @@ export function accountBootstrap(
   };
 }
 function Editor() {
+  const gecEmbed = useGecEmbed();
   const [doc, setDoc] = useState<EconomyDocument>(initial),
     [layout, setLayout] = useState<Layout>(() => layoutDocument(doc)),
     [layoutBusy, setLayoutBusy] = useState(true),
@@ -435,7 +437,7 @@ function Editor() {
       window.history.replaceState(
         null,
         "",
-        `${location.pathname}?local=${encodeURIComponent(next.id)}`,
+        `${location.pathname}?local=${encodeURIComponent(next.id)}${new URLSearchParams(location.search).get("embed") === "1" ? "&embed=1" : ""}`,
       );
       return next.id;
     },
@@ -888,6 +890,19 @@ function Editor() {
   );
   return (
     <div className="app-shell">
+      <div className="gec-return-bar">
+        <a
+          href={GEC_HOME}
+          onClick={(e) => {
+            if (gecEmbed.embedded) {
+              e.preventDefault();
+              gecEmbed.close();
+            }
+          }}
+        >
+          ← Back to Game Economist Consulting
+        </a>
+      </div>
       <header className="topbar">
         <button
           className="brand"
@@ -929,7 +944,7 @@ function Editor() {
               <span className="status-dot warning" />
             )}
             {releaseReady
-              ? "Ready to release"
+              ? "Diagram valid"
               : `Draft · ${readiness.violations.length} convention ${readiness.violations.length === 1 ? "fix" : "fixes"}`}
           </button>
           {readinessOpen && (
@@ -944,7 +959,10 @@ function Editor() {
                   : "Fix before sharing or final export"}
               </strong>
               {releaseReady ? (
-                <p>This diagram follows the economy flow conventions.</p>
+                <p>
+                  Diagram structure follows the economy flow conventions. Source
+                  accuracy still needs review.
+                </p>
               ) : (
                 readiness.violations.map((violation) => (
                   <button
@@ -1039,7 +1057,7 @@ function Editor() {
                   : doc.visibility === "public"
                     ? session
                       ? "Public"
-                      : "Public · local only"
+                      : "Not published"
                     : "Private"}
               </span>
             </button>
@@ -1109,7 +1127,7 @@ function Editor() {
               disabled={layoutBusy || !!layoutError}
               title={
                 releaseReady
-                  ? "Share or export this release-ready diagram"
+                  ? "Share or export this diagram"
                   : "Download marked JSON or flowpack backups while this diagram is a draft"
               }
               onClick={() => setModal("share")}
@@ -1857,6 +1875,11 @@ function Editor() {
           onClose={() => setModal(null)}
           onSignIn={() => setModal("auth")}
           onApply={(d) => openDocument(d)}
+          onImport={() => {
+            setJsonText("");
+            setImportPreview(null);
+            setModal("json");
+          }}
         />
       )}
       {pendingConnection && (

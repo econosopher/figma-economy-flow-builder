@@ -1,4 +1,5 @@
 import "../../src/render";
+import { checkReleaseReadiness } from "../../src/core/conventions";
 import {
   importDocument,
   blankDocument,
@@ -20,8 +21,12 @@ const results: unknown[] = [];
 try {
   for (const input of [apex, rainbow, dice, returns]) {
     const d = importDocument(input).document;
+    await Promise.all(
+      [400, 500, 600].map((weight) =>
+        document.fonts.load(`${weight} 14px Inter`),
+      ),
+    );
     await document.fonts.ready;
-    const rendered = await window.renderEconomy(d);
     const ctx = document.createElement("canvas").getContext("2d")!;
     const measure = (text: string, size: number, weight: number) => {
       ctx.font = `${weight} ${size}px Inter`;
@@ -32,6 +37,27 @@ try {
       measureCards(d, measure),
       measureHeadings(d, measure),
     );
+    if (!checkReleaseReadiness(d).ready) {
+      const attempts = await Promise.allSettled([
+        window.renderEconomy(d),
+        svgBlob(d, layout),
+        pngBlob(d, layout),
+      ]);
+      if (
+        attempts.some((result) => result.status !== "rejected") ||
+        layout.issues.length
+      )
+        throw new Error(
+          `${d.name}: legacy draft export gate or geometry regression`,
+        );
+      results.push({
+        name: d.name,
+        legacyDraftRejected: true,
+        routingIssues: 0,
+      });
+      continue;
+    }
+    const rendered = await window.renderEconomy(d);
     const svg = await (await svgBlob(d, layout)).text();
     const png = new Uint8Array(await (await pngBlob(d, layout)).arrayBuffer());
     const expected = Uint8Array.from(atob(rendered.png), (c) =>

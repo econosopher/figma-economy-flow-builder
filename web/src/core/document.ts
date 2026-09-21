@@ -316,7 +316,7 @@ export function forkDocument(
     ...structuredClone(validateDocument(d)),
     id: uid(),
     name,
-    visibility: d.visibility ?? "public",
+    visibility: "private",
   };
 }
 export function deleteCard(d: EconomyDocument, id: string): EconomyDocument {

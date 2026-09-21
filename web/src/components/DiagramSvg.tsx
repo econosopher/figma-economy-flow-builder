@@ -263,26 +263,36 @@ export function BridgeDrawing({
   routes,
   settings,
   selectedId,
+  highlightedIds,
+  background = "white",
 }: {
   routes: Route[];
   settings: Settings;
   selectedId?: string;
+  highlightedIds?: ReadonlySet<string>;
+  background?: string;
 }) {
   return (
     <g pointerEvents="none">
       {routes.flatMap((route) =>
         route.bridges.map((path, i) => (
           <g key={`${route.edge.id}-${i}`}>
-            <path d={path} fill="none" stroke="white" strokeWidth="5" />
+            <path d={path} fill="none" stroke={background} strokeWidth="5" />
             <path
               d={path}
               fill="none"
               stroke={
-                selectedId === route.edge.id
+                selectedId === route.edge.id ||
+                highlightedIds?.has(route.edge.id)
                   ? "#b08716"
                   : pipeColor(route, settings)
               }
-              strokeWidth={selectedId === route.edge.id ? 2.4 : 1.5}
+              strokeWidth={
+                selectedId === route.edge.id ||
+                highlightedIds?.has(route.edge.id)
+                  ? 2.4
+                  : 1.5
+              }
             />
           </g>
         )),

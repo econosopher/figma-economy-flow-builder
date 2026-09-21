@@ -21,13 +21,17 @@ export function ResearchDialog({
   onClose,
   onApply,
   onSignIn,
+  onImport,
 }: {
   config: AppConfig;
   signedIn: boolean;
   onClose: () => void;
   onApply: (d: EconomyDocument) => void;
   onSignIn: () => void;
+  onImport: () => void;
 }) {
+  const [instructions, setInstructions] = useState("");
+  const [copied, setCopied] = useState(false);
   const [game, setGame] = useState(""),
     [depth, setDepth] = useState(2),
     [provider, setProvider] = useState("gemini"),
@@ -39,7 +43,7 @@ export function ResearchDialog({
       sessionStorage.getItem("flow-research-job") || "",
     );
   useEffect(() => {
-    if (!jobId || !signedIn) return;
+    if (!jobId || !signedIn || !config.research) return;
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout>;
     const poll = async () => {
@@ -60,7 +64,7 @@ export function ResearchDialog({
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [jobId, signedIn]);
+  }, [jobId, signedIn, config.research]);
   async function generate() {
     setBusy(true);
     setError("");
@@ -78,6 +82,87 @@ export function ResearchDialog({
       setBusy(false);
     }
   }
+  if (!config.research)
+    return (
+      <Modal
+        title="Start with research"
+        description="Create instructions for your research tool, then import its diagram JSON."
+        onClose={onClose}
+      >
+        <p>
+          No account or API key is needed here. Accounts are optional for saving
+          diagrams across devices.
+        </p>
+        <label className="field">
+          Game name
+          <input
+            autoFocus
+            value={game}
+            onChange={(e) => {
+              setGame(e.target.value);
+              setInstructions("");
+              setCopied(false);
+            }}
+            placeholder="e.g. Apex Legends"
+            maxLength={200}
+          />
+        </label>
+        <button
+          className="button primary full"
+          disabled={!game.trim()}
+          onClick={() => {
+            setInstructions(
+              `${createResearchBrief(game.trim(), 3)}\n\n${createEconomyJsonPrompt(game.trim(), 3)}`,
+            );
+            setCopied(false);
+          }}
+        >
+          Create research instructions
+        </button>
+        {instructions && (
+          <>
+            <p className="helper">
+              Use these instructions in your preferred research tool. Ask it for
+              the generated JSON; its own access and usage limits apply.
+            </p>
+            <textarea
+              className="json-editor"
+              aria-label="Research instructions"
+              value={instructions}
+              readOnly
+              onFocus={(e) => e.currentTarget.select()}
+            />
+            <button
+              className="button"
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(instructions);
+                  setCopied(true);
+                  setError("");
+                } catch {
+                  setError(
+                    "Select the instructions above and copy them using your keyboard.",
+                  );
+                }
+              }}
+            >
+              {copied ? "Copied" : "Copy instructions"}
+            </button>
+          </>
+        )}
+        <div className="modal-actions">
+          <button className="button" onClick={onImport}>
+            Import generated JSON
+          </button>
+        </div>
+        <p className="helper">
+          You will review the import before opening a new diagram. Your current
+          work stays intact. Automated research on this site is not available
+          yet.
+        </p>
+        {error && <p role="alert">{error}</p>}
+      </Modal>
+    );
   return (
     <Modal
       title="Start with research"

@@ -1,7 +1,7 @@
 :root {
   font-family: Inter, Arial, sans-serif;
   color: #23352b;
-  background: #fafbf9;
+  background: #dcdcdc;
   font-synthesis: none;
   font-weight: 400;
   font-size: 13px;
@@ -306,7 +306,7 @@ a {
   flex: 1;
   min-width: 0;
   position: relative;
-  background: #fafbf9;
+  background: #dcdcdc;
   overflow: hidden;
 }
 .canvas-toolbar {
@@ -479,7 +479,7 @@ a {
   padding: 12px 26px;
   font-size: 10px;
   color: #8b988f;
-  background: #fafbf9f5;
+  background: #dcdcdcf5;
   border-top: 1px solid #eaf0e9;
   gap: 12px;
 }
@@ -1430,7 +1430,7 @@ a {
 }
 .canvas-area,
 .react-flow {
-  background: #fff;
+  background: #dcdcdc;
 }
 .inspector {
   position: absolute;
@@ -1808,7 +1808,7 @@ a {
   }
 }
 .react-flow {
-  --xy-background-color: #fff;
+  --xy-background-color: #dcdcdc;
 }
 .action-plus,
 .action-minus {
@@ -1965,4 +1965,18 @@ a {
 .library-note select:focus-visible {
   outline: 2px solid #f5c95c;
   outline-offset: 2px;
+}
+
+.gec-return-bar {
+  flex-shrink: 0;
+  padding: 5px 16px;
+  background: #dcdcdc;
+  font-size: 11px;
+}
+.gec-return-bar a {
+  color: #363d46;
+  text-decoration: none;
+}
+.gec-return-bar a:hover {
+  text-decoration: underline;
 }

@@ -1,4 +1,5 @@
 import { EvidenceBadge } from "./CardEvidence";
+import { GEC_CANVAS } from "../lib/embed";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ReactFlow,
@@ -32,6 +33,7 @@ import {
   type ResourceKind,
 } from "./DirectEditing";
 import { ink } from "./DiagramSvg";
+import { traceInvestments } from "../core/trace";
 import type { Layout, PlacedCard, Route } from "../core/layout";
 import { CardDrawing, PipeDrawing, BridgeDrawing } from "./DiagramSvg";
 export type Selection = {
@@ -69,7 +71,7 @@ function EconomyCard({ data, selected }: NodeProps<CardNode>) {
         : data.settings.sink;
   return (
     <div
-      className={`economy-card ${selected ? "is-selected" : ""} ${drop ? "resource-drop-target" : ""}`}
+      className={`economy-card ${selected ? "is-selected" : ""} ${data.highlight ? "investment-path" : ""} ${drop ? "resource-drop-target" : ""}`}
       onDragOver={(e) => {
         if (
           !data.readOnly &&
@@ -104,7 +106,11 @@ function EconomyCard({ data, selected }: NodeProps<CardNode>) {
       }}
       style={{ width: c.width, height: c.height }}
     >
-      <EvidenceBadge document={data.document} cardId={c.card.id} onOpen={() => data.openEvidence(c.card.id)} />
+      <EvidenceBadge
+        document={data.document}
+        cardId={c.card.id}
+        onOpen={() => data.openEvidence(c.card.id)}
+      />
       <Handle
         type="target"
         position={Position.Left}
@@ -406,7 +412,7 @@ function EconomyEdge({ data, selected }: EdgeProps) {
       <PipeDrawing
         route={r}
         settings={data!.settings as Settings}
-        selected={selected}
+        selected={selected || Boolean(data!.highlight)}
       />
     </g>
   );
@@ -529,6 +535,7 @@ export function Canvas({
       previewWorker.current = null;
     };
   }, []);
+  const [hoveredCard, setHoveredCard] = useState<string | null>(null);
   const [selectedCards, setSelectedCards] = useState<string[]>([]);
   useEffect(() => {
     if (selection?.kind === "card")
@@ -538,6 +545,18 @@ export function Canvas({
     else setSelectedCards([]);
   }, [selection]);
   useEffect(() => onSelectedIds(selectedCards), [selectedCards, onSelectedIds]);
+  const investmentPath = useMemo(
+    () =>
+      traceInvestments(
+        d,
+        hoveredCard
+          ? [hoveredCard]
+          : selection?.kind === "card"
+            ? [...new Set([...selectedCards, selection.id])]
+            : [],
+      ),
+    [d, hoveredCard, selectedCards, selection],
+  );
   const linked = useMemo(() => {
     const e = d.edges.find(
       (e) => selection?.kind === "edge" && e.id === selection.id,
@@ -606,7 +625,8 @@ export function Canvas({
           document: d,
           openEvidence: onOpenEvidence,
           settings: d.settings,
-          highlight: linked.has(c.card.id),
+          highlight:
+            linked.has(c.card.id) || investmentPath.cards.has(c.card.id),
           readOnly,
           add: onAdd,
           remove: onDelete,
@@ -654,6 +674,7 @@ export function Canvas({
       d.settings,
       selection,
       linked,
+      investmentPath,
       selectedCards,
       readOnly,
       onAdd,
@@ -677,11 +698,18 @@ export function Canvas({
           source: r.edge.from,
           target: r.edge.to,
           type: "pipe",
-          data: { route: r, settings: d.settings },
+          data: {
+            route: r,
+            settings: d.settings,
+            highlight: investmentPath.edges.has(r.edge.id),
+          },
+          className: investmentPath.edges.has(r.edge.id)
+            ? "investment-path"
+            : undefined,
           selected: selection?.kind === "edge" && selection.id === r.edge.id,
           ariaLabel: `${r.edge.feedback ? "Return" : "Pipe"} from ${d.cards.find((c) => c.id === r.edge.from)?.label} to ${d.cards.find((c) => c.id === r.edge.to)?.label}`,
         })),
-    [layout, d.settings, d.cards, selection],
+    [layout, d.settings, d.cards, selection, investmentPath],
   );
   const fitted = useRef("");
   useEffect(() => {
@@ -864,6 +892,12 @@ export function Canvas({
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         onNodesChange={onChanges}
+        onNodeMouseEnter={(_, n) => {
+          if (n.type === "card") setHoveredCard(n.id);
+        }}
+        onNodeMouseLeave={(_, n) =>
+          setHoveredCard((id) => (id === n.id ? null : id))
+        }
         onNodeClick={(event, n) => {
           if (n.type === "card") {
             const ids = event.shiftKey
@@ -1005,11 +1039,13 @@ export function Canvas({
             <BridgeDrawing
               routes={layout.routes}
               settings={d.settings}
+              highlightedIds={investmentPath.edges}
+              background={GEC_CANVAS}
               selectedId={selection?.kind === "edge" ? selection.id : undefined}
             />
           </svg>
         </ViewportPortal>
-        <Background color="#dfe5e1" gap={24} size={0.7} />
+        <Background color="#c2c7c3" gap={24} size={0.7} />
         <Controls showInteractive={false} fitViewOptions={FIT_OPTIONS} />
       </ReactFlow>
       {menu && !readOnly && (
