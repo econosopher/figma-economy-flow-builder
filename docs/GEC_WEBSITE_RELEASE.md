@@ -67,3 +67,29 @@ verify research accuracy. Large diagrams still require zooming.
 Deploy the verified editor first, then the website modal. Keep API configuration
 and the existing Netlify forwarding layer unchanged. Record deployment receipts
 in the release handoff after public readback.
+
+## Deployment receipts
+
+- Editor source: `92345e6c63593a36ca10ad71946aad28c717c01b`, pushed on
+  `codex/gec-flow-release`.
+- Cloudflare production version: `b337b0d6-f836-4c04-b0b2-09698827d609`.
+- Public `flow.gameeconomistconsulting.com` HTML exactly matched the built
+  artifact, including `main-DD3XTBKo.js`. The entire `/api/config` response
+  matched the pre-release response.
+- Website source: `082b6887cdcef6f753aa3290092f1a73b8c2c086`, pushed on
+  `codex/gec-flow-modal-release` in `econosopher/website-gec`.
+- Netlify preview: `6ab1bdeb34916c0eb00e5dfd`. Browser acceptance included lazy
+  loading, retained iframe state, exact-origin readiness, focus and scroll
+  restoration, browser Back/Forward, inner-dialog Escape, 390-pixel viewport,
+  guest instruction copying, PNG clipboard copying and a valid downloaded
+  3328 × 1768 PNG.
+- Netlify production: `6ab1bea4d8bb91071745e802`. Published after the editor.
+  The public modal JavaScript matched the artifact exactly. Homepage differences
+  were limited to Netlify's injected monitoring script; the production editor
+  origin and sidebar link were verified.
+
+GitHub Actions run `35667544415` could not start: its annotation reports an
+account billing lock. No workflow steps executed. Local unit tests, TypeScript,
+build, production Wrangler dry run and approved browser acceptance passed.
+No billing settings were changed. The release branches are retained for source
+integration; production was deployed from the exact commits above.
