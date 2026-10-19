@@ -35,6 +35,7 @@ window.renderEconomy = async (input) => {
     diagram,
     measureCards(diagram, measure),
     measureHeadings(diagram, measure),
+    measure,
   );
   const svg = await (await svgBlob(diagram, layout)).text();
   if (layout.issues.length)

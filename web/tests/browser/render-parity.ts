@@ -31,6 +31,7 @@ try {
       d,
       measureCards(d, measure),
       measureHeadings(d, measure),
+      measure,
     );
     const svg = await (await svgBlob(d, layout)).text();
     const png = new Uint8Array(await (await pngBlob(d, layout)).arrayBuffer());

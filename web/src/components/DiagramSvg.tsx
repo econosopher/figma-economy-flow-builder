@@ -1,5 +1,10 @@
 import type { Card, Settings, EconomyDocument } from "../core/document";
-import type { CardMetrics, Layout, Route } from "../core/layout";
+import {
+  spacingFor,
+  type CardMetrics,
+  type Layout,
+  type Route,
+} from "../core/layout";
 export function ink(fill: string) {
   const rgb = [1, 3, 5].map((i) => {
     const c = parseInt(fill.slice(i, i + 2), 16) / 255;
@@ -28,6 +33,7 @@ export function CardDrawing({
       ? settings.finalGood
       : settings.actionHeader;
   const tint = ink(fill);
+  const sp = spacingFor(settings);
   return (
     <g fontFamily="Inter, Arial, sans-serif">
       <rect
@@ -51,13 +57,13 @@ export function CardDrawing({
       {isFinal && (
         <>
           <path
-            d={`M 8 1.5 H ${metrics.width - 8} Q ${metrics.width - 1.5} 1.5 ${metrics.width - 1.5} 8 V 24 H 1.5 V 8 Q 1.5 1.5 8 1.5`}
+            d={`M 8 1.5 H ${metrics.width - 8} Q ${metrics.width - 1.5} 1.5 ${metrics.width - 1.5} 8 V ${sp.finalBand} H 1.5 V 8 Q 1.5 1.5 8 1.5`}
             fill="#000000"
           />
           <text
-            x="16"
-            y="17"
-            fontSize="9"
+            x={sp.titleInset}
+            y={sp.finalBand - 7}
+            fontSize={sp.finalSize}
             fontWeight="600"
             letterSpacing="1"
             fill="white"
@@ -69,9 +75,14 @@ export function CardDrawing({
       {metrics.title.map((t, i) => (
         <text
           key={i}
-          x="16"
-          y={metrics.anchorY - (metrics.title.length * 19) / 2 + 14 + i * 19}
-          fontSize="13"
+          x={sp.titleInset}
+          y={
+            metrics.anchorY -
+            (metrics.title.length * sp.titleLine) / 2 +
+            Math.round(sp.titleLine * 0.74) +
+            i * sp.titleLine
+          }
+          fontSize={sp.titleSize}
           fontWeight="600"
           fill={tint}
         >
@@ -81,17 +92,17 @@ export function CardDrawing({
       {metrics.rows.map((row, i) => (
         <g key={i}>
           <rect
-            x="12"
+            x={sp.chipInset}
             y={row.y}
-            width={metrics.width - 24}
+            width={metrics.width - 2 * sp.chipInset}
             height={row.height}
             rx="4"
             fill={settings[row.kind]}
           />
           <text
-            x="21"
-            y={row.y + 18}
-            fontSize="12"
+            x={sp.symbolX}
+            y={row.y + sp.rowPad / 2 + sp.rowLine * 0.75}
+            fontSize={sp.rowSize + 1}
             fill={ink(settings[row.kind])}
             fontWeight="600"
           >
@@ -100,9 +111,9 @@ export function CardDrawing({
           {row.lines.map((line, j) => (
             <text
               key={j}
-              x="37"
-              y={row.y + 18 + j * 16}
-              fontSize="11"
+              x={sp.rowTextX}
+              y={row.y + sp.rowPad / 2 + sp.rowLine * 0.75 + j * sp.rowLine}
+              fontSize={sp.rowSize}
               fill={ink(settings[row.kind])}
             >
               {line}
@@ -112,19 +123,21 @@ export function CardDrawing({
       ))}
       {metrics.notes.length > 0 && (
         <line
-          x1="16"
-          y1={metrics.notesY - 7}
-          x2={metrics.width - 16}
-          y2={metrics.notesY - 7}
+          x1={sp.titleInset}
+          y1={metrics.notesY - sp.notesGap + 5}
+          x2={metrics.width - sp.titleInset}
+          y2={metrics.notesY - sp.notesGap + 5}
           stroke="#e9edea"
         />
       )}
       {metrics.notes.map((line, j) => (
         <text
           key={j}
-          x="16"
-          y={metrics.notesY + 11 + j * 16}
-          fontSize="11"
+          x={sp.titleInset}
+          y={
+            metrics.notesY + Math.round(sp.notesLine * 0.69) + j * sp.notesLine
+          }
+          fontSize={sp.notesSize}
           fill="#68736d"
         >
           {line}
@@ -147,6 +160,8 @@ export function PipeDrawing({
   markerId?: string;
 }) {
   const color = selected ? "#b08716" : pipeColor(route, settings);
+  const sp = spacingFor(settings);
+  const label = route.label;
   return (
     <g>
       <defs>
@@ -181,6 +196,25 @@ export function PipeDrawing({
             : `url(#${markerId}-${route.edge.id})`
         }
       />
+      {label && (
+        <g
+          transform={`translate(${label.x} ${label.y})${label.vertical ? " rotate(-90)" : ""}`}
+          fontFamily="Inter, Arial, sans-serif"
+          fontSize={sp.labelSize}
+          textAnchor="middle"
+          fill={selected ? "#b08716" : "#5b6a62"}
+          stroke="white"
+          strokeWidth="3"
+          strokeLinejoin="round"
+          paintOrder="stroke"
+        >
+          {label.lines.map((line, i) => (
+            <text key={i} y={-(label.lines.length - 1 - i) * sp.labelLine - 4}>
+              {line}
+            </text>
+          ))}
+        </g>
+      )}
     </g>
   );
 }
@@ -260,18 +294,25 @@ export function DiagramDrawing({
     if (!r.unresolved) arrowTargets.add(r.edge.to);
     return { ...r, arrowhead };
   });
+  const sp = spacingFor(d.settings);
   return (
     <g fontFamily="Inter, Arial, sans-serif">
-      {!selection?.length && (
+      {!selection?.length && d.settings.showTitle && (
         <>
-          <text x="28" y="28" fontSize="16" fontWeight="600" fill="#23332b">
+          <text
+            x={sp.nameX}
+            y={sp.nameY}
+            fontSize={sp.nameSize}
+            fontWeight="600"
+            fill="#23332b"
+          >
             {d.name}
           </text>
           <text
-            x={layout.bounds.width - 28}
-            y="28"
+            x={layout.bounds.width - sp.nameX}
+            y={sp.nameY}
             textAnchor="end"
-            fontSize="10"
+            fontSize={sp.brandSize}
             fill="#839087"
           >
             Game Economist Consulting
@@ -297,9 +338,9 @@ export function DiagramDrawing({
             {g.lines.map((line, i) => (
               <text
                 key={i}
-                x={g.x + 18}
-                y={g.y + 26 + i * 18}
-                fontSize="12"
+                x={g.x + sp.groupInset}
+                y={g.y + sp.groupHeader - 8 + i * sp.groupLine}
+                fontSize={sp.groupSize}
                 fontWeight="600"
                 fill="#627168"
               >
@@ -312,8 +353,8 @@ export function DiagramDrawing({
         <g key={s.id}>
           <text
             x={s.x}
-            y={s.y + 13}
-            fontSize="10"
+            y={s.y + Math.round(sp.stageLine * 0.72)}
+            fontSize={sp.stageSize - 2}
             fontWeight="500"
             letterSpacing="1"
             fill="#839087"
@@ -323,9 +364,9 @@ export function DiagramDrawing({
           {s.lines.map((line, i) => (
             <text
               key={i}
-              x={s.x + 25}
-              y={s.y + 13 + i * 18}
-              fontSize="12"
+              x={s.x + sp.stageIndent}
+              y={s.y + Math.round(sp.stageLine * 0.72) + i * sp.stageLine}
+              fontSize={sp.stageSize}
               fontWeight="600"
               fill="#4d5f53"
             >
