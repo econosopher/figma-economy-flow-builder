@@ -13,6 +13,7 @@ import {
   uid,
   type EconomyDocument,
   type Card,
+  type Settings,
 } from "../core/document";
 import type { Selection } from "./Canvas";
 export function Inspector({
@@ -422,13 +423,14 @@ export function Inspector({
                   ...d,
                   settings: {
                     ...d.settings,
-                    spacing: e.target.value as "compact" | "comfortable",
+                    spacing: e.target.value as Settings["spacing"],
                   },
                 })
               }
             >
               <option value="comfortable">Comfortable</option>
               <option value="compact">Compact</option>
+              <option value="slide">Slide</option>
             </select>
           </label>
           {(
@@ -482,6 +484,32 @@ export function Inspector({
               }
             />
             Include resource key in exports
+          </label>
+          <label className="checkbox">
+            <input
+              type="checkbox"
+              checked={d.settings.showTitle}
+              onChange={(e) =>
+                onChange({
+                  ...d,
+                  settings: { ...d.settings, showTitle: e.target.checked },
+                })
+              }
+            />
+            Include name and brand in exports
+          </label>
+          <label className="checkbox">
+            <input
+              type="checkbox"
+              checked={d.settings.showLabels}
+              onChange={(e) =>
+                onChange({
+                  ...d,
+                  settings: { ...d.settings, showLabels: e.target.checked },
+                })
+              }
+            />
+            Show pipe labels
           </label>
           <label className="field">
             Export background

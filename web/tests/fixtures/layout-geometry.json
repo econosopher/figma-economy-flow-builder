@@ -1,0 +1,142 @@
+{
+ "apex_legends.json|compact": {
+  "width": 3176,
+  "height": 2368,
+  "digest": "b51e1954e80685f1b460c7bd28e2daaf5a6c550d"
+ },
+ "apex_legends.json|comfortable": {
+  "width": 3240,
+  "height": 2476,
+  "digest": "4bccf95a308864b4836769fc5ff7e2b7dc7f5429"
+ },
+ "dice_throne_digital.json|compact": {
+  "width": 2228,
+  "height": 4354,
+  "digest": "e1ccab7157942f73e89dedeedcabda083b031ccb"
+ },
+ "dice_throne_digital.json|comfortable": {
+  "width": 2284,
+  "height": 4474,
+  "digest": "44bc6af98e63e835740cd7e959e9e68b8303274a"
+ },
+ "helldivers.json|compact": {
+  "width": 2184,
+  "height": 1196,
+  "digest": "f34ea69d660506555bed7c2a9ae83ec31136d6dd"
+ },
+ "helldivers.json|comfortable": {
+  "width": 2280,
+  "height": 1232,
+  "digest": "4b4c4d974c75db0d1fd8283cddc0b275ec95ec7b"
+ },
+ "mecha_break.json|compact": {
+  "width": 3324,
+  "height": 1476,
+  "digest": "d4bc8392e87e8ff15182b7b651104b410361115f"
+ },
+ "mecha_break.json|comfortable": {
+  "width": 3456,
+  "height": 1524,
+  "digest": "a12f83d2d985581e49f32ea17e8bf7cbca86a562"
+ },
+ "payday_3.json|compact": {
+  "width": 2036,
+  "height": 3052,
+  "digest": "aedb34d198b5bb27c734877b0f6871a66be760c3"
+ },
+ "payday_3.json|comfortable": {
+  "width": 2112,
+  "height": 3088,
+  "digest": "3654571ef9283e6ed85a2b8a5abeaea7d33b9f0c"
+ },
+ "rainbow_six_siege.json|compact": {
+  "width": 1864,
+  "height": 2992,
+  "digest": "fc08b4512c77d52adef1eac41b3b375a3957e830"
+ },
+ "rainbow_six_siege.json|comfortable": {
+  "width": 1920,
+  "height": 3040,
+  "digest": "4c8af5abbcdf93cc8e485f1803b1d835b1e3fb3e"
+ },
+ "subsections_example.json|compact": {
+  "width": 1844,
+  "height": 1860,
+  "digest": "709f046db60a7105973fb0978304a4ca88f62e18"
+ },
+ "subsections_example.json|comfortable": {
+  "width": 1972,
+  "height": 1884,
+  "digest": "82da624495e2cc43876f3b95d749e921255ccdc0"
+ },
+ "sweepstakes_slots.json|compact": {
+  "width": 4804,
+  "height": 2660,
+  "digest": "1700a9dd5222eebd24debe6c2714e9c79ebc6f4d"
+ },
+ "sweepstakes_slots.json|comfortable": {
+  "width": 4952,
+  "height": 2780,
+  "digest": "4247eba64d56243e4fbe06e247f1662b0b71a5ae"
+ },
+ "preset:gossip_harbor|compact": {
+  "width": 2328,
+  "height": 1582,
+  "digest": "f56b9f495722a4992bc75a0ca3f658be1c7e3e2e"
+ },
+ "preset:gossip_harbor|comfortable": {
+  "width": 2404,
+  "height": 1594,
+  "digest": "11f77a361326a5eb8f10e922a2e81ee1b78aa5d9"
+ },
+ "preset:royal_match|compact": {
+  "width": 2496,
+  "height": 1820,
+  "digest": "67765d601e58aa7e3d071f62bf6421e0051cda8c"
+ },
+ "preset:royal_match|comfortable": {
+  "width": 2580,
+  "height": 1856,
+  "digest": "ec4f0c11caa06c086616244f64f8b9895847b153"
+ },
+ "preset:monopoly_go|compact": {
+  "width": 2568,
+  "height": 2178,
+  "digest": "4ca8ea55dee86a5814076c495306724295e73804"
+ },
+ "preset:monopoly_go|comfortable": {
+  "width": 2624,
+  "height": 2214,
+  "digest": "08f6bfab78bdb6e1dd2564ea9e95664138258b2e"
+ },
+ "preset:world_of_warcraft|compact": {
+  "width": 2592,
+  "height": 1910,
+  "digest": "c3c026a3b3fac14d95c1ea0eb5f310311675d0bd"
+ },
+ "preset:world_of_warcraft|comfortable": {
+  "width": 2648,
+  "height": 1946,
+  "digest": "839cd779ac1e1838e3adec535639de47da1ad053"
+ },
+ "preset:warzone|compact": {
+  "width": 2568,
+  "height": 1884,
+  "digest": "7f9160d585ae7fbc7cc75ea799575663f1cf853e"
+ },
+ "preset:warzone|comfortable": {
+  "width": 2628,
+  "height": 1920,
+  "digest": "d4d29d2520952d18681aeb3ab74aae0aa76e4d02"
+ },
+ "preset:apex_legends|compact": {
+  "width": 2616,
+  "height": 2026,
+  "digest": "206d42ffce7d691768031c6156413e8b4a6f66e4"
+ },
+ "preset:apex_legends|comfortable": {
+  "width": 2688,
+  "height": 2074,
+  "digest": "c26f91511e992a9c02fb24b683565239c2ea4370"
+ }
+}

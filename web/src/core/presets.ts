@@ -139,6 +139,8 @@ export const starter: EconomyDocument = {
     finalGood: "#F5C95C",
     spacing: "comfortable",
     showLegend: true,
+    showTitle: true,
+    showLabels: false,
     background: "white",
     source: "#21865b",
     sink: "#d15d44",

@@ -1,4 +1,4 @@
-import type { Card, EconomyDocument, Pipe } from "./document";
+import type { Card, EconomyDocument, Pipe, Settings } from "./document";
 export interface Point {
   x: number;
   y: number;
@@ -27,6 +27,13 @@ export interface PlacedCard extends Rect {
   card: Card;
   metrics: CardMetrics;
 }
+export interface RouteLabel {
+  lines: string[];
+  x: number;
+  y: number;
+  /** Set along a vertical track: the drawing rotates the text to run with the pipe. */
+  vertical: boolean;
+}
 export interface Route {
   edge: Pipe;
   points: Point[];
@@ -34,6 +41,7 @@ export interface Route {
   bridges: string[];
   unresolved: boolean;
   arrowhead?: boolean;
+  label?: RouteLabel;
 }
 export interface Layout {
   documentId: string;
@@ -49,9 +57,167 @@ export interface Layout {
   routes: Route[];
   bounds: Rect;
   issues: string[];
+  spacing: Spacing;
 }
 export const TRACK = 12,
   CARD_WIDTH = 196;
+/** Every geometry literal the layout and drawing share, chosen by `settings.spacing`. */
+export interface Spacing {
+  cardWidth: number;
+  /** Narrowest channel that carries at least one track. */
+  gapMin: number;
+  /** Width of a channel with no tracks (the margins beside the first and last stage). */
+  gapEmpty: number;
+  /** Clearance added around the tracks in a channel; half of it precedes the first track. */
+  gapPad: number;
+  stackGap: number;
+  marginLeft: number;
+  marginRight: number;
+  nameX: number;
+  nameY: number;
+  nameSize: number;
+  brandSize: number;
+  stagesY: number;
+  stageSize: number;
+  stageLine: number;
+  stageIndent: number;
+  /** Distance from the stage heading block to the first group. */
+  stageGap: number;
+  groupInset: number;
+  groupHeader: number;
+  groupSize: number;
+  groupLine: number;
+  groupPad: number;
+  titleInset: number;
+  titleSize: number;
+  titleLine: number;
+  headerMin: number;
+  headerPad: number;
+  headerGap: number;
+  finalBand: number;
+  finalSize: number;
+  chipInset: number;
+  symbolX: number;
+  rowTextX: number;
+  rowSize: number;
+  rowLine: number;
+  rowPad: number;
+  rowGap: number;
+  bottomPad: number;
+  notesGap: number;
+  notesSize: number;
+  notesLine: number;
+  labelSize: number;
+  labelLine: number;
+}
+const comfortable: Spacing = {
+  cardWidth: CARD_WIDTH,
+  gapMin: 100,
+  gapEmpty: 100,
+  gapPad: 48,
+  stackGap: 52,
+  marginLeft: 40,
+  marginRight: 28,
+  nameX: 28,
+  nameY: 28,
+  nameSize: 16,
+  brandSize: 10,
+  stagesY: 60,
+  stageSize: 12,
+  stageLine: 18,
+  stageIndent: 25,
+  stageGap: 24,
+  groupInset: 18,
+  groupHeader: 34,
+  groupSize: 12,
+  groupLine: 18,
+  groupPad: 36,
+  titleInset: 16,
+  titleSize: 13,
+  titleLine: 19,
+  headerMin: 60,
+  headerPad: 30,
+  headerGap: 8,
+  finalBand: 24,
+  finalSize: 9,
+  chipInset: 12,
+  symbolX: 21,
+  rowTextX: 37,
+  rowSize: 11,
+  rowLine: 16,
+  rowPad: 12,
+  rowGap: 4,
+  bottomPad: 8,
+  notesGap: 12,
+  notesSize: 11,
+  notesLine: 16,
+  labelSize: 11,
+  labelLine: 14,
+};
+const compact: Spacing = {
+  ...comfortable,
+  gapMin: 72,
+  gapEmpty: 72,
+  stackGap: 40,
+};
+/** Sized so a five-column diagram across a 10-inch slide keeps chip text at 7pt or larger:
+ * narrower cards, channels no wider than their tracks need, and larger type relative to width. */
+const slide: Spacing = {
+  cardWidth: 160,
+  gapMin: 40,
+  gapEmpty: 20,
+  gapPad: 24,
+  stackGap: 24,
+  marginLeft: 20,
+  marginRight: 16,
+  nameX: 16,
+  nameY: 20,
+  nameSize: 13,
+  brandSize: 9,
+  stagesY: 32,
+  stageSize: 11,
+  stageLine: 16,
+  stageIndent: 22,
+  stageGap: 20,
+  groupInset: 12,
+  groupHeader: 26,
+  groupSize: 11,
+  groupLine: 16,
+  groupPad: 20,
+  titleInset: 12,
+  titleSize: 13,
+  titleLine: 16,
+  headerMin: 44,
+  headerPad: 22,
+  headerGap: 6,
+  finalBand: 20,
+  finalSize: 8,
+  chipInset: 8,
+  symbolX: 15,
+  rowTextX: 28,
+  rowSize: 12,
+  rowLine: 15,
+  rowPad: 8,
+  rowGap: 3,
+  bottomPad: 6,
+  notesGap: 10,
+  notesSize: 11,
+  notesLine: 14,
+  labelSize: 12,
+  labelLine: 14,
+};
+export function spacingFor(settings: Settings): Spacing {
+  const base =
+    settings.spacing === "slide"
+      ? slide
+      : settings.spacing === "compact"
+        ? compact
+        : comfortable;
+  // Without the name band the stage headings move up to where the name was.
+  return settings.showTitle
+    ? base
+    : { ...base, stagesY: base.stagesY - base.nameY + 4 };
+}
 export type Measure = (text: string, size: number, weight: number) => number;
 export const approximateMeasure: Measure = (text, size) =>
   [...text].reduce(
@@ -94,17 +260,24 @@ export function measureHeadings(
   d: EconomyDocument,
   measure: Measure = approximateMeasure,
 ) {
+  const sp = spacingFor(d.settings);
   return {
     stages: Object.fromEntries(
       d.stages.map((s) => [
         s.id,
-        wrapText(s.label, CARD_WIDTH - 25, 12, 600, measure),
+        wrapText(
+          s.label,
+          sp.cardWidth - sp.stageIndent,
+          sp.stageSize,
+          600,
+          measure,
+        ),
       ]),
     ),
     groups: Object.fromEntries(
       d.groups.map((g) => [
         g.id,
-        wrapText(g.label, CARD_WIDTH, 12, 600, measure),
+        wrapText(g.label, sp.cardWidth, sp.groupSize, 600, measure),
       ]),
     ),
   };
@@ -113,13 +286,21 @@ export function measureCards(
   d: EconomyDocument,
   measure: Measure = approximateMeasure,
 ): Record<string, CardMetrics> {
+  const sp = spacingFor(d.settings);
   return Object.fromEntries(
     d.cards.map((c) => {
-      const title = wrapText(c.label, CARD_WIDTH - 32, 13, 600, measure);
+      const title = wrapText(
+        c.label,
+        sp.cardWidth - 2 * sp.titleInset,
+        sp.titleSize,
+        600,
+        measure,
+      );
+      const finalBand = c.kind === "final_good" ? sp.finalBand : 0;
       const header =
-        Math.max(60, title.length * 19 + 30) +
-        (c.kind === "final_good" ? 24 : 0);
-      let y = header + 8;
+        Math.max(sp.headerMin, title.length * sp.titleLine + sp.headerPad) +
+        finalBand;
+      let y = header + sp.headerGap;
       const rows: Row[] = [];
       for (const [kind, values] of [
         ["source", c.sources],
@@ -127,26 +308,40 @@ export function measureCards(
         ["value", c.values],
       ] as const)
         for (const value of values) {
-          const lines = wrapText(value, CARD_WIDTH - 52, 11, 400, measure);
-          const height = lines.length * 16 + 12;
+          const lines = wrapText(
+            value,
+            sp.cardWidth - sp.rowTextX - 15,
+            sp.rowSize,
+            400,
+            measure,
+          );
+          const height = lines.length * sp.rowLine + sp.rowPad;
           rows.push({ kind, lines, y, height });
-          y += height + 4;
+          y += height + sp.rowGap;
         }
       const notes = c.notes
-        ? wrapText(c.notes, CARD_WIDTH - 32, 11, 400, measure)
+        ? wrapText(
+            c.notes,
+            sp.cardWidth - 2 * sp.titleInset,
+            sp.notesSize,
+            400,
+            measure,
+          )
         : [];
-      const notesY = y + (notes.length ? 12 : 0);
+      const notesY = y + (notes.length ? sp.notesGap : 0);
       return [
         c.id,
         {
-          width: CARD_WIDTH,
+          width: sp.cardWidth,
           height: Math.max(
             header + 4,
-            (rows.length ? y + 8 : y) +
-              (notes.length ? notes.length * 16 + 26 : 0),
+            (rows.length ? y + sp.bottomPad : y) +
+              (notes.length
+                ? notes.length * sp.notesLine + sp.notesLine + 10
+                : 0),
           ),
           header,
-          anchorY: (header + (c.kind === "final_good" ? 24 : 0)) / 2,
+          anchorY: (header + finalBand) / 2,
           title,
           rows,
           notes,
@@ -349,7 +544,9 @@ export function layoutDocument(
   d: EconomyDocument,
   measured = measureCards(d),
   headings = measureHeadings(d),
+  measure: Measure = approximateMeasure,
 ): Layout {
+  const sp = spacingFor(d.settings);
   const edges = [...d.edges];
   const edgeOrder = new Map(edges.map((edge, index) => [edge.id, index]));
   const stageIndex = new Map(d.stages.map((s, i) => [s.id, i]));
@@ -376,25 +573,25 @@ export function layoutDocument(
     ),
   );
   const gapWidths = channels.map((c) =>
-    Math.max(
-      d.settings.spacing === "compact" ? 72 : 100,
-      c.length * TRACK + 48,
-    ),
+    c.length ? Math.max(sp.gapMin, c.length * TRACK + sp.gapPad) : sp.gapEmpty,
   );
   const stageXs: number[] = [];
-  let x = 40 + gapWidths[0];
+  let x = sp.marginLeft + gapWidths[0];
   for (let i = 0; i < d.stages.length; i++) {
     stageXs.push(x);
-    x += CARD_WIDTH + gapWidths[i + 1];
+    x += sp.cardWidth + gapWidths[i + 1];
   }
-  const width = x + 28;
-  const stackGap = d.settings.spacing === "compact" ? 40 : 52;
+  const width = x + sp.marginRight;
+  const stackGap = sp.stackGap;
   const groups: Layout["groups"] = [];
   const cards: PlacedCard[] = [];
   let y =
-    84 +
+    sp.stagesY +
+    sp.stageGap +
     Math.max(
-      ...Object.values(headings.stages).map((lines) => lines.length * 18),
+      ...Object.values(headings.stages).map(
+        (lines) => lines.length * sp.stageLine,
+      ),
     );
   const corridors: number[] = [];
   for (const g of d.groups) {
@@ -417,17 +614,17 @@ export function layoutDocument(
         cardData.get(e.to)?.groupId === g.id,
     ).length;
     const trackSpace = Math.max(36, Math.ceil(crossing / 2) * TRACK + 24);
-    const header = 34 + headings.groups[g.id].length * 18;
-    const groupHeight = stackHeight + header + 36;
+    const header = sp.groupHeader + headings.groups[g.id].length * sp.groupLine;
+    const groupHeight = stackHeight + header + sp.groupPad;
     groups.push({
       id: g.id,
       label: g.label,
       lines: headings.groups[g.id],
       header,
       color: g.color,
-      x: stageXs[0] - 18,
+      x: stageXs[0] - sp.groupInset,
       y,
-      width: width - 28 - (stageXs[0] - 18),
+      width: width - sp.marginRight - (stageXs[0] - sp.groupInset),
       height: groupHeight,
     });
     stacks.forEach((cs, i) => {
@@ -454,8 +651,10 @@ export function layoutDocument(
   const issues: string[] = [];
   const sideX = (edgeId: string, stage: number, side: "i" | "o") => {
     const gap = side === "o" ? stage + 1 : stage;
-    const left = gap === 0 ? 40 : stageXs[gap - 1] + CARD_WIDTH;
-    return left + 24 + channels[gap].indexOf(`${side}:${edgeId}`) * TRACK;
+    const left = gap === 0 ? sp.marginLeft : stageXs[gap - 1] + sp.cardWidth;
+    return (
+      left + sp.gapPad / 2 + channels[gap].indexOf(`${side}:${edgeId}`) * TRACK
+    );
   };
   const port = (c: PlacedCard, _e: Pipe, out: boolean) => ({
     x: c.x + (out ? c.width : 0),
@@ -567,6 +766,9 @@ export function layoutDocument(
     const others = routes.filter((r) => r !== route);
     route.path = bridgePath(route.points, others);
     route.bridges = crossingBridges(route.points, others);
+    route.label = d.settings.showLabels
+      ? placeLabel(route, sp, measure)
+      : undefined;
     route.arrowhead = !routes.some(
       (r) =>
         r !== route &&
@@ -584,9 +786,9 @@ export function layoutDocument(
     stages: d.stages.map((s, i) => ({
       ...s,
       x: stageXs[i],
-      y: 60,
-      width: CARD_WIDTH,
-      height: headings.stages[s.id].length * 18,
+      y: sp.stagesY,
+      width: sp.cardWidth,
+      height: headings.stages[s.id].length * sp.stageLine,
       lines: headings.stages[s.id],
     })),
     routes,
@@ -597,5 +799,49 @@ export function layoutDocument(
       height: maxY + (d.settings.showLegend ? 58 : 0),
     },
     issues,
+    spacing: sp,
+  };
+}
+/** A pipe label sits on the longest straight run of its route: above a horizontal segment,
+ * or rotated along a vertical track when no horizontal run can hold the text. It never leaves
+ * the segment's extent, so it stays clear of cards; it may sit beside neighbouring tracks. */
+export function placeLabel(
+  route: Pick<Route, "edge" | "points">,
+  sp: Spacing,
+  measure: Measure = approximateMeasure,
+): RouteLabel | undefined {
+  const text = route.edge.label.trim();
+  if (!text || route.points.length < 2) return undefined;
+  const segments = route.points.slice(1).map((b, i) => {
+    const a = route.points[i];
+    return {
+      a,
+      b,
+      vertical: a.x === b.x,
+      length: Math.abs(b.x - a.x) + Math.abs(b.y - a.y),
+    };
+  });
+  const longest = (list: typeof segments) =>
+    list.reduce<(typeof segments)[number] | undefined>(
+      (best, s) => (!best || s.length > best.length ? s : best),
+      undefined,
+    );
+  const horizontal = longest(segments.filter((s) => !s.vertical));
+  const fits = (s: { length: number }) =>
+    measure(text, sp.labelSize, 400) <= s.length - 8;
+  const chosen =
+    horizontal && fits(horizontal) ? horizontal : longest(segments);
+  if (!chosen) return undefined;
+  return {
+    lines: wrapText(
+      text,
+      Math.max(chosen.length - 8, 40),
+      sp.labelSize,
+      400,
+      measure,
+    ),
+    x: (chosen.a.x + chosen.b.x) / 2,
+    y: (chosen.a.y + chosen.b.y) / 2,
+    vertical: chosen.vertical,
   };
 }

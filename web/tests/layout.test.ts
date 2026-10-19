@@ -1,6 +1,7 @@
 import { textEditKey } from "../src/core/history";
 import { presets } from "../src/core/presets";
 import { describe, it, expect } from "vitest";
+import { createHash } from "node:crypto";
 import { readFileSync, readdirSync } from "node:fs";
 import {
   importDocument,
@@ -14,6 +15,7 @@ import {
   layoutDocument,
   measureCards,
   routeHitsCard,
+  spacingFor,
   tracksConflict,
 } from "../src/core/layout";
 const examples = readdirSync(new URL("../../examples/", import.meta.url))
@@ -49,10 +51,10 @@ function assertReadable(d: EconomyDocument) {
     for (const g of l.groups)
       expect(
         routeHitsCard(r.points, {
-          x: g.x + 18,
+          x: g.x + l.spacing.groupInset,
           y: g.y + 12,
-          width: 196,
-          height: g.lines.length * 18,
+          width: l.spacing.cardWidth,
+          height: g.lines.length * l.spacing.groupLine,
         }),
       ).toBe(false);
     for (const other of l.routes) {
@@ -269,5 +271,184 @@ describe("economy layout", () => {
     console.log("100-card/300-edge layout ms:", elapsed.toFixed(1));
     expect(l.issues).toEqual([]);
     expect(elapsed).toBeLessThan(1000);
+  });
+  it("keeps compact and comfortable geometry exactly as before the spacing table", () => {
+    const expected = JSON.parse(
+      readFileSync(
+        new URL("./fixtures/layout-geometry.json", import.meta.url),
+        "utf8",
+      ),
+    ) as Record<string, { width: number; height: number; digest: string }>;
+    const docs = [
+      ...examples,
+      ...presets.map((p) => ({ name: `preset:${p.id}`, doc: p.document })),
+    ];
+    for (const { name, doc } of docs)
+      for (const spacing of ["compact", "comfortable"] as const) {
+        const l = layoutDocument(
+          validateDocument({
+            ...doc,
+            settings: { ...doc.settings, spacing },
+          }),
+        );
+        const digest = createHash("sha1")
+          .update(
+            JSON.stringify({
+              cards: l.cards.map((c) => [
+                c.card.id,
+                c.x,
+                c.y,
+                c.width,
+                c.height,
+              ]),
+              groups: l.groups.map((g) => [g.id, g.x, g.y, g.width, g.height]),
+              stages: l.stages.map((s) => [s.id, s.x, s.y, s.width, s.height]),
+              routes: l.routes.map((r) => [r.edge.id, r.points, r.path]),
+            }),
+          )
+          .digest("hex");
+        expect(
+          { width: l.bounds.width, height: l.bounds.height, digest },
+          `${name} ${spacing}`,
+        ).toEqual(expected[`${name}|${spacing}`]);
+      }
+  });
+});
+describe("slide spacing", () => {
+  /** Five columns, one lane, Time and Money roots, a labelled Money pipe and a return pipe. */
+  function slideDocument(spacing: "compact" | "slide", showTitle = true) {
+    const stages = ["Inputs", "Prepare", "Run", "Return", "Outcomes"].map(
+      (label, i) => ({ id: `s${i}`, label }),
+    );
+    const card = (
+      id: string,
+      label: string,
+      stage: number,
+      extra: Record<string, unknown> = {},
+    ) =>
+      cardSchema.parse({
+        id,
+        label,
+        stageId: `s${stage}`,
+        groupId: "g",
+        order: 0,
+        ...extra,
+      });
+    return validateDocument({
+      schemaVersion: 3,
+      id: "slide-test",
+      name: "Slide test",
+      stages,
+      groups: [{ id: "g", label: "Loop", color: "#f7f8fa" }],
+      cards: [
+        card("time", "Time", 0, { kind: "initial_sink_node" }),
+        card("money", "Money", 0, { kind: "initial_sink_node", order: 1 }),
+        card("prep", "To Kit a Loadout in the Hub", 1, {
+          sinks: ["Materials, coins", "Tokens: cosmetics"],
+          values: ["Workshop stations", "Stash size"],
+          notes: "A free loadout risks nothing",
+        }),
+        card("run", "To Raid Topside", 2, {
+          sources: ["Materials, loot"],
+          sinks: ["Loadout on death", "Ammo, meds"],
+          values: ["Level, skill tree"],
+        }),
+        card("ret", "To Finish an Expedition", 3, {
+          sinks: ["Stash and level: reset"],
+          values: ["Skill points", "Cosmetics kept"],
+        }),
+        card("fg", "The haul and the escape", 4, { kind: "final_good" }),
+      ],
+      edges: [
+        { id: "t", from: "time", to: "prep" },
+        {
+          id: "m",
+          from: "money",
+          to: "prep",
+          label: "buys the game and tokens",
+        },
+        { id: "a", from: "prep", to: "run" },
+        { id: "b", from: "run", to: "ret" },
+        { id: "c", from: "run", to: "prep", feedback: true },
+        { id: "d", from: "run", to: "fg", type: "final" },
+      ],
+      settings: {
+        spacing,
+        showLegend: false,
+        showTitle,
+        showLabels: true,
+        background: "transparent",
+      },
+    });
+  }
+  it("is accepted by the schema and reads narrower than compact without collisions", () => {
+    const compact = layoutDocument(slideDocument("compact"));
+    const slide = assertReadable(slideDocument("slide"));
+    expect(slide.spacing.cardWidth).toBe(160);
+    expect(slide.bounds.width).toBeLessThan(compact.bounds.width * 0.8);
+    // Chip text on a 10-inch slide: px font × 720pt / px width.
+    expect(
+      (slide.spacing.rowSize * 720) / slide.bounds.width,
+    ).toBeGreaterThanOrEqual(7);
+    expect((compact.spacing.rowSize * 720) / compact.bounds.width).toBeLessThan(
+      7,
+    );
+    expect(slide.cards.map((c) => c.card.id)).toEqual(
+      compact.cards.map((c) => c.card.id),
+    );
+  });
+  it("moves the stage headings up when the title band is hidden", () => {
+    const shown = layoutDocument(slideDocument("slide"));
+    const hidden = layoutDocument(slideDocument("slide", false));
+    expect(hidden.stages[0].y).toBeLessThan(shown.stages[0].y);
+    expect(hidden.bounds.height).toBeLessThan(shown.bounds.height);
+    expect(spacingFor(slideDocument("compact").settings).stagesY).toBe(60);
+  });
+  it("draws no labels unless showLabels is set, so researched presets keep their look", () => {
+    for (const { document: doc } of presets) {
+      expect(doc.settings.showLabels).toBe(false);
+      expect(layoutDocument(doc).routes.every((r) => !r.label)).toBe(true);
+    }
+    const d = slideDocument("slide");
+    const off = validateDocument({
+      ...d,
+      settings: { ...d.settings, showLabels: false },
+    });
+    expect(layoutDocument(off).routes.every((r) => !r.label)).toBe(true);
+  });
+  it("places a pipe label on its route and never on another card", () => {
+    for (const spacing of ["compact", "slide"] as const) {
+      const l = layoutDocument(slideDocument(spacing));
+      const labelled = l.routes.find((r) => r.edge.id === "m")!;
+      expect(labelled.label).toBeDefined();
+      expect(labelled.label!.lines.join(" ")).toBe("buys the game and tokens");
+      const on = labelled.points.some((p, i) => {
+        const q = labelled.points[i + 1];
+        if (!q) return false;
+        const { x, y } = labelled.label!;
+        return (
+          (p.x === q.x &&
+            x === p.x &&
+            y >= Math.min(p.y, q.y) &&
+            y <= Math.max(p.y, q.y)) ||
+          (p.y === q.y &&
+            y === p.y &&
+            x >= Math.min(p.x, q.x) &&
+            x <= Math.max(p.x, q.x))
+        );
+      });
+      expect(on).toBe(true);
+      for (const c of l.cards)
+        if (![labelled.edge.from, labelled.edge.to].includes(c.card.id))
+          expect(
+            labelled.label!.x > c.x &&
+              labelled.label!.x < c.x + c.width &&
+              labelled.label!.y > c.y &&
+              labelled.label!.y < c.y + c.height,
+          ).toBe(false);
+      expect(
+        l.routes.filter((r) => r.edge.id !== "m").every((r) => !r.label),
+      ).toBe(true);
+    }
   });
 });

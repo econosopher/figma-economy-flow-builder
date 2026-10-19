@@ -31,7 +31,12 @@ import {
   type ResourceKind,
 } from "./DirectEditing";
 import { ink } from "./DiagramSvg";
-import type { Layout, PlacedCard, Route } from "../core/layout";
+import {
+  spacingFor,
+  type Layout,
+  type PlacedCard,
+  type Route,
+} from "../core/layout";
 import { CardDrawing, PipeDrawing, BridgeDrawing } from "./DiagramSvg";
 export type Selection = {
   kind: "card" | "edge" | "group" | "stage";
@@ -733,9 +738,7 @@ export function Canvas({
       y:
         after?.y ??
         (before
-          ? before.y +
-            before.height +
-            (d.settings.spacing === "compact" ? 40 : 52)
+          ? before.y + before.height + spacingFor(d.settings).stackGap
           : group.y + group.header),
     };
   };

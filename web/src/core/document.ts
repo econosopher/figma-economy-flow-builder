@@ -14,8 +14,14 @@ export const originalPalette = {
   finalGood: "#F5C95C",
 };
 export const settingsSchema = z.object({
-  spacing: z.enum(["compact", "comfortable"]).default("comfortable"),
+  // "slide" sizes a diagram for a 10-inch slide: see spacingFor in layout.ts.
+  spacing: z.enum(["compact", "comfortable", "slide"]).default("comfortable"),
   showLegend: z.boolean().default(true),
+  // The name and brand band above the stage headings.
+  showTitle: z.boolean().default(true),
+  // Draw each pipe's label along its route. Off by default: researched presets carry
+  // labels that were authored before labels were drawn, and dense corridors crowd them.
+  showLabels: z.boolean().default(false),
   background: z.enum(["white", "transparent"]).default("white"),
   actionHeader: color.default("#000000"),
   finalGood: color.default("#F5C95C"),
