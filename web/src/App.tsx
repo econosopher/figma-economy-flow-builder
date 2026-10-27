@@ -50,6 +50,7 @@ import {
   validateDocument,
   type EconomyDocument,
 } from "./core/document";
+import { checkStandard } from "./core/standard";
 import {
   layoutDocument,
   measureCards,
@@ -1450,6 +1451,11 @@ function Editor() {
               {importPreview.notices.map((n, i) => (
                 <p className="helper" key={i}>
                   {n}
+                </p>
+              ))}
+              {checkStandard(importPreview.document).map((issue, i) => (
+                <p className="helper" key={`standard-${i}`}>
+                  {issue.rule}: {issue.message}
                 </p>
               ))}
               <button

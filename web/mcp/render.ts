@@ -2,6 +2,7 @@ import puppeteer from "@cloudflare/puppeteer";
 import type { AppEnv } from "../worker/env";
 import { HttpError, rest, boundedBytes } from "../worker/helpers";
 import { validateDocument } from "../src/core/document";
+import { checkStandard } from "../src/core/standard";
 import { requireCapability, type McpIdentity } from "./auth";
 import type { RenderedDiagram } from "../src/render";
 
@@ -12,6 +13,7 @@ export async function renderDiagram(
 ) {
   await requireCapability(env, user, "read");
   const document = validateDocument(input);
+  const standardIssues = checkStandard(document);
   if (!env.BROWSER)
     throw new HttpError(503, "Diagram rendering is not configured.");
   const allowed = await env.EVENT_LIMIT.limit({ key: `render:${user.id}` });
@@ -78,6 +80,7 @@ export async function renderDiagram(
   if (rendered.issues.length)
     return {
       routingIssues: rendered.issues,
+      standardIssues,
       svg: rendered.svg,
       png: "",
       previewId: null,
@@ -131,6 +134,7 @@ export async function renderDiagram(
     png: rendered.png,
     svg: rendered.svg,
     routingIssues: [],
+    standardIssues,
     downloads: {
       png: `${env.API_ORIGIN || env.APP_URL}/api/mcp/previews/${id}/png`,
       svg: `${env.API_ORIGIN || env.APP_URL}/api/mcp/previews/${id}/svg`,

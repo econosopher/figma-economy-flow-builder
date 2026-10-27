@@ -161,10 +161,16 @@ const v2Schema = z.object({
       sources: z.array(label).optional(),
       sinks: z.array(label).optional(),
       values: z.array(label).optional(),
+      notes: cardSchema.shape.notes.optional(),
     }),
   ),
   edges: z.array(
-    z.object({ from: id, to: id, type: edgeSchema.shape.type.optional() }),
+    z.object({
+      from: id,
+      to: id,
+      type: edgeSchema.shape.type.optional(),
+      label: edgeSchema.shape.label.optional(),
+    }),
   ),
 });
 export function importDocument(input: unknown): {
@@ -199,7 +205,7 @@ export function importDocument(input: unknown): {
         n.kind === "initial_sink_node" || n.kind === "final_good"
           ? n.kind
           : "action",
-      notes: "",
+      notes: n.notes ?? "",
     })),
     edges: old.edges.map((e, i) => {
       const a = nodes.get(e.from),
@@ -211,7 +217,7 @@ export function importDocument(input: unknown): {
       );
       if (feedback)
         notices.push(`${a!.label} → ${b!.label} will use a return track.`);
-      return { ...e, id: `pipe-${i}`, feedback };
+      return { ...e, label: e.label ?? "", id: `pipe-${i}`, feedback };
     }),
     settings: defaultSettings,
   });

@@ -1,0 +1,397 @@
+{
+  "schemaVersion": 3,
+  "id": "horde-siege-standard-fixture",
+  "name": "Horde Siege (standard fixture)",
+  "stages": [
+    {
+      "id": "fund",
+      "label": "Inputs"
+    },
+    {
+      "id": "choose",
+      "label": "Kit"
+    },
+    {
+      "id": "play",
+      "label": "Mission"
+    },
+    {
+      "id": "exit",
+      "label": "Extraction"
+    },
+    {
+      "id": "settle",
+      "label": "Settlement"
+    },
+    {
+      "id": "earn",
+      "label": "Rewards"
+    },
+    {
+      "id": "upgrade",
+      "label": "Upgrades"
+    },
+    {
+      "id": "outcome",
+      "label": "Outcomes"
+    }
+  ],
+  "groups": [
+    {
+      "id": "match",
+      "label": "Mission economy: Energy, ammo, revives",
+      "color": "#f3f7f4"
+    },
+    {
+      "id": "progress",
+      "label": "Progression: XP, levels, coins",
+      "color": "#f6f6f6"
+    },
+    {
+      "id": "weapons",
+      "label": "Weapon modding: parts",
+      "color": "#f1f5fa"
+    }
+  ],
+  "cards": [
+    {
+      "id": "time",
+      "label": "Spend Time",
+      "stageId": "fund",
+      "groupId": "match",
+      "order": 0,
+      "kind": "initial_sink_node",
+      "sources": [],
+      "sinks": [],
+      "values": [],
+      "notes": "The card note records what this step does for the player and where its resources come from and go to the card note records what this step does for the player and where its resources come from and go to the card note records what this step does for the player and where its resources come from and go to the card note records what this step does for the player and where its resources come from and go to the card note records what this step does for t."
+    },
+    {
+      "id": "kit",
+      "label": "Kit Out",
+      "stageId": "choose",
+      "groupId": "match",
+      "order": 0,
+      "kind": "action",
+      "sources": [
+        "Energy: mission start grant"
+      ],
+      "sinks": [
+        "Energy: ammo, secondary weapon"
+      ],
+      "values": [],
+      "notes": "The card note records what this step does for the player and where its resources come from and go to the card note records what this step does for the player and where its resources come from and go to the card note records what this step does for the player and where its."
+    },
+    {
+      "id": "fight",
+      "label": "Fight the Mission",
+      "stageId": "play",
+      "groupId": "match",
+      "order": 0,
+      "kind": "action",
+      "sources": [
+        "Energy: kills, objectives"
+      ],
+      "sinks": [
+        "Energy: Supply Cache buys"
+      ],
+      "values": [],
+      "notes": "The card note records what this step does for the player and where its resources come from and go to the card note records what this step does for the player and where its resources come from and go to the card note records what this step does for the player and where its resources come from and go to the card note rec."
+    },
+    {
+      "id": "extract",
+      "label": "Extract on the Raven",
+      "stageId": "exit",
+      "groupId": "match",
+      "order": 0,
+      "kind": "action",
+      "sources": [
+        "Weapon Parts kept"
+      ],
+      "sinks": [
+        "Weapon Parts lost on a fail"
+      ],
+      "values": [],
+      "notes": "The card note records what this step does for the player and where its resources come from and go to the card note records what this step does for the player and where its resources come from and go to the card note records what this step does for the player and where its resources come from and go to."
+    },
+    {
+      "id": "money",
+      "label": "Spend Money",
+      "stageId": "fund",
+      "groupId": "progress",
+      "order": 0,
+      "kind": "initial_sink_node",
+      "sources": [],
+      "sinks": [],
+      "values": [],
+      "notes": "The card note records what this step does for the player and where its resources come from and go to the card note records what this step does for the player and where its resources come from and go to the card note records what this step does for the player and where its resources come from and go to the card note records what this step does for the player and where its resources come from and go to the card note reco."
+    },
+    {
+      "id": "settle",
+      "label": "Settle the Round",
+      "stageId": "settle",
+      "groupId": "progress",
+      "order": 0,
+      "kind": "action",
+      "sources": [
+        "Coins: score, weekly cap"
+      ],
+      "sinks": [],
+      "values": [
+        "Class XP: class played",
+        "Player XP: account-wide"
+      ],
+      "notes": "The card note records what this step does for the player and where its resources come from and go to the card note records what this step does for the player and where its resources come from and go to the card note records what this step does for the player and where its resources."
+    },
+    {
+      "id": "classlvl",
+      "label": "Level the Class",
+      "stageId": "earn",
+      "groupId": "progress",
+      "order": 0,
+      "kind": "action",
+      "sources": [],
+      "sinks": [],
+      "values": [
+        "Class level: 30 per class",
+        "Unlocks: weapons, mods"
+      ],
+      "notes": "The card note records what this step does for the player and where its resources come from and go to the card note records what this step does for the player and where its resources come from and go to the card note records what this step does for the player and where its resources come."
+    },
+    {
+      "id": "acctlvl",
+      "label": "Level the Account",
+      "stageId": "earn",
+      "groupId": "progress",
+      "order": 1,
+      "kind": "action",
+      "sources": [],
+      "sinks": [],
+      "values": [
+        "Player level: 100, 4 Re-Ups"
+      ],
+      "notes": "The card note records what this step does for the player and where its resources come from and go to the ca."
+    },
+    {
+      "id": "coins",
+      "label": "Spend Coins or Iron",
+      "stageId": "upgrade",
+      "groupId": "progress",
+      "order": 0,
+      "kind": "action",
+      "sources": [],
+      "sinks": [
+        "Coins: Barracks cosmetics",
+        "Iron: premium bundles"
+      ],
+      "values": [],
+      "notes": "The card note records what this step does for the player and where its resources come from and go to the card note records what this step does for the player and where its resources come from and go to the card note records what this step does for the player and where its resources com."
+    },
+    {
+      "id": "status",
+      "label": "Show Status",
+      "stageId": "outcome",
+      "groupId": "progress",
+      "order": 0,
+      "kind": "final_good",
+      "sources": [],
+      "sinks": [],
+      "values": [
+        "Player level, medals",
+        "Cosmetics, banner"
+      ],
+      "notes": "The card note records what this step does for the player and where its resources come from and go to the card note records what this step does for the player and where its resources come from and go to the card note records what this step does for the player and where its resources."
+    },
+    {
+      "id": "parts",
+      "label": "Bank Weapon Parts",
+      "stageId": "earn",
+      "groupId": "weapons",
+      "order": 0,
+      "kind": "action",
+      "sources": [
+        "Weapon Parts: secondaries, stockpiles"
+      ],
+      "sinks": [],
+      "values": [],
+      "notes": "The card note records what this step does for the player and where its resources come from and go to the card note records what this step does for the player and where its resources come from and go to the card note records what this step does for."
+    },
+    {
+      "id": "mods",
+      "label": "Mod Weapons",
+      "stageId": "upgrade",
+      "groupId": "weapons",
+      "order": 0,
+      "kind": "action",
+      "sources": [],
+      "sinks": [
+        "Weapon Parts: buy a mod"
+      ],
+      "values": [
+        "Mod slots: one to four"
+      ],
+      "notes": "The card note records what this step does for the player and where its resources come from and go to the card note records what this step does for the player and where its resources come from and go to the card note records what this ste."
+    },
+    {
+      "id": "build",
+      "label": "Stronger Build",
+      "stageId": "outcome",
+      "groupId": "weapons",
+      "order": 0,
+      "kind": "final_good",
+      "sources": [],
+      "sinks": [],
+      "values": [
+        "Modded weapons, class gear"
+      ],
+      "notes": "The card note records what this step does for the player and where its resources come from and go to the card note records what this step does for the player and where its resources come from and go to the card note records what this st."
+    }
+  ],
+  "edges": [
+    {
+      "id": "time-kit",
+      "from": "time",
+      "to": "kit",
+      "label": "Start a mission",
+      "feedback": false,
+      "type": "normal"
+    },
+    {
+      "id": "kit-fight",
+      "from": "kit",
+      "to": "fight",
+      "label": "Deploy",
+      "feedback": false,
+      "type": "normal"
+    },
+    {
+      "id": "fight-extract",
+      "from": "fight",
+      "to": "extract",
+      "label": "Reach the landing zone",
+      "feedback": false,
+      "type": "normal"
+    },
+    {
+      "id": "extract-settle",
+      "from": "extract",
+      "to": "settle",
+      "label": "Mission ends",
+      "feedback": false,
+      "type": "normal"
+    },
+    {
+      "id": "settle-classlvl",
+      "from": "settle",
+      "to": "classlvl",
+      "label": "Class XP",
+      "feedback": false,
+      "type": "normal"
+    },
+    {
+      "id": "settle-acctlvl",
+      "from": "settle",
+      "to": "acctlvl",
+      "label": "Player XP",
+      "feedback": false,
+      "type": "normal"
+    },
+    {
+      "id": "settle-coins",
+      "from": "settle",
+      "to": "coins",
+      "label": "Coins",
+      "feedback": false,
+      "type": "normal"
+    },
+    {
+      "id": "money-coins",
+      "from": "money",
+      "to": "coins",
+      "label": "Buy Iron",
+      "feedback": false,
+      "type": "normal"
+    },
+    {
+      "id": "extract-parts",
+      "from": "extract",
+      "to": "parts",
+      "label": "Parts banked on extraction",
+      "feedback": false,
+      "type": "normal"
+    },
+    {
+      "id": "parts-mods",
+      "from": "parts",
+      "to": "mods",
+      "label": "Spend parts",
+      "feedback": false,
+      "type": "normal"
+    },
+    {
+      "id": "classlvl-mods",
+      "from": "classlvl",
+      "to": "mods",
+      "label": "Class level unlocks mods",
+      "feedback": false,
+      "type": "cross-lane"
+    },
+    {
+      "id": "mods-build",
+      "from": "mods",
+      "to": "build",
+      "label": "Modded weapons",
+      "feedback": false,
+      "type": "normal"
+    },
+    {
+      "id": "classlvl-build",
+      "from": "classlvl",
+      "to": "build",
+      "label": "Class gear and perks",
+      "feedback": false,
+      "type": "normal"
+    },
+    {
+      "id": "acctlvl-status",
+      "from": "acctlvl",
+      "to": "status",
+      "label": "Player level",
+      "feedback": false,
+      "type": "normal"
+    },
+    {
+      "id": "coins-status",
+      "from": "coins",
+      "to": "status",
+      "label": "Cosmetics",
+      "feedback": false,
+      "type": "normal"
+    }
+  ],
+  "settings": {
+    "spacing": "comfortable",
+    "showLegend": true,
+    "background": "white",
+    "actionHeader": "#000000",
+    "finalGood": "#F5C95C",
+    "source": "#21865b",
+    "sink": "#d15d44",
+    "value": "#ba8425"
+  },
+  "visibility": "public",
+  "research": {
+    "presetId": "horde-siege-standard-fixture",
+    "revision": "2026-10-27",
+    "category": "PC / console",
+    "summary": "Structural fixture for the GEC standard tests: the reviewed Horde Siege diagram with its notes and sources replaced by neutral text.",
+    "scope": "Cards, rows, pipes and labels of the reviewed diagram; prose notes and evidence removed.",
+    "checkedAt": "2026-10-27",
+    "limitations": [
+      "Weapon Parts per source and Weapon Mod prices in parts are not published.",
+      "Iron prices and the premium upgrade are not modelled beyond the Spend Money root."
+    ],
+    "sources": [],
+    "interpretations": []
+  }
+}

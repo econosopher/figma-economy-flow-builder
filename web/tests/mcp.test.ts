@@ -136,6 +136,23 @@ describe("stable-ID editing", () => {
   });
   it("uses the shared semantic and routing validators for supplied JSON", () => {
     expect(validateDraft(starter).routingIssues).toEqual([]);
+    const draft = validateDraft(starter);
+    expect(draft.standard.rulesVersion).toBe("2026.10.27");
+    expect(draft.standardIssues.map((i) => i.rule)).toEqual(
+      expect.arrayContaining(["GEC-011", "GEC-014"]),
+    );
+    expect(draft.standardIssues.every((i) => i.severity === "warning")).toBe(
+      true,
+    );
+    const clean = {
+      ...starter,
+      cards: starter.cards.map((c) =>
+        c.kind === "initial_sink_node" ? { ...c, sinks: [] } : c,
+      ),
+    };
+    expect(
+      validateDraft(clean).standardIssues.filter((i) => i.rule === "GEC-011"),
+    ).toEqual([]);
     expect(() =>
       validateDraft({
         ...starter,
@@ -234,6 +251,65 @@ describe("MCP transport and OAuth", () => {
         "render_diagram",
         "submit_preset",
       ]),
+    );
+    expect(
+      body.result.tools.find((t) => t.name === "validate_diagram"),
+    ).toMatchObject({ description: expect.stringContaining("standardIssues") });
+  });
+  it("serves the economy-flow standard as an MCP prompt and the rules as a resource", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string) =>
+        Response.json(url.includes("/auth/v1/user") ? { id: account } : true),
+      ),
+    );
+    const call = async (id: number, method: string, params: object = {}) =>
+      rpcBody(
+        await worker.fetch(
+          new Request(mcpUrl(env()), {
+            method: "POST",
+            headers: {
+              Host: new URL(mcpUrl(env())).host,
+              Authorization: `Bearer ${principal.token}`,
+              "Content-Type": "application/json",
+              Accept: "application/json, text/event-stream",
+            },
+            body: JSON.stringify({ jsonrpc: "2.0", id, method, params }),
+          }),
+          env(),
+          {} as ExecutionContext,
+        ),
+      );
+    const prompts = (await call(1, "prompts/list")) as {
+      result: { prompts: { name: string }[] };
+    };
+    expect(prompts.result.prompts.map((p) => p.name)).toContain(
+      "economy_flow_standard",
+    );
+    const prompt = (await call(2, "prompts/get", {
+      name: "economy_flow_standard",
+    })) as { result: { messages: { content: { text: string } }[] } };
+    expect(prompt.result.messages[0].content.text).toContain(
+      "The resource ledger (GEC-012)",
+    );
+    expect(prompt.result.messages[0].content.text).toContain(
+      "Roots: Spend Time and, when real money is involved, Spend Money",
+    );
+    const resources = (await call(3, "resources/list")) as {
+      result: { resources: { uri: string }[] };
+    };
+    expect(resources.result.resources.map((r) => r.uri)).toContain(
+      "economy-flow://rules",
+    );
+    const rules = (await call(4, "resources/read", {
+      uri: "economy-flow://rules",
+    })) as { result: { contents: { text: string; mimeType: string }[] } };
+    expect(rules.result.contents[0].mimeType).toBe("text/markdown");
+    expect(rules.result.contents[0].text).toContain(
+      "## GEC-011 - Keep roots free of resource rows",
+    );
+    expect(rules.result.contents[0].text).toContain(
+      "Contract version: 2026.10.27",
     );
   });
   it("allows browser preflight only from approved origins, including error responses", async () => {
