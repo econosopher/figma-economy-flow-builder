@@ -13,6 +13,7 @@ import {
   measureHeadings,
 } from "../src/core/layout";
 import { presets, starter } from "../src/core/presets";
+import { checkStandard, standardMetadata } from "../src/core/standard";
 import {
   getDocument,
   saveDocument,
@@ -84,6 +85,9 @@ export function validateDraft(input: unknown) {
     document,
     notices,
     routingIssues: layout.issues,
+    // GEC standard warnings (docs/ECONOMY_FLOW_RULES.md). They never block a save.
+    standardIssues: checkStandard(document, approximateMeasure),
+    standard: standardMetadata,
     measurement: "approximate; render_diagram checks actual font metrics",
   };
 }
@@ -165,6 +169,7 @@ export async function editDiagram(
     ...result(env, saved),
     diff: draft.diff,
     routingIssues: draft.routingIssues,
+    standardIssues: draft.standardIssues,
   };
 }
 export async function createDiagram(
@@ -206,5 +211,6 @@ export async function createDiagram(
       ),
     ),
     notices: imported.notices,
+    standardIssues: checkStandard(document),
   };
 }
