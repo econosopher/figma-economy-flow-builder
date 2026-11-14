@@ -90,6 +90,7 @@ try {
         type: "normal",
         feedback: false,
         label: "",
+        resource: "",
       });
   }
   const worker = new Worker(

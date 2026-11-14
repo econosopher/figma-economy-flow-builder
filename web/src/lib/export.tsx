@@ -2,6 +2,7 @@ import { reportEvent } from "./api";
 import { DiagramSvg } from "../components/DiagramSvg";
 import type { EconomyDocument } from "../core/document";
 import type { Layout } from "../core/layout";
+import type { Focus } from "../core/trace";
 import regularCss from "@fontsource/inter/400.css?raw";
 import mediumCss from "@fontsource/inter/500.css?raw";
 import semiboldCss from "@fontsource/inter/600.css?raw";
@@ -36,6 +37,7 @@ export async function svgBlob(
   document: EconomyDocument,
   layout: Layout,
   selection?: string[],
+  focus?: Focus,
 ) {
   const { renderToStaticMarkup } = await import("react-dom/server");
   return new Blob(
@@ -45,6 +47,7 @@ export async function svgBlob(
           document={document}
           layout={layout}
           selection={selection}
+          focus={focus}
           fontCss={await fonts()}
         />,
       ),
@@ -57,10 +60,11 @@ async function renderPng(
   layout: Layout,
   selection?: string[],
   scale = 2,
+  focus?: Focus,
 ): Promise<Blob> {
   if (layout.issues.length)
     throw new Error("Resolve the highlighted routing issues before exporting.");
-  const blob = await svgBlob(document, layout, selection);
+  const blob = await svgBlob(document, layout, selection, focus);
   const url = URL.createObjectURL(blob);
   try {
     const image = new Image();
@@ -105,13 +109,14 @@ export async function copyPng(
   d: EconomyDocument,
   l: Layout,
   selection?: string[],
+  focus?: Focus,
 ) {
   if (!navigator.clipboard?.write)
     throw new Error(
       "Image clipboard is unavailable in this browser. Download PNG instead.",
     );
   await navigator.clipboard.write([
-    new ClipboardItem({ "image/png": pngBlob(d, l, selection) }),
+    new ClipboardItem({ "image/png": pngBlob(d, l, selection, 2, focus) }),
   ]);
 }
 
@@ -120,9 +125,10 @@ export async function pngBlob(
   layout: Layout,
   selection?: string[],
   scale = 2,
+  focus?: Focus,
 ): Promise<Blob> {
   try {
-    return await renderPng(document, layout, selection, scale);
+    return await renderPng(document, layout, selection, scale, focus);
   } catch (error) {
     reportEvent("export_failed", {
       cards: document.cards.length,

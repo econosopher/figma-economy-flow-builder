@@ -214,6 +214,7 @@ describe("checkStandard on the Horde Siege v2 diagram", () => {
       type: "normal" as const,
       feedback: true,
       label,
+      resource: "",
     });
     const unlabelled = checkStandard({
       ...horde,

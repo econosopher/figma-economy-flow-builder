@@ -2,141 +2,141 @@
  "apex_legends.json|compact": {
   "width": 3176,
   "height": 2368,
-  "digest": "b51e1954e80685f1b460c7bd28e2daaf5a6c550d"
+  "digest": "618880b3dbc01bbe3836439b6e6c285805c1322a"
  },
  "apex_legends.json|comfortable": {
   "width": 3240,
   "height": 2476,
-  "digest": "4bccf95a308864b4836769fc5ff7e2b7dc7f5429"
+  "digest": "fc282ac7423a9417cb6f7a893de533fa7d1538f9"
  },
  "dice_throne_digital.json|compact": {
   "width": 2228,
   "height": 4354,
-  "digest": "e1ccab7157942f73e89dedeedcabda083b031ccb"
+  "digest": "12a652b170e968deb1bcd8041b48a7bdafc20eca"
  },
  "dice_throne_digital.json|comfortable": {
   "width": 2284,
   "height": 4474,
-  "digest": "44bc6af98e63e835740cd7e959e9e68b8303274a"
+  "digest": "a76817c7997dc462b70279f150e02666e1e4031d"
  },
  "helldivers.json|compact": {
   "width": 2184,
   "height": 1196,
-  "digest": "f34ea69d660506555bed7c2a9ae83ec31136d6dd"
+  "digest": "42ee64b5aa6b7940c18e8b1998d93b1f73ac9eb2"
  },
  "helldivers.json|comfortable": {
   "width": 2280,
   "height": 1232,
-  "digest": "4b4c4d974c75db0d1fd8283cddc0b275ec95ec7b"
+  "digest": "e1bf646ed2b53235fe6a3a9d59fb67c714b50f3f"
  },
  "mecha_break.json|compact": {
   "width": 3324,
   "height": 1476,
-  "digest": "d4bc8392e87e8ff15182b7b651104b410361115f"
+  "digest": "1c5d706da84288f38df7e5f14d8e83e980db5d7f"
  },
  "mecha_break.json|comfortable": {
   "width": 3456,
   "height": 1524,
-  "digest": "a12f83d2d985581e49f32ea17e8bf7cbca86a562"
+  "digest": "08385d6c3581ce291dd86549dcc26a9c3ae6348b"
  },
  "payday_3.json|compact": {
   "width": 2036,
   "height": 3052,
-  "digest": "aedb34d198b5bb27c734877b0f6871a66be760c3"
+  "digest": "ac595b5e6496f27f07e80cce2575b0f742f0a227"
  },
  "payday_3.json|comfortable": {
   "width": 2112,
   "height": 3088,
-  "digest": "3654571ef9283e6ed85a2b8a5abeaea7d33b9f0c"
+  "digest": "4324eed2afeaa40ce551e74f7b72f2d1b36ef062"
  },
  "rainbow_six_siege.json|compact": {
   "width": 1864,
   "height": 2992,
-  "digest": "fc08b4512c77d52adef1eac41b3b375a3957e830"
+  "digest": "f1e3c80be148e18c2c72a7afdc87f4a09e30d518"
  },
  "rainbow_six_siege.json|comfortable": {
   "width": 1920,
   "height": 3040,
-  "digest": "4c8af5abbcdf93cc8e485f1803b1d835b1e3fb3e"
+  "digest": "9b9cca9bd8859914bccdf1da379c4f332aa972cc"
  },
  "subsections_example.json|compact": {
   "width": 1844,
   "height": 1860,
-  "digest": "709f046db60a7105973fb0978304a4ca88f62e18"
+  "digest": "2155171c05e2ae92de384e3880aba4ae1e48939e"
  },
  "subsections_example.json|comfortable": {
   "width": 1972,
   "height": 1884,
-  "digest": "82da624495e2cc43876f3b95d749e921255ccdc0"
+  "digest": "06a6c457a7cf6dbc8e7208e3298290417aae2f01"
  },
  "sweepstakes_slots.json|compact": {
   "width": 4804,
   "height": 2660,
-  "digest": "1700a9dd5222eebd24debe6c2714e9c79ebc6f4d"
+  "digest": "82eee85ff30c71a62779d319fa68e1008bef7f29"
  },
  "sweepstakes_slots.json|comfortable": {
   "width": 4952,
   "height": 2780,
-  "digest": "4247eba64d56243e4fbe06e247f1662b0b71a5ae"
+  "digest": "7b5da3542e5fd7cb95c46ef426ce3966cea10921"
  },
  "preset:gossip_harbor|compact": {
   "width": 2328,
   "height": 1582,
-  "digest": "f56b9f495722a4992bc75a0ca3f658be1c7e3e2e"
+  "digest": "895046eed23ec59b835a74e5634ef889e0a868a8"
  },
  "preset:gossip_harbor|comfortable": {
   "width": 2404,
   "height": 1594,
-  "digest": "11f77a361326a5eb8f10e922a2e81ee1b78aa5d9"
+  "digest": "ba67091bfc64bd71268ff1b6ee6197fa624430ee"
  },
  "preset:royal_match|compact": {
   "width": 2496,
   "height": 1820,
-  "digest": "67765d601e58aa7e3d071f62bf6421e0051cda8c"
+  "digest": "006fd93b8a42b2a53585c6ca3076c6750a7a2259"
  },
  "preset:royal_match|comfortable": {
   "width": 2580,
   "height": 1856,
-  "digest": "ec4f0c11caa06c086616244f64f8b9895847b153"
+  "digest": "8c1b7cfee8f44ba33d355f13cdf846130267ba8a"
  },
  "preset:monopoly_go|compact": {
   "width": 2568,
   "height": 2178,
-  "digest": "4ca8ea55dee86a5814076c495306724295e73804"
+  "digest": "665dc70f4ffc50f0b1c8a822fa106458576d15a3"
  },
  "preset:monopoly_go|comfortable": {
   "width": 2624,
   "height": 2214,
-  "digest": "08f6bfab78bdb6e1dd2564ea9e95664138258b2e"
+  "digest": "6aba6383f1a83f1f30dc52bc76d3680da538cb3c"
  },
  "preset:world_of_warcraft|compact": {
   "width": 2592,
   "height": 1910,
-  "digest": "c3c026a3b3fac14d95c1ea0eb5f310311675d0bd"
+  "digest": "65b55e4ed0ded1342d2d8c343e0dc76eaf47a612"
  },
  "preset:world_of_warcraft|comfortable": {
   "width": 2648,
   "height": 1946,
-  "digest": "839cd779ac1e1838e3adec535639de47da1ad053"
+  "digest": "020a0f9472c4ecd6ef1da4337641094b0a3e5830"
  },
  "preset:warzone|compact": {
   "width": 2568,
   "height": 1884,
-  "digest": "7f9160d585ae7fbc7cc75ea799575663f1cf853e"
+  "digest": "ac981a44957810764a506c5964eb9658c89590ab"
  },
  "preset:warzone|comfortable": {
   "width": 2628,
   "height": 1920,
-  "digest": "d4d29d2520952d18681aeb3ab74aae0aa76e4d02"
+  "digest": "04a25d975d592077ed14ce71b69ac5489de7ea64"
  },
  "preset:apex_legends|compact": {
   "width": 2616,
   "height": 2026,
-  "digest": "206d42ffce7d691768031c6156413e8b4a6f66e4"
+  "digest": "a06461ba798bb1f20997b89dd7806a12b2c92b8c"
  },
  "preset:apex_legends|comfortable": {
   "width": 2688,
   "height": 2074,
-  "digest": "c26f91511e992a9c02fb24b683565239c2ea4370"
+  "digest": "cf7d379be22d743d20d604b1eeaaf91758e00e72"
  }
 }

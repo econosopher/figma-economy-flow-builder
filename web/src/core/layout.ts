@@ -1,4 +1,9 @@
 import type { Card, EconomyDocument, Pipe, Settings } from "./document";
+import {
+  pipeResources,
+  type PipeResource,
+  type ResourceKeyEntry,
+} from "./pipeResource";
 export interface Point {
   x: number;
   y: number;
@@ -34,14 +39,36 @@ export interface RouteLabel {
   /** Set along a vertical track: the drawing rotates the text to run with the pipe. */
   vertical: boolean;
 }
+/** A resource name pill near the target end of a pipe. x and y are its centre. */
+export interface RouteTag {
+  text: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  /** Set on a vertical track: the drawing rotates the pill to run with the pipe. */
+  vertical: boolean;
+}
 export interface Route {
   edge: Pipe;
   points: Point[];
+  /** The pipe's path, broken around every pipe it crosses (see `crossingGaps`). */
   path: string;
-  bridges: string[];
+  /** Where this pipe's horizontal runs are broken for a vertical pipe passing through. */
+  gaps: Point[];
   unresolved: boolean;
   arrowhead?: boolean;
+  /** Where this pipe joins a run already drawn by an earlier pipe into the same card. */
+  join?: Point;
   label?: RouteLabel;
+  /** Set only while `settings.showResources` is on and the pipe has an effective resource. */
+  resource?: PipeResource;
+  tag?: RouteTag;
+}
+/** The pipe colours in the resource key, laid out in rows after the row-sign entries. */
+export interface ResourceLegend {
+  rows: number;
+  items: (ResourceKeyEntry & { x: number; row: number })[];
 }
 export interface Layout {
   documentId: string;
@@ -58,6 +85,9 @@ export interface Layout {
   bounds: Rect;
   issues: string[];
   spacing: Spacing;
+  /** Coloured resources in assignment order; empty while `settings.showResources` is off. */
+  resources: ResourceKeyEntry[];
+  legend: ResourceLegend;
 }
 export const TRACK = 12,
   CARD_WIDTH = 196;
@@ -487,13 +517,17 @@ export function tracksConflict(
   }
   return false;
 }
-export function crossingBridges(points: Point[], routes: Route[]): string[] {
-  const result: string[] = [];
+/** Half the break left in a horizontal pipe where a vertical pipe passes through it. With
+ * round caps the visible gap is about 10 px. */
+export const GAP_HALF = 6;
+/** The points where a horizontal run of `points` crosses a vertical run of another route. */
+export function crossingGaps(points: Point[], routes: Route[]): Point[] {
+  const result: Point[] = [];
   for (let i = 1; i < points.length; i++) {
     const a = points[i - 1],
       b = points[i];
     if (a.y !== b.y) continue;
-    const crossing = new Set<number>();
+    const crossings: number[] = [];
     for (const route of routes)
       for (let j = 1; j < route.points.length; j++) {
         const c = route.points[j - 1],
@@ -505,40 +539,81 @@ export function crossingBridges(points: Point[], routes: Route[]): string[] {
           a.y > Math.min(c.y, e.y) + 5 &&
           a.y < Math.max(c.y, e.y) - 5
         )
-          crossing.add(c.x);
+          crossings.push(c.x);
       }
-    for (const x of crossing)
-      result.push(`M ${x - 4} ${a.y} Q ${x} ${a.y - 7} ${x + 4} ${a.y}`);
+    const direction = b.x >= a.x ? 1 : -1;
+    for (const x of [...new Set(crossings)].sort((x, y) => (x - y) * direction))
+      result.push({ x, y: a.y });
   }
   return result;
 }
-function bridgePath(points: Point[], routes: Route[]): string {
+/** The route as an SVG path, lifted off the page at every crossing. */
+function gapPath(points: Point[], routes: Route[]): string {
   if (!points.length) return "";
   let path = `M ${points[0].x} ${points[0].y}`;
+  const gaps = crossingGaps(points, routes);
   for (let i = 1; i < points.length; i++) {
     const a = points[i - 1],
       b = points[i];
-    const crossings: number[] = [];
-    if (a.y === b.y)
-      for (const route of routes)
-        for (let j = 1; j < route.points.length; j++) {
-          const c = route.points[j - 1],
-            e = route.points[j];
-          if (
-            c.x === e.x &&
-            c.x > Math.min(a.x, b.x) + 7 &&
-            c.x < Math.max(a.x, b.x) - 7 &&
-            a.y > Math.min(c.y, e.y) + 5 &&
-            a.y < Math.max(c.y, e.y) - 5
-          )
-            crossings.push(c.x);
-        }
     const direction = b.x >= a.x ? 1 : -1;
-    for (const x of [...new Set(crossings)].sort((x, y) => (x - y) * direction))
-      path += ` L ${x - 4 * direction} ${a.y} Q ${x} ${a.y - 7} ${x + 4 * direction} ${a.y}`;
+    if (a.y === b.y)
+      for (const g of gaps)
+        if (g.y === a.y && g.x > Math.min(a.x, b.x) && g.x < Math.max(a.x, b.x))
+          path += ` L ${g.x - GAP_HALF * direction} ${a.y} M ${g.x + GAP_HALF * direction} ${a.y}`;
     path += ` L ${b.x} ${b.y}`;
   }
   return path;
+}
+/** Which pipes draw an arrowhead and where later pipes join. Only the first resolved pipe
+ * into a card draws its arrowhead; each later one gets a dot where its terminal run meets a
+ * run already drawn into the same card. Shared by the layout and the selection export, so
+ * a filtered drawing keeps its own first arrowhead. */
+export function pipeEnds(
+  routes: Pick<Route, "edge" | "points" | "unresolved">[],
+): { arrowhead: boolean; join?: Point }[] {
+  return routes.map((route, index) => {
+    const earlier = routes
+      .slice(0, index)
+      .filter((r) => !r.unresolved && r.edge.to === route.edge.to);
+    if (!earlier.length) return { arrowhead: true };
+    const n = route.points.length;
+    if (n < 2) return { arrowhead: false };
+    const p = route.points[n - 2],
+      q = route.points[n - 1];
+    const horizontal = p.y === q.y;
+    const along = (pt: Point) => (horizontal ? pt.x : pt.y);
+    const direction = along(q) >= along(p) ? 1 : -1;
+    let best: number | undefined;
+    for (const r of earlier)
+      for (let j = 1; j < r.points.length; j++) {
+        const c = r.points[j - 1],
+          e = r.points[j];
+        const collinear = horizontal
+          ? c.y === e.y && Math.abs(c.y - p.y) < 0.1
+          : c.x === e.x && Math.abs(c.x - p.x) < 0.1;
+        if (!collinear) continue;
+        const lo = Math.max(
+            Math.min(along(p), along(q)),
+            Math.min(along(c), along(e)),
+          ),
+          hi = Math.min(
+            Math.max(along(p), along(q)),
+            Math.max(along(c), along(e)),
+          );
+        if (hi - lo <= 0.1) continue;
+        const start = direction > 0 ? lo : hi;
+        if (
+          best === undefined ||
+          Math.abs(start - along(p)) < Math.abs(best - along(p))
+        )
+          best = start;
+      }
+    if (best === undefined) return { arrowhead: false };
+    return {
+      arrowhead: false,
+      join: horizontal ? { x: best, y: p.y } : { x: p.x, y: best },
+    };
+  });
 }
 export function layoutDocument(
   d: EconomyDocument,
@@ -755,30 +830,34 @@ export function layoutDocument(
     const route = {
       edge: e,
       points: resolvedPoints,
-      path: bridgePath(resolvedPoints, routes),
-      bridges: [] as string[],
+      path: gapPath(resolvedPoints, routes),
+      gaps: [] as Point[],
       unresolved,
     };
     routes.push(route);
   }
-  // Paint every crossing after all base pipes, independent of edge insertion order.
-  for (const route of routes) {
+  // Break every crossing after all base pipes, independent of edge insertion order.
+  const ends = pipeEnds(routes);
+  routes.forEach((route, i) => {
     const others = routes.filter((r) => r !== route);
-    route.path = bridgePath(route.points, others);
-    route.bridges = crossingBridges(route.points, others);
+    route.path = gapPath(route.points, others);
+    route.gaps = crossingGaps(route.points, others);
     route.label = d.settings.showLabels
       ? placeLabel(route, sp, measure)
       : undefined;
-    route.arrowhead = !routes.some(
-      (r) =>
-        r !== route &&
-        !r.unresolved &&
-        r.edge.to === route.edge.to &&
-        routes.indexOf(r) < routes.indexOf(route),
-    );
-  }
+    route.arrowhead = ends[i].arrowhead;
+    route.join = ends[i].join;
+  });
+  const { byEdge, legend: resources } = d.settings.showResources
+    ? pipeResources(d)
+    : { byEdge: new Map<string, PipeResource>(), legend: [] };
+  for (const route of routes) route.resource = byEdge.get(route.edge.id);
+  placeTags(routes, cards, groups, sp, measure);
   const maxY =
     Math.max(y, ...routes.flatMap((r) => r.points.map((p) => p.y))) + 32;
+  const legend = d.settings.showLegend
+    ? resourceLegend(resources, width - 56, measure)
+    : { rows: 0, items: [] };
   return {
     documentId: d.id,
     cards,
@@ -796,10 +875,16 @@ export function layoutDocument(
       x: 0,
       y: 0,
       width,
-      height: maxY + (d.settings.showLegend ? 58 : 0),
+      height:
+        maxY +
+        (d.settings.showLegend
+          ? 58 + LEGEND_ROW * Math.max(0, legend.rows - 1)
+          : 0),
     },
     issues,
     spacing: sp,
+    resources,
+    legend,
   };
 }
 /** A pipe label sits on the longest straight run of its route: above a horizontal segment,
@@ -844,4 +929,189 @@ export function placeLabel(
     y: (chosen.a.y + chosen.b.y) / 2,
     vertical: chosen.vertical,
   };
+}
+
+/** Height of each extra row in the resource key. */
+export const LEGEND_ROW = 20;
+/** Resource entries follow the three row-sign entries on the first line of the key and wrap
+ * under them, so a key without coloured resources keeps its single line. */
+export function resourceLegend(
+  resources: ResourceKeyEntry[],
+  available: number,
+  measure: Measure = approximateMeasure,
+): ResourceLegend {
+  const items: ResourceLegend["items"] = [];
+  let x = 560,
+    row = 0;
+  for (const r of resources) {
+    const width = 26 + measure(r.name, 11, 400);
+    if (x + width > available && x > 120) {
+      row += 1;
+      x = 120;
+    }
+    items.push({ ...r, x, row });
+    x += width + 24;
+  }
+  return { rows: items.length ? row + 1 : 0, items };
+}
+export const TAG_HEIGHT = 14,
+  TAG_SIZE = 10;
+const TAG_MAX = 150;
+interface Box {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+const overlaps = (a: Box, b: Box) =>
+  a.x < b.x + b.width &&
+  b.x < a.x + a.width &&
+  a.y < b.y + b.height &&
+  b.y < a.y + a.height;
+function segmentBox(a: Point, b: Point): Box {
+  return {
+    x: Math.min(a.x, b.x),
+    y: Math.min(a.y, b.y),
+    width: Math.abs(a.x - b.x),
+    height: Math.abs(a.y - b.y),
+  };
+}
+/** An axis-aligned segment crosses the inside of a box (touching its edge does not count). */
+const segmentEnters = (a: Point, b: Point, r: Box) =>
+  Math.min(a.x, b.x) < r.x + r.width &&
+  Math.max(a.x, b.x) > r.x &&
+  Math.min(a.y, b.y) < r.y + r.height &&
+  Math.max(a.y, b.y) > r.y;
+function labelBox(label: RouteLabel, sp: Spacing, measure: Measure): Box {
+  const width =
+    Math.max(...label.lines.map((l) => measure(l, sp.labelSize, 400))) + 6;
+  const top = -4 - (label.lines.length - 1) * sp.labelLine - sp.labelSize,
+    bottom = -1;
+  return label.vertical
+    ? {
+        x: label.x + top,
+        y: label.y - width / 2,
+        width: bottom - top,
+        height: width,
+      }
+    : {
+        x: label.x - width / 2,
+        y: label.y + top,
+        width,
+        height: bottom - top,
+      };
+}
+function tagText(name: string, measure: Measure) {
+  let text = name.trim();
+  if (measure(text, TAG_SIZE, 500) <= TAG_MAX) return text;
+  while (text.length > 1 && measure(`${text}…`, TAG_SIZE, 500) > TAG_MAX)
+    text = text.slice(0, -1);
+  return `${text.trimEnd()}…`;
+}
+/** Each pipe with a resource gets a tag on a straight run that belongs to it alone, as near
+ * its target as possible: horizontal runs first, then vertical tracks, then the source stub.
+ * The pill never covers a card, a group heading, a pipe label, another tag or any other
+ * pipe, so it stays off shared terminal stubs and crossings. No clear spot, no tag. */
+export function placeTags(
+  routes: Route[],
+  cards: Rect[],
+  groups: Layout["groups"],
+  sp: Spacing,
+  measure: Measure = approximateMeasure,
+) {
+  const fixed: Box[] = [
+    ...cards.map((c) => ({
+      x: c.x - 3,
+      y: c.y - 3,
+      width: c.width + 6,
+      height: c.height + 6,
+    })),
+    ...groups.map((g) => ({
+      x: g.x + sp.groupInset,
+      y: g.y + 12,
+      width: sp.cardWidth,
+      height: g.lines.length * sp.groupLine,
+    })),
+    ...routes.flatMap((r) => (r.label ? [labelBox(r.label, sp, measure)] : [])),
+  ];
+  const tags: Box[] = [];
+  for (const route of routes) {
+    route.tag = undefined;
+    const n = route.points.length;
+    if (!route.resource || n < 2) continue;
+    const text = tagText(route.resource.name, measure);
+    const length = measure(text, TAG_SIZE, 500) + 12;
+    const reach = length / 2 + TAG_HEIGHT;
+    const area = segmentBox(
+      {
+        x: Math.min(...route.points.map((p) => p.x)) - reach,
+        y: Math.min(...route.points.map((p) => p.y)) - reach,
+      },
+      {
+        x: Math.max(...route.points.map((p) => p.x)) + reach,
+        y: Math.max(...route.points.map((p) => p.y)) + reach,
+      },
+    );
+    const near = (b: Box) => overlaps(b, area);
+    const boxes = [...fixed, ...tags].filter(near);
+    const pipes = routes
+      .filter((r) => r !== route)
+      .flatMap((r) =>
+        r.points.slice(1).map((b, i) => [r.points[i], b] as const),
+      )
+      .filter(([a, b]) => near(segmentBox(a, b)));
+    const clear = (box: Box) =>
+      !boxes.some((b) => overlaps(b, box)) &&
+      !pipes.some(([a, b]) => segmentEnters(a, b, box));
+    const segments = route.points
+      .slice(1)
+      .map((b, i) => ({ a: route.points[i], b, index: i }))
+      .reverse();
+    const passes = [
+      segments.filter((s) => s.a.y === s.b.y && (s.index > 0 || n === 2)),
+      segments.filter((s) => s.a.x === s.b.x),
+      segments.filter((s) => s.a.y === s.b.y && s.index === 0 && n > 2),
+    ];
+    let found: RouteTag | undefined;
+    for (const pass of passes) {
+      for (const { a, b, index } of pass) {
+        const vertical = a.x === b.x;
+        const from = vertical ? a.y : a.x,
+          to = vertical ? b.y : b.x;
+        const direction = to >= from ? 1 : -1;
+        const endMargin = index === n - 2 ? 14 : 4;
+        const first = to - direction * (length / 2 + endMargin),
+          last = from + direction * (length / 2 + 4);
+        for (let c = first; (c - last) * direction >= 0; c -= direction * 4) {
+          const box = vertical
+            ? {
+                x: a.x - TAG_HEIGHT / 2 - 1,
+                y: c - length / 2 - 1,
+                width: TAG_HEIGHT + 2,
+                height: length + 2,
+              }
+            : {
+                x: c - length / 2 - 1,
+                y: a.y - TAG_HEIGHT / 2 - 1,
+                width: length + 2,
+                height: TAG_HEIGHT + 2,
+              };
+          if (!clear(box)) continue;
+          found = {
+            text,
+            x: vertical ? a.x : c,
+            y: vertical ? c : a.y,
+            width: length,
+            height: TAG_HEIGHT,
+            vertical,
+          };
+          tags.push(box);
+          break;
+        }
+        if (found) break;
+      }
+      if (found) break;
+    }
+    route.tag = found;
+  }
 }

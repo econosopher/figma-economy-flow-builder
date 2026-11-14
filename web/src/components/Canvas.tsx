@@ -1,7 +1,7 @@
-import { GEC_CANVAS } from "../lib/embed";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ReactFlow,
+  Panel,
   ViewportPortal,
   Background,
   Controls,
@@ -33,14 +33,14 @@ import {
   type ResourceKind,
 } from "./DirectEditing";
 import { ink } from "./DiagramSvg";
-import { traceInvestments } from "../core/trace";
+import { traceInvestments, type Focus } from "../core/trace";
 import {
   spacingFor,
   type Layout,
   type PlacedCard,
   type Route,
 } from "../core/layout";
-import { CardDrawing, PipeDrawing, BridgeDrawing } from "./DiagramSvg";
+import { CardDrawing, PipeDrawing, PipeMarks } from "./DiagramSvg";
 export type Selection = {
   kind: "card" | "edge" | "group" | "stage";
   id: string;
@@ -50,6 +50,8 @@ type CardNode = Node<
     placed: PlacedCard;
     settings: Settings;
     highlight: boolean;
+    /** Outside the focused path. */
+    dimmed: boolean;
     readOnly: boolean;
     add: (id: string) => void;
     remove: (id: string) => void;
@@ -75,7 +77,7 @@ function EconomyCard({ data, selected }: NodeProps<CardNode>) {
         : data.settings.sink;
   return (
     <div
-      className={`economy-card ${selected ? "is-selected" : ""} ${data.highlight ? "investment-path" : ""} ${drop ? "resource-drop-target" : ""}`}
+      className={`economy-card ${selected ? "is-selected" : ""} ${data.highlight ? "investment-path" : ""} ${data.dimmed ? "is-dimmed" : ""} ${drop ? "resource-drop-target" : ""}`}
       onDragOver={(e) => {
         if (
           !data.readOnly &&
@@ -422,7 +424,8 @@ function EconomyEdge({ data, selected }: EdgeProps) {
       <PipeDrawing
         route={r}
         settings={data!.settings as Settings}
-        selected={selected || Boolean(data!.highlight)}
+        selected={selected}
+        dimmed={Boolean(data!.dimmed)}
       />
     </g>
   );
@@ -456,6 +459,9 @@ export function Canvas({
   onRemoveSelection,
   focusTarget,
   onFocusConsumed,
+  resourceFocus = null,
+  onResourceFocus = () => {},
+  onFocus = () => {},
 }: {
   document: EconomyDocument;
   layout: Layout;
@@ -473,6 +479,11 @@ export function Canvas({
   onRemoveSelection: (s: NonNullable<Selection>) => void;
   focusTarget: string | null;
   onFocusConsumed: () => void;
+  /** The resource key picked in the on-canvas key: focuses every pipe of that resource. */
+  resourceFocus?: string | null;
+  onResourceFocus?: (key: string | null) => void;
+  /** The focus without hover, for exporting the focused view. */
+  onFocus?: (focus: Focus | null) => void;
 }) {
   const flow = useReactFlow();
   const activeDrag = useRef(false);
@@ -553,24 +564,60 @@ export function Canvas({
     else setSelectedCards([]);
   }, [selection]);
   useEffect(() => onSelectedIds(selectedCards), [selectedCards, onSelectedIds]);
-  const investmentPath = useMemo(
+  const selectionPath = useMemo(
     () =>
       traceInvestments(
         d,
-        hoveredCard
-          ? [hoveredCard]
-          : selection?.kind === "card"
-            ? [...new Set([...selectedCards, selection.id])]
-            : [],
+        selection?.kind === "card"
+          ? [...new Set([...selectedCards, selection.id])]
+          : [],
       ),
-    [d, hoveredCard, selectedCards, selection],
+    [d, selectedCards, selection],
   );
+  const hoverPath = useMemo(
+    () => (hoveredCard ? traceInvestments(d, [hoveredCard]) : null),
+    [d, hoveredCard],
+  );
+  const investmentPath = hoverPath ?? selectionPath;
   const linked = useMemo(() => {
     const e = d.edges.find(
       (e) => selection?.kind === "edge" && e.id === selection.id,
     );
     return new Set(e ? [e.from, e.to] : []);
   }, [d.edges, selection]);
+  // Hover wins over a picked resource, which wins over the selection.
+  const stableFocus = useMemo(() => {
+    const routes = layout.routes.filter(
+      (r) => resourceFocus && r.resource?.key === resourceFocus,
+    );
+    if (routes.length)
+      return {
+        cards: new Set(routes.flatMap((r) => [r.edge.from, r.edge.to])),
+        edges: new Set(routes.map((r) => r.edge.id)),
+      };
+    if (selection?.kind === "card") return selectionPath;
+    if (selection?.kind === "edge" && linked.size)
+      return { cards: linked, edges: new Set([selection.id]) };
+    return null;
+  }, [layout.routes, resourceFocus, selection, selectionPath, linked]);
+  const focus = hoverPath ?? stableFocus;
+  useEffect(
+    () =>
+      onFocus(
+        stableFocus
+          ? { cards: [...stableFocus.cards], edges: [...stableFocus.edges] }
+          : null,
+      ),
+    [stableFocus, onFocus],
+  );
+  useEffect(() => {
+    if (!resourceFocus) return;
+    const clear = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onResourceFocus(null);
+    };
+    window.addEventListener("keydown", clear);
+    return () => window.removeEventListener("keydown", clear);
+  }, [resourceFocus, onResourceFocus]);
   const nodes: Node[] = useMemo(
     () => [
       ...layout.groups.map((g) => ({
@@ -633,6 +680,7 @@ export function Canvas({
           settings: d.settings,
           highlight:
             linked.has(c.card.id) || investmentPath.cards.has(c.card.id),
+          dimmed: !!focus && !focus.cards.has(c.card.id),
           readOnly,
           add: onAdd,
           remove: onDelete,
@@ -681,6 +729,7 @@ export function Canvas({
       selection,
       linked,
       investmentPath,
+      focus,
       selectedCards,
       readOnly,
       onAdd,
@@ -706,7 +755,7 @@ export function Canvas({
           data: {
             route: r,
             settings: d.settings,
-            highlight: investmentPath.edges.has(r.edge.id),
+            dimmed: !!focus && !focus.edges.has(r.edge.id),
           },
           className: investmentPath.edges.has(r.edge.id)
             ? "investment-path"
@@ -714,7 +763,18 @@ export function Canvas({
           selected: selection?.kind === "edge" && selection.id === r.edge.id,
           ariaLabel: `${r.edge.feedback ? "Return" : "Pipe"} from ${d.cards.find((c) => c.id === r.edge.from)?.label} to ${d.cards.find((c) => c.id === r.edge.to)?.label}`,
         })),
-    [layout, d.settings, d.cards, selection, investmentPath],
+    [layout, d.settings, d.cards, selection, investmentPath, focus],
+  );
+  const dimmedPipes = useMemo(
+    () =>
+      focus
+        ? new Set(
+            layout.routes
+              .filter((r) => !focus.edges.has(r.edge.id))
+              .map((r) => r.edge.id),
+          )
+        : undefined,
+    [layout.routes, focus],
   );
   const fitted = useRef("");
   useEffect(() => {
@@ -927,6 +987,7 @@ export function Canvas({
         }}
         onPaneClick={() => {
           onSelect(null);
+          onResourceFocus(null);
           setMenu(null);
         }}
         onMoveStart={() => setMenu(null)}
@@ -1040,15 +1101,33 @@ export function Canvas({
               pointerEvents: "none",
             }}
           >
-            <BridgeDrawing
+            <PipeMarks
               routes={layout.routes}
               settings={d.settings}
-              highlightedIds={investmentPath.edges}
-              background={GEC_CANVAS}
+              dimmedIds={dimmedPipes}
               selectedId={selection?.kind === "edge" ? selection.id : undefined}
             />
           </svg>
         </ViewportPortal>
+        {d.settings.showResources && layout.resources.length > 0 && (
+          <Panel position="bottom-center" className="resource-key">
+            <div role="group" aria-label="Focus a resource">
+              {layout.resources.map((r) => (
+                <button
+                  key={r.key}
+                  className="resource-key-item"
+                  aria-pressed={resourceFocus === r.key}
+                  onClick={() =>
+                    onResourceFocus(resourceFocus === r.key ? null : r.key)
+                  }
+                >
+                  <span style={{ background: r.color }} />
+                  {r.name}
+                </button>
+              ))}
+            </div>
+          </Panel>
+        )}
         <Background color="#c2c7c3" gap={24} size={0.7} />
         <Controls showInteractive={false} fitViewOptions={FIT_OPTIONS} />
       </ReactFlow>

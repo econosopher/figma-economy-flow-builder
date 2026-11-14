@@ -7,7 +7,8 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { Plus, X, Search, GripVertical } from "lucide-react";
-import type { Card, EconomyDocument } from "../core/document";
+import type { Card, EconomyDocument, Pipe } from "../core/document";
+import { inferResource, resourceCandidates } from "../core/pipeResource";
 import type { Selection } from "./Canvas";
 export type ResourceKind = "sources" | "sinks" | "values" | "notes";
 export const resourceChoices: {
@@ -26,6 +27,67 @@ export const resourceColor = (d: EconomyDocument, kind: ResourceKind) =>
     : d.settings[
         kind === "sources" ? "source" : kind === "sinks" ? "sink" : "value"
       ];
+const CUSTOM = "\u0000custom";
+/** What a pipe carries: Auto (inferred from both cards), a row on the source card, or a
+ * typed name. Shared by the pipe menu and the Inspector. */
+export function PipeResourceField({
+  document: d,
+  edge,
+  onChange,
+}: {
+  document: EconomyDocument;
+  edge: Pipe;
+  onChange: (d: EconomyDocument) => void;
+}) {
+  const from = d.cards.find((c) => c.id === edge.from),
+    to = d.cards.find((c) => c.id === edge.to);
+  const inferred = inferResource(from, to);
+  const candidates = resourceCandidates(from);
+  const [custom, setCustom] = useState(
+    !!edge.resource && !candidates.includes(edge.resource),
+  );
+  const set = (resource: string) =>
+    onChange({
+      ...d,
+      edges: d.edges.map((p) => (p.id === edge.id ? { ...p, resource } : p)),
+    });
+  return (
+    <>
+      <label className="field">
+        Resource
+        <select
+          aria-label="Pipe resource"
+          value={custom ? CUSTOM : edge.resource}
+          onChange={(e) => {
+            setCustom(e.target.value === CUSTOM);
+            if (e.target.value !== CUSTOM) set(e.target.value);
+          }}
+        >
+          <option value="">
+            {inferred ? `Auto: ${inferred}` : "Auto: none found"}
+          </option>
+          {candidates.map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
+          <option value={CUSTOM}>Other…</option>
+        </select>
+      </label>
+      {custom && (
+        <label className="field">
+          Resource name
+          <input
+            aria-label="Pipe resource name"
+            maxLength={160}
+            value={edge.resource}
+            onChange={(e) => set(e.target.value)}
+          />
+        </label>
+      )}
+    </>
+  );
+}
 export function InlineEdit({
   value,
   label,
@@ -629,6 +691,12 @@ export function ItemMenu({
             />
             Return pipe / feedback
           </label>
+          <PipeResourceField
+            key={edge.id}
+            document={d}
+            edge={edge}
+            onChange={onChange}
+          />
           <label className="field">
             Label
             <input

@@ -1,10 +1,20 @@
 import type { Card, Settings, EconomyDocument } from "../core/document";
 import {
+  LEGEND_ROW,
+  TAG_SIZE,
+  pipeEnds,
   spacingFor,
   type CardMetrics,
   type Layout,
+  type ResourceLegend,
   type Route,
 } from "../core/layout";
+import type { Focus } from "../core/trace";
+/** The selection gold, used for a selected pipe that has no resource colour. */
+export const SELECTED = "#b08716";
+/** Opacity of pipes and cards outside the focused path. */
+export const DIM_PIPE = 0.15,
+  DIM_CARD = 0.45;
 export function ink(fill: string) {
   const rgb = [1, 3, 5].map((i) => {
     const c = parseInt(fill.slice(i, i + 2), 16) / 255;
@@ -146,24 +156,34 @@ export function CardDrawing({
     </g>
   );
 }
+/** A pipe's own colour: its resource colour while resources show, else value or grey. */
 export const pipeColor = (route: Route, s: Settings) =>
-  route.edge.type === "value" ? s.value : "#89978f";
+  (s.showResources && route.resource?.color) ||
+  (route.edge.type === "value" ? s.value : "#89978f");
+/** A selected pipe keeps its resource colour; one without turns gold, as before. */
+const strokeColor = (route: Route, s: Settings, selected: boolean) =>
+  selected
+    ? (s.showResources && route.resource?.color) || SELECTED
+    : pipeColor(route, s);
 export function PipeDrawing({
   route,
   settings,
   selected = false,
+  dimmed = false,
   markerId = "arrow",
 }: {
   route: Route;
   settings: Settings;
   selected?: boolean;
+  /** Outside the focused path: drawn at low opacity. */
+  dimmed?: boolean;
   markerId?: string;
 }) {
-  const color = selected ? "#b08716" : pipeColor(route, settings);
+  const color = strokeColor(route, settings, selected);
   const sp = spacingFor(settings);
   const label = route.label;
   return (
-    <g>
+    <g className="pipe-drawing" opacity={dimmed ? DIM_PIPE : undefined}>
       <defs>
         <marker
           id={`${markerId}-${route.edge.id}`}
@@ -186,7 +206,7 @@ export function PipeDrawing({
         d={route.path}
         fill="none"
         stroke={color}
-        strokeWidth={selected ? 2.4 : 1.5}
+        strokeWidth={selected ? 2.8 : route.edge.feedback ? 1.5 : 2}
         strokeLinejoin="round"
         strokeLinecap="round"
         strokeDasharray={route.edge.type === "final" ? "6 5" : undefined}
@@ -202,7 +222,7 @@ export function PipeDrawing({
           fontFamily="Inter, Arial, sans-serif"
           fontSize={sp.labelSize}
           textAnchor="middle"
-          fill={selected ? "#b08716" : "#5b6a62"}
+          fill={selected ? color : "#5b6a62"}
           stroke="white"
           strokeWidth="3"
           strokeLinejoin="round"
@@ -218,48 +238,82 @@ export function PipeDrawing({
     </g>
   );
 }
-export function BridgeDrawing({
+/** Join dots and resource tags, painted after every pipe so no later pipe covers them. */
+export function PipeMarks({
   routes,
   settings,
   selectedId,
-  highlightedIds,
-  background = "white",
+  dimmedIds,
 }: {
   routes: Route[];
   settings: Settings;
   selectedId?: string;
-  highlightedIds?: ReadonlySet<string>;
-  background?: string;
+  /** Pipes outside the focused path. */
+  dimmedIds?: ReadonlySet<string>;
 }) {
   return (
-    <g pointerEvents="none">
-      {routes.flatMap((route) =>
-        route.bridges.map((path, i) => (
-          <g key={`${route.edge.id}-${i}`}>
-            <path d={path} fill="none" stroke={background} strokeWidth="5" />
-            <path
-              d={path}
-              fill="none"
-              stroke={
-                selectedId === route.edge.id ||
-                highlightedIds?.has(route.edge.id)
-                  ? "#b08716"
-                  : pipeColor(route, settings)
-              }
-              strokeWidth={
-                selectedId === route.edge.id ||
-                highlightedIds?.has(route.edge.id)
-                  ? 2.4
-                  : 1.5
-              }
-            />
-          </g>
-        )),
-      )}
+    <g pointerEvents="none" fontFamily="Inter, Arial, sans-serif">
+      {routes
+        .filter((r) => r.join || (settings.showResources && r.tag))
+        .map((route) => {
+          const color = strokeColor(
+            route,
+            settings,
+            selectedId === route.edge.id,
+          );
+          const tag = settings.showResources ? route.tag : undefined;
+          return (
+            <g
+              key={route.edge.id}
+              className="pipe-drawing"
+              opacity={dimmedIds?.has(route.edge.id) ? DIM_PIPE : undefined}
+            >
+              {route.join && (
+                <circle
+                  cx={route.join.x}
+                  cy={route.join.y}
+                  r="3"
+                  fill={color}
+                />
+              )}
+              {tag && (
+                <g
+                  transform={`translate(${tag.x} ${tag.y})${tag.vertical ? " rotate(-90)" : ""}`}
+                >
+                  <rect
+                    x={-tag.width / 2}
+                    y={-tag.height / 2}
+                    width={tag.width}
+                    height={tag.height}
+                    rx={tag.height / 2}
+                    fill="white"
+                    stroke={color}
+                    strokeWidth="1"
+                  />
+                  <text
+                    y={TAG_SIZE * 0.36}
+                    textAnchor="middle"
+                    fontSize={TAG_SIZE}
+                    fontWeight="500"
+                    fill="#2b3530"
+                  >
+                    {tag.text}
+                  </text>
+                </g>
+              )}
+            </g>
+          );
+        })}
     </g>
   );
 }
-export function LegendDrawing({ settings }: { settings: Settings }) {
+export function LegendDrawing({
+  settings,
+  legend,
+}: {
+  settings: Settings;
+  legend?: ResourceLegend;
+}) {
   return (
     <g fontFamily="Inter, Arial, sans-serif">
       <text fontSize="10" fill="#8a968f">
@@ -277,6 +331,26 @@ export function LegendDrawing({ settings }: { settings: Settings }) {
           </text>
         </g>
       ))}
+      {settings.showResources &&
+        legend?.items.map((item) => (
+          <g
+            key={item.key}
+            transform={`translate(${item.x} ${item.row * LEGEND_ROW})`}
+          >
+            <line
+              x1="1"
+              x2="17"
+              y1="-4"
+              y2="-4"
+              stroke={item.color}
+              strokeWidth="2.5"
+              strokeLinecap="round"
+            />
+            <text x="26" fontSize="11" fill="#637168">
+              {item.name}
+            </text>
+          </g>
+        ))}
     </g>
   );
 }
@@ -284,10 +358,13 @@ export function DiagramDrawing({
   document: d,
   layout,
   selection,
+  focus,
 }: {
   document: EconomyDocument;
   layout: Layout;
   selection?: string[];
+  /** Draws everything outside these cards and pipes dimmed, as the canvas focus does. */
+  focus?: Focus;
 }) {
   const selected = new Set(selection);
   const cards = selection?.length
@@ -298,12 +375,21 @@ export function DiagramDrawing({
         (r) => selected.has(r.edge.from) && selected.has(r.edge.to),
       )
     : layout.routes;
-  const arrowTargets = new Set<string>();
-  const drawnRoutes = routes.map((r) => {
-    const arrowhead = !arrowTargets.has(r.edge.to);
-    if (!r.unresolved) arrowTargets.add(r.edge.to);
-    return { ...r, arrowhead };
-  });
+  // A selection drops pipes, so the first arrowhead and the joins are found again.
+  const ends = pipeEnds(routes);
+  const drawnRoutes = routes.map((r, i) => ({
+    ...r,
+    arrowhead: ends[i].arrowhead,
+    join: ends[i].join,
+  }));
+  const focusCards = focus && new Set(focus.cards),
+    dimmedPipes =
+      focus &&
+      new Set(
+        routes
+          .filter((r) => !focus.edges.includes(r.edge.id))
+          .map((r) => r.edge.id),
+      );
   const sp = spacingFor(d.settings);
   return (
     <g fontFamily="Inter, Arial, sans-serif">
@@ -390,12 +476,23 @@ export function DiagramDrawing({
           key={r.edge.id}
           route={r}
           settings={d.settings}
+          dimmed={dimmedPipes?.has(r.edge.id)}
           markerId="export"
         />
       ))}
-      <BridgeDrawing routes={routes} settings={d.settings} />
+      <PipeMarks
+        routes={drawnRoutes}
+        settings={d.settings}
+        dimmedIds={dimmedPipes}
+      />
       {cards.map((c) => (
-        <g key={c.card.id} transform={`translate(${c.x} ${c.y})`}>
+        <g
+          key={c.card.id}
+          transform={`translate(${c.x} ${c.y})`}
+          opacity={
+            focusCards && !focusCards.has(c.card.id) ? DIM_CARD : undefined
+          }
+        >
           <CardDrawing
             card={c.card}
             metrics={c.metrics}
@@ -404,8 +501,10 @@ export function DiagramDrawing({
         </g>
       ))}
       {d.settings.showLegend && !selection?.length && (
-        <g transform={`translate(28 ${layout.bounds.height - 26})`}>
-          <LegendDrawing settings={d.settings} />
+        <g
+          transform={`translate(28 ${layout.bounds.height - 26 - LEGEND_ROW * Math.max(0, layout.legend.rows - 1)})`}
+        >
+          <LegendDrawing settings={d.settings} legend={layout.legend} />
         </g>
       )}
     </g>
@@ -415,11 +514,13 @@ export function DiagramSvg({
   document,
   layout,
   selection,
+  focus,
   fontCss = "",
 }: {
   document: EconomyDocument;
   layout: Layout;
   selection?: string[];
+  focus?: Focus;
   fontCss?: string;
 }) {
   const selected = selection?.length
@@ -448,6 +549,7 @@ export function DiagramSvg({
         document={document}
         layout={layout}
         selection={selection}
+        focus={focus}
       />
     </svg>
   );

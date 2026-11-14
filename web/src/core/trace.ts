@@ -1,5 +1,11 @@
 import type { EconomyDocument } from "./document";
 
+/** A focused view: these cards and pipes keep full strength and everything else dims. */
+export interface Focus {
+  cards: string[];
+  edges: string[];
+}
+
 /** Trace all acquisition paths into the target, stopping at player investments.
  * Feedback is a return trip, not a new upstream source of an investment.
  */

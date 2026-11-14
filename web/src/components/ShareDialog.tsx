@@ -13,6 +13,7 @@ import {
 import { Modal } from "./Modal";
 import type { EconomyDocument } from "../core/document";
 import type { Layout } from "../core/layout";
+import type { Focus } from "../core/trace";
 import { api, type AppConfig } from "../lib/api";
 import { pngBlob, download, filename, copyPng, svgBlob } from "../lib/export";
 interface Installation {
@@ -24,6 +25,7 @@ export function ShareDialog({
   document: d,
   layout,
   selection,
+  focus = null,
   config,
   signedIn,
   onClose,
@@ -33,6 +35,8 @@ export function ShareDialog({
   document: EconomyDocument;
   layout: Layout;
   selection: string[];
+  /** The canvas focus (a picked resource or the selected path), when there is one. */
+  focus?: Focus | null;
   config: AppConfig;
   signedIn: boolean;
   onClose: () => void;
@@ -227,6 +231,21 @@ export function ShareDialog({
                 >
                   Export {selection.length} selected{" "}
                   {selection.length === 1 ? "card" : "cards"}
+                </button>
+              )}
+              {focus && (
+                <button
+                  className="button full"
+                  onClick={() =>
+                    run(async () =>
+                      download(
+                        await pngBlob(d, layout, undefined, 2, focus),
+                        filename(`${d.name} focus`, "png"),
+                      ),
+                    )
+                  }
+                >
+                  Export focused view
                 </button>
               )}
               <div className="divider" />
