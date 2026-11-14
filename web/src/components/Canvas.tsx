@@ -1,3 +1,4 @@
+import { GEC_CANVAS } from "../lib/embed";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ReactFlow,
@@ -18,6 +19,7 @@ import {
 } from "@xyflow/react";
 import { Plus, Minus, MoreHorizontal, GripVertical } from "lucide-react";
 import {
+  isFundamentalRoot,
   validateDocument,
   type EconomyDocument,
   type Card,
@@ -31,6 +33,7 @@ import {
   type ResourceKind,
 } from "./DirectEditing";
 import { ink } from "./DiagramSvg";
+import { traceInvestments } from "../core/trace";
 import {
   spacingFor,
   type Layout,
@@ -62,6 +65,7 @@ type CardNode = Node<
 >;
 function EconomyCard({ data, selected }: NodeProps<CardNode>) {
   const { placed: c } = data;
+  const fixedRoot = isFundamentalRoot(c.card);
   const [drop, setDrop] = useState(false);
   const fill =
     c.card.kind === "action"
@@ -71,10 +75,11 @@ function EconomyCard({ data, selected }: NodeProps<CardNode>) {
         : data.settings.sink;
   return (
     <div
-      className={`economy-card ${selected ? "is-selected" : ""} ${drop ? "resource-drop-target" : ""}`}
+      className={`economy-card ${selected ? "is-selected" : ""} ${data.highlight ? "investment-path" : ""} ${drop ? "resource-drop-target" : ""}`}
       onDragOver={(e) => {
         if (
           !data.readOnly &&
+          !fixedRoot &&
           e.dataTransfer.types.includes("application/economy-resource")
         ) {
           e.preventDefault();
@@ -85,7 +90,7 @@ function EconomyCard({ data, selected }: NodeProps<CardNode>) {
       onDragLeave={() => setDrop(false)}
       onDrop={(e) => {
         setDrop(false);
-        if (data.readOnly) return;
+        if (data.readOnly || fixedRoot) return;
         const raw = e.dataTransfer.getData("application/economy-resource");
         if (!raw) return;
         e.preventDefault();
@@ -128,24 +133,26 @@ function EconomyCard({ data, selected }: NodeProps<CardNode>) {
       />
       {!data.readOnly && (
         <>
-          <InlineEdit
-            value={c.card.label}
-            label="Card title"
-            autoEdit={data.focus}
-            onAutoEdit={data.focusConsumed}
-            style={{
-              left: 16,
-              top: c.metrics.anchorY - (c.metrics.title.length * 19) / 2 - 2,
-              width: c.width - 32,
-              height: c.metrics.title.length * 19 + 4,
-              backgroundColor: fill,
-              color: ink(fill),
-              fontSize: 13,
-              fontWeight: 600,
-              lineHeight: "19px",
-            }}
-            onSave={(label) => data.edit(c.card.id, { label })}
-          />
+          {!fixedRoot && (
+            <InlineEdit
+              value={c.card.label}
+              label="Card title"
+              autoEdit={data.focus}
+              onAutoEdit={data.focusConsumed}
+              style={{
+                left: 16,
+                top: c.metrics.anchorY - (c.metrics.title.length * 19) / 2 - 2,
+                width: c.width - 32,
+                height: c.metrics.title.length * 19 + 4,
+                backgroundColor: fill,
+                color: ink(fill),
+                fontSize: 13,
+                fontWeight: 600,
+                lineHeight: "19px",
+              }}
+              onSave={(label) => data.edit(c.card.id, { label })}
+            />
+          )}
           {c.metrics.rows.map((row, i) => {
             const key =
               row.kind === "source"
@@ -215,9 +222,11 @@ function EconomyCard({ data, selected }: NodeProps<CardNode>) {
               onSave={(notes) => data.edit(c.card.id, { notes })}
             />
           )}
-          <span className="card-grip" title="Drag to move">
-            <GripVertical size={13} />
-          </span>
+          {!fixedRoot && (
+            <span className="card-grip" title="Drag to move">
+              <GripVertical size={13} />
+            </span>
+          )}
           <button
             className="card-control action-plus nodrag nopan"
             aria-label="Add connected card"
@@ -234,30 +243,36 @@ function EconomyCard({ data, selected }: NodeProps<CardNode>) {
           >
             <Plus size={14} />
           </button>
-          <button
-            className="card-control action-minus nodrag nopan"
-            aria-label="Remove card"
-            title="Remove card"
-            onClick={(e) => {
-              e.stopPropagation();
-              data.remove(c.card.id);
-            }}
-          >
-            <Minus size={14} />
-          </button>
-          <button
-            className="card-more nodrag nopan"
-            aria-label="Card options"
-            onClick={(e) => {
-              e.stopPropagation();
-              data.menu({ kind: "card", id: c.card.id }, e.currentTarget);
-            }}
-          >
-            <MoreHorizontal size={15} />
-          </button>
-          <AddResourceMenu
-            onAdd={(kind) => data.resource(kind, undefined, c.card.id)}
-          />
+          {!fixedRoot && (
+            <button
+              className="card-control action-minus nodrag nopan"
+              aria-label="Remove card"
+              title="Remove card"
+              onClick={(e) => {
+                e.stopPropagation();
+                data.remove(c.card.id);
+              }}
+            >
+              <Minus size={14} />
+            </button>
+          )}
+          {!fixedRoot && (
+            <button
+              className="card-more nodrag nopan"
+              aria-label="Card options"
+              onClick={(e) => {
+                e.stopPropagation();
+                data.menu({ kind: "card", id: c.card.id }, e.currentTarget);
+              }}
+            >
+              <MoreHorizontal size={15} />
+            </button>
+          )}
+          {!fixedRoot && (
+            <AddResourceMenu
+              onAdd={(kind) => data.resource(kind, undefined, c.card.id)}
+            />
+          )}
         </>
       )}
     </div>
@@ -407,7 +422,7 @@ function EconomyEdge({ data, selected }: EdgeProps) {
       <PipeDrawing
         route={r}
         settings={data!.settings as Settings}
-        selected={selected}
+        selected={selected || Boolean(data!.highlight)}
       />
     </g>
   );
@@ -528,6 +543,7 @@ export function Canvas({
       previewWorker.current = null;
     };
   }, []);
+  const [hoveredCard, setHoveredCard] = useState<string | null>(null);
   const [selectedCards, setSelectedCards] = useState<string[]>([]);
   useEffect(() => {
     if (selection?.kind === "card")
@@ -537,6 +553,18 @@ export function Canvas({
     else setSelectedCards([]);
   }, [selection]);
   useEffect(() => onSelectedIds(selectedCards), [selectedCards, onSelectedIds]);
+  const investmentPath = useMemo(
+    () =>
+      traceInvestments(
+        d,
+        hoveredCard
+          ? [hoveredCard]
+          : selection?.kind === "card"
+            ? [...new Set([...selectedCards, selection.id])]
+            : [],
+      ),
+    [d, hoveredCard, selectedCards, selection],
+  );
   const linked = useMemo(() => {
     const e = d.edges.find(
       (e) => selection?.kind === "edge" && e.id === selection.id,
@@ -603,7 +631,8 @@ export function Canvas({
         data: {
           placed: c,
           settings: d.settings,
-          highlight: linked.has(c.card.id),
+          highlight:
+            linked.has(c.card.id) || investmentPath.cards.has(c.card.id),
           readOnly,
           add: onAdd,
           remove: onDelete,
@@ -620,7 +649,7 @@ export function Canvas({
           select: (id: string) => onSelect({ kind: "card", id }),
         },
         selected: selectedCards.includes(c.card.id),
-        draggable: !readOnly,
+        draggable: !readOnly && !isFundamentalRoot(c.card),
         width: c.width,
         height: c.height,
         measured: { width: c.width, height: c.height },
@@ -651,6 +680,7 @@ export function Canvas({
       d.settings,
       selection,
       linked,
+      investmentPath,
       selectedCards,
       readOnly,
       onAdd,
@@ -673,11 +703,18 @@ export function Canvas({
           source: r.edge.from,
           target: r.edge.to,
           type: "pipe",
-          data: { route: r, settings: d.settings },
+          data: {
+            route: r,
+            settings: d.settings,
+            highlight: investmentPath.edges.has(r.edge.id),
+          },
+          className: investmentPath.edges.has(r.edge.id)
+            ? "investment-path"
+            : undefined,
           selected: selection?.kind === "edge" && selection.id === r.edge.id,
           ariaLabel: `${r.edge.feedback ? "Return" : "Pipe"} from ${d.cards.find((c) => c.id === r.edge.from)?.label} to ${d.cards.find((c) => c.id === r.edge.to)?.label}`,
         })),
-    [layout, d.settings, d.cards, selection],
+    [layout, d.settings, d.cards, selection, investmentPath],
   );
   const fitted = useRef("");
   useEffect(() => {
@@ -825,6 +862,7 @@ export function Canvas({
             event.preventDefault();
             event.stopPropagation();
             const c = d.cards.find((c) => c.id === node.id)!;
+            if (isFundamentalRoot(c)) return;
             if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
               const index =
                 d.stages.findIndex((s) => s.id === c.stageId) +
@@ -858,6 +896,12 @@ export function Canvas({
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         onNodesChange={onChanges}
+        onNodeMouseEnter={(_, n) => {
+          if (n.type === "card") setHoveredCard(n.id);
+        }}
+        onNodeMouseLeave={(_, n) =>
+          setHoveredCard((id) => (id === n.id ? null : id))
+        }
         onNodeClick={(event, n) => {
           if (n.type === "card") {
             const ids = event.shiftKey
@@ -999,11 +1043,13 @@ export function Canvas({
             <BridgeDrawing
               routes={layout.routes}
               settings={d.settings}
+              highlightedIds={investmentPath.edges}
+              background={GEC_CANVAS}
               selectedId={selection?.kind === "edge" ? selection.id : undefined}
             />
           </svg>
         </ViewportPortal>
-        <Background color="#dfe5e1" gap={24} size={0.7} />
+        <Background color="#c2c7c3" gap={24} size={0.7} />
         <Controls showInteractive={false} fitViewOptions={FIT_OPTIONS} />
       </ReactFlow>
       {menu && !readOnly && (

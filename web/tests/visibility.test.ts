@@ -7,9 +7,14 @@ import {
 import { starter } from "../src/core/presets";
 
 describe("visibility compatibility", () => {
-  it("defaults new diagrams and preset copies to public", () => {
-    expect(blankDocument().visibility).toBe("public");
-    expect(forkDocument(starter).visibility).toBe("public");
+  it("defaults new diagrams and preset copies to private", () => {
+    expect(blankDocument().visibility).toBe("private");
+    expect(forkDocument(starter).visibility).toBe("private");
+  });
+  it("copies published diagrams privately", () => {
+    expect(forkDocument({ ...starter, visibility: "public" }).visibility).toBe(
+      "private",
+    );
   });
   it("does not opt legacy saved diagrams into automatic publication", () => {
     expect(validateDocument(starter).visibility).toBeUndefined();

@@ -111,6 +111,9 @@ export const documentSchema = z.object({
 });
 export type EconomyDocument = z.infer<typeof documentSchema>;
 export type Card = z.infer<typeof cardSchema>;
+export const isFundamentalRoot = (card: Card) =>
+  card.kind === "initial_sink_node" &&
+  (card.label === "Time" || card.label === "Money");
 export type Pipe = z.infer<typeof edgeSchema>;
 export type Settings = z.infer<typeof settingsSchema>;
 export const defaultSettings: Settings = settingsSchema.parse({});
@@ -228,7 +231,7 @@ export function blankDocument(): EconomyDocument {
     schemaVersion: 3,
     id: uid(),
     name: "Untitled economy",
-    visibility: "public",
+    visibility: "private",
     stages: [
       { id: "invest", label: "Investment" },
       { id: "play", label: "Core play" },
@@ -249,7 +252,7 @@ export function forkDocument(
     ...structuredClone(validateDocument(d)),
     id: uid(),
     name,
-    visibility: d.visibility ?? "public",
+    visibility: "private",
   };
 }
 export function deleteCard(d: EconomyDocument, id: string): EconomyDocument {

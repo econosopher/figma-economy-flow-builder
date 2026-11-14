@@ -1,3 +1,4 @@
+import { GEC_HOME, useGecEmbed } from "./lib/embed";
 import { PublicCatalog } from "./components/PublicCatalog";
 import { recordDiagramView } from "./lib/api";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -46,6 +47,7 @@ import {
   deleteCard,
   forkDocument,
   importDocument,
+  isFundamentalRoot,
   uid,
   validateDocument,
   type EconomyDocument,
@@ -57,7 +59,7 @@ import {
   measureHeadings,
   type Layout,
 } from "./core/layout";
-import { starter, presetDescription } from "./core/presets";
+import { presets, starter, presetDescription } from "./core/presets";
 import {
   api,
   ApiError,
@@ -96,9 +98,29 @@ function initial() {
     const saved = id && readSaved(id);
     if (saved) return saved.document;
   } catch {}
-  return forkDocument(starter);
+  const featured = presets.find((item) => item.id === "world_of_warcraft");
+  const opening = forkDocument(featured?.document || starter);
+  if (!featured) return opening;
+  return {
+    ...opening,
+    cards: opening.cards.map((card) =>
+      card.kind === "initial_sink_node"
+        ? {
+            ...card,
+            label:
+              card.id === "time"
+                ? "Time"
+                : card.id === "money"
+                  ? "Money"
+                  : card.label,
+            sinks: [],
+          }
+        : card,
+    ),
+  };
 }
 function Editor() {
+  const gecEmbed = useGecEmbed();
   const [doc, setDoc] = useState<EconomyDocument>(initial),
     [layout, setLayout] = useState<Layout>(() => layoutDocument(doc)),
     [layoutBusy, setLayoutBusy] = useState(true),
@@ -347,7 +369,14 @@ function Editor() {
       setHistoryTick((k) => k + 1);
       if (cloudRevision !== undefined)
         cloudRevisions.current.set(next.id, cloudRevision);
-      window.history.replaceState(null, "", location.pathname);
+      window.history.replaceState(
+        null,
+        "",
+        location.pathname +
+          (new URLSearchParams(location.search).get("embed") === "1"
+            ? "?embed=1"
+            : ""),
+      );
       return next.id;
     },
     [],
@@ -571,7 +600,11 @@ function Editor() {
       if (!s) return;
       const d = docRef.current;
       let next = d;
-      if (s.kind === "card") next = deleteCard(d, s.id);
+      if (s.kind === "card") {
+        const card = d.cards.find((item) => item.id === s.id);
+        if (card && isFundamentalRoot(card)) return;
+        next = deleteCard(d, s.id);
+      }
       if (s.kind === "edge")
         next = { ...d, edges: d.edges.filter((e) => e.id !== s.id) };
       if (s.kind === "group") {
@@ -664,6 +697,8 @@ function Editor() {
   );
   const move = useCallback(
     (id: string, stageId: string, groupId: string, order: number) => {
+      const card = docRef.current.cards.find((item) => item.id === id);
+      if (card && isFundamentalRoot(card)) return;
       lastCommit.current = 0;
       commit({
         ...docRef.current,
@@ -727,6 +762,7 @@ function Editor() {
         notify("Choose a card, or drag this resource onto one.");
         return;
       }
+      if (isFundamentalRoot(card)) return;
       const text =
         value ||
         (kind === "notes"
@@ -767,16 +803,34 @@ function Editor() {
   );
   return (
     <div className="app-shell">
+      {!gecEmbed.framed && (
+        <div className="gec-return-bar">
+          <a
+            href={GEC_HOME}
+            onClick={(e) => {
+              if (gecEmbed.embedded) {
+                e.preventDefault();
+                gecEmbed.close();
+              }
+            }}
+          >
+            ← Back to Game Economist Consulting
+          </a>
+        </div>
+      )}
       <header className="topbar">
         <button
           className="brand"
           onClick={() => void loadLibrary()}
           aria-label="Open diagram library"
         >
-          <img src="/logo.png" alt="Economy Flow Builder shipyard logo" />
+          <img
+            src="/economy-flow-logo.png"
+            alt="Economy Flow shipyard logo"
+          />
           <div>
-            <strong>Economy Flow</strong>
-            <span>BY GAME ECONOMIST CONSULTING</span>
+            <strong>ECONOMY FLOW</strong>
+            <span>GAME ECONOMIST CONSULTING</span>
           </div>
         </button>
         <div className="header-separator" />
@@ -849,7 +903,7 @@ function Editor() {
                 {doc.visibility === "public"
                   ? session
                     ? "Public"
-                    : "Public · local only"
+                    : "Not published"
                   : "Private"}
               </span>
             </button>
@@ -1605,6 +1659,11 @@ function Editor() {
           onClose={() => setModal(null)}
           onSignIn={() => setModal("auth")}
           onApply={(d) => openDocument(d)}
+          onImport={() => {
+            setJsonText("");
+            setImportPreview(null);
+            setModal("json");
+          }}
         />
       )}
       {pendingConnection && (

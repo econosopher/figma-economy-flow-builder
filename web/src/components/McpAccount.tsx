@@ -111,10 +111,10 @@ export function McpAccount() {
     <main className="mcp-account">
       <a href={config?.apiOrigin || "/"}>
         <img
-          src="/logo.png"
-          width="44"
-          height="44"
-          alt="Game Economist Consulting shipyard"
+          src="/economy-flow-logo.png"
+          width="72"
+          height="65"
+          alt="Economy Flow shipyard logo"
         />
       </a>
       <h1>{authorizationId ? "Connect to Economy Flow" : "MCP connections"}</h1>
