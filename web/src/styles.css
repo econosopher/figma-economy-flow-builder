@@ -1522,6 +1522,10 @@ a {
 .pipe-drawing {
   transition: opacity 120ms;
 }
+/* Sit above the canvas footer, which overlays the bottom of the canvas. */
+.react-flow__panel.resource-key {
+  bottom: 44px;
+}
 .resource-key > div {
   display: flex;
   flex-wrap: wrap;
