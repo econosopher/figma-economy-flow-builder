@@ -2,22 +2,22 @@
  "apex_legends.json|compact": {
   "width": 3176,
   "height": 2368,
-  "digest": "618880b3dbc01bbe3836439b6e6c285805c1322a"
+  "digest": "dcc7441f718b5c1e788922b00f0231d27dbc395a"
  },
  "apex_legends.json|comfortable": {
   "width": 3240,
   "height": 2476,
-  "digest": "fc282ac7423a9417cb6f7a893de533fa7d1538f9"
+  "digest": "c42a3dc8239055ed6def8c3bc53fe9a47be11140"
  },
  "dice_throne_digital.json|compact": {
   "width": 2228,
   "height": 4354,
-  "digest": "12a652b170e968deb1bcd8041b48a7bdafc20eca"
+  "digest": "5b720a8e671d19010a76f09dca5c88b92ec9d64a"
  },
  "dice_throne_digital.json|comfortable": {
   "width": 2284,
   "height": 4474,
-  "digest": "a76817c7997dc462b70279f150e02666e1e4031d"
+  "digest": "c0e1d5121288a6b7107e34da7bd40cfd79ef4e10"
  },
  "helldivers.json|compact": {
   "width": 2184,
@@ -32,111 +32,111 @@
  "mecha_break.json|compact": {
   "width": 3324,
   "height": 1476,
-  "digest": "1c5d706da84288f38df7e5f14d8e83e980db5d7f"
+  "digest": "07d51c2fa78d7b2537abeb4d976513f8746c6463"
  },
  "mecha_break.json|comfortable": {
   "width": 3456,
   "height": 1524,
-  "digest": "08385d6c3581ce291dd86549dcc26a9c3ae6348b"
+  "digest": "795b085d8a2ed9a7ce18e79cdec2a254aaa424b6"
  },
  "payday_3.json|compact": {
   "width": 2036,
   "height": 3052,
-  "digest": "ac595b5e6496f27f07e80cce2575b0f742f0a227"
+  "digest": "dacb51c065b5bfe9bbd3cf3da8001332fb6ba447"
  },
  "payday_3.json|comfortable": {
   "width": 2112,
   "height": 3088,
-  "digest": "4324eed2afeaa40ce551e74f7b72f2d1b36ef062"
+  "digest": "c6d456dbb4cc969ca52962ddb501ccd6ffb9b907"
  },
  "rainbow_six_siege.json|compact": {
   "width": 1864,
   "height": 2992,
-  "digest": "f1e3c80be148e18c2c72a7afdc87f4a09e30d518"
+  "digest": "dd04ce1bc36d62072ca92e767217b337b3c4cc36"
  },
  "rainbow_six_siege.json|comfortable": {
   "width": 1920,
   "height": 3040,
-  "digest": "9b9cca9bd8859914bccdf1da379c4f332aa972cc"
+  "digest": "5ec8483cfc8dbc56fa572be7918993c9391e15a7"
  },
  "subsections_example.json|compact": {
   "width": 1844,
   "height": 1860,
-  "digest": "2155171c05e2ae92de384e3880aba4ae1e48939e"
+  "digest": "6ff7edf2403f0a8c6b8f1feb4d654d3665c4f628"
  },
  "subsections_example.json|comfortable": {
   "width": 1972,
   "height": 1884,
-  "digest": "06a6c457a7cf6dbc8e7208e3298290417aae2f01"
+  "digest": "7f4e693a6f624359c8e5de00c9dd1d9d7ddca99b"
  },
  "sweepstakes_slots.json|compact": {
   "width": 4804,
   "height": 2660,
-  "digest": "82eee85ff30c71a62779d319fa68e1008bef7f29"
+  "digest": "80be38b734bcd321097fdc78ec37bdae040b8d4c"
  },
  "sweepstakes_slots.json|comfortable": {
   "width": 4952,
   "height": 2780,
-  "digest": "7b5da3542e5fd7cb95c46ef426ce3966cea10921"
+  "digest": "61a77449060a748b2d30a2f9d39f749746753d35"
  },
  "preset:gossip_harbor|compact": {
   "width": 2328,
   "height": 1582,
-  "digest": "895046eed23ec59b835a74e5634ef889e0a868a8"
+  "digest": "fab089cee3e5650e32a2450f723244bea2a62f68"
  },
  "preset:gossip_harbor|comfortable": {
   "width": 2404,
   "height": 1594,
-  "digest": "ba67091bfc64bd71268ff1b6ee6197fa624430ee"
+  "digest": "c61176d1956412cb3129c616f005332bc253c0ef"
  },
  "preset:royal_match|compact": {
   "width": 2496,
   "height": 1820,
-  "digest": "006fd93b8a42b2a53585c6ca3076c6750a7a2259"
+  "digest": "0a4401a1e357362eaba724c59149f10753cfb54f"
  },
  "preset:royal_match|comfortable": {
   "width": 2580,
   "height": 1856,
-  "digest": "8c1b7cfee8f44ba33d355f13cdf846130267ba8a"
+  "digest": "28718bcfb9d6dbae1a44cd86d89479fc4f736d6d"
  },
  "preset:monopoly_go|compact": {
   "width": 2568,
   "height": 2178,
-  "digest": "665dc70f4ffc50f0b1c8a822fa106458576d15a3"
+  "digest": "8585875e5f55db84a5c86f1f4e83d894b38529e7"
  },
  "preset:monopoly_go|comfortable": {
   "width": 2624,
   "height": 2214,
-  "digest": "6aba6383f1a83f1f30dc52bc76d3680da538cb3c"
+  "digest": "3ab013ad184a4992ff33a00861846206fe926cb0"
  },
  "preset:world_of_warcraft|compact": {
   "width": 2592,
   "height": 1910,
-  "digest": "65b55e4ed0ded1342d2d8c343e0dc76eaf47a612"
+  "digest": "43e7c1e2827fac4ee64bed27d7bb8eed93695cd5"
  },
  "preset:world_of_warcraft|comfortable": {
   "width": 2648,
   "height": 1946,
-  "digest": "020a0f9472c4ecd6ef1da4337641094b0a3e5830"
+  "digest": "4088f116a12e38e4e6b9c96676955e993822b88c"
  },
  "preset:warzone|compact": {
   "width": 2568,
   "height": 1884,
-  "digest": "ac981a44957810764a506c5964eb9658c89590ab"
+  "digest": "0900d2228c006ca4d15bd9d60d9d15975492e0da"
  },
  "preset:warzone|comfortable": {
   "width": 2628,
   "height": 1920,
-  "digest": "04a25d975d592077ed14ce71b69ac5489de7ea64"
+  "digest": "57419ee0730864e5dc8d885fde03e75d70e7e2ea"
  },
  "preset:apex_legends|compact": {
   "width": 2616,
   "height": 2026,
-  "digest": "a06461ba798bb1f20997b89dd7806a12b2c92b8c"
+  "digest": "45618208db8eea9024e1defaf462f9efd9c9eee6"
  },
  "preset:apex_legends|comfortable": {
   "width": 2688,
   "height": 2074,
-  "digest": "cf7d379be22d743d20d604b1eeaaf91758e00e72"
+  "digest": "bc44dce2d46db03cace985a334bde63cb25458a6"
  }
 }

@@ -556,10 +556,24 @@ function gapPath(points: Point[], routes: Route[]): string {
     const a = points[i - 1],
       b = points[i];
     const direction = b.x >= a.x ? 1 : -1;
+    // Gaps for neighbouring lanes touch; merge them so no zero-length piece (a dot with
+    // round caps) is left between.
+    const spans: [number, number][] = [];
     if (a.y === b.y)
       for (const g of gaps)
-        if (g.y === a.y && g.x > Math.min(a.x, b.x) && g.x < Math.max(a.x, b.x))
-          path += ` L ${g.x - GAP_HALF * direction} ${a.y} M ${g.x + GAP_HALF * direction} ${a.y}`;
+        if (
+          g.y === a.y &&
+          g.x > Math.min(a.x, b.x) &&
+          g.x < Math.max(a.x, b.x)
+        ) {
+          const start = g.x - GAP_HALF * direction,
+            end = g.x + GAP_HALF * direction,
+            last = spans.at(-1);
+          if (last && (start - last[1]) * direction <= 0) last[1] = end;
+          else spans.push([start, end]);
+        }
+    for (const [start, end] of spans)
+      path += ` L ${start} ${a.y} M ${end} ${a.y}`;
     path += ` L ${b.x} ${b.y}`;
   }
   return path;

@@ -32,6 +32,7 @@ import {
   DiagramDrawing,
   DiagramSvg,
   pipeColor,
+  withEnds,
 } from "../src/components/DiagramSvg";
 
 const card = (id: string, stage: number, extra: Partial<Card> = {}) =>
@@ -241,6 +242,18 @@ const onSegment = (p: Point, a: Point, b: Point) =>
 const onRoute = (p: Point, r: Pick<Route, "points">) =>
   r.points.slice(1).some((b, i) => onSegment(p, r.points[i], b));
 
+/** The straight pieces a path actually draws (M starts a new piece, L draws one). */
+function drawn(path: string): [Point, Point][] {
+  const pieces: [Point, Point][] = [];
+  let at: Point | undefined;
+  for (const [, op, x, y] of path.matchAll(/([ML]) (-?[\d.]+) (-?[\d.]+)/g)) {
+    const p = { x: Number(x), y: Number(y) };
+    if (op === "L" && at) pieces.push([at, p]);
+    at = p;
+  }
+  return pieces;
+}
+
 describe("pipe drawing", () => {
   it("tags each resource pipe on its own run, clear of cards, labels, tags and other pipes", () => {
     let tagged = 0;
@@ -259,6 +272,15 @@ describe("pipe drawing", () => {
           expect(r.tag!.height).toBe(TAG_HEIGHT);
           expect(onRoute(r.tag!, r)).toBe(true);
           const b = box(r);
+          for (const o of l.routes)
+            if (o.label) {
+              const inside =
+                o.label.x > b.x &&
+                o.label.x < b.x + b.width &&
+                o.label.y > b.y &&
+                o.label.y < b.y + b.height;
+              expect(inside).toBe(false);
+            }
           for (const c of l.cards) expect(overlap(b, c)).toBe(false);
           for (const o of tags)
             if (o !== r) expect(overlap(b, box(o))).toBe(false);
@@ -386,12 +408,33 @@ describe("pipe drawing", () => {
                 }),
             ),
           ).toBe(true);
-          const forward = `L ${g.x - GAP_HALF} ${g.y} M ${g.x + GAP_HALF} ${g.y}`,
-            backward = `L ${g.x + GAP_HALF} ${g.y} M ${g.x - GAP_HALF} ${g.y}`;
-          expect(r.path.includes(forward) || r.path.includes(backward)).toBe(
-            true,
-          );
+          // No drawn piece comes within GAP_HALF of the crossing on its row.
+          for (const [a, b] of drawn(r.path))
+            if (a.y === g.y && b.y === g.y)
+              expect(
+                Math.min(a.x, b.x) >= g.x + GAP_HALF ||
+                  Math.max(a.x, b.x) <= g.x - GAP_HALF,
+              ).toBe(true);
         }
+        // Neighbouring gaps merge: no zero-length piece is left to draw a dot.
+        for (const [a, b] of drawn(r.path))
+          expect(a.x === b.x && a.y === b.y).toBe(false);
+        // The break hides nothing else: the drawn pieces cover the route minus the gaps.
+        const drawnLength = drawn(r.path).reduce(
+          (n, [a, b]) => n + Math.abs(a.x - b.x) + Math.abs(a.y - b.y),
+          0,
+        );
+        const routeLength = r.points
+          .slice(1)
+          .reduce(
+            (n, b, i) =>
+              n + Math.abs(b.x - r.points[i].x) + Math.abs(b.y - r.points[i].y),
+            0,
+          );
+        expect(drawnLength).toBeLessThanOrEqual(routeLength);
+        expect(drawnLength).toBeGreaterThanOrEqual(
+          routeLength - r.gaps.length * 2 * GAP_HALF,
+        );
       }
     }
     expect(gaps).toBeGreaterThan(10);
@@ -421,5 +464,24 @@ describe("focused export", () => {
     ).toHaveLength(2);
     // The focused pipe keeps its own colour at full strength.
     expect(focused).toContain(`stroke="${RESOURCE_PALETTE[1]}"`);
+  });
+  it("gives a focused pipe its own arrowhead when the card's first pipe is dimmed", () => {
+    const d = goldDocument();
+    const l = layoutDocument(d);
+    expect(l.routes[1].arrowhead).toBe(false);
+    const drawn = withEnds(l.routes, new Set(["q", "g"]));
+    expect(drawn[1]).toMatchObject({ arrowhead: true, join: undefined });
+    // The dimmed pipes keep what the full drawing gives them.
+    expect(drawn[0].arrowhead).toBe(true);
+    expect(drawn[2].arrowhead).toBe(true);
+    const svg = renderToStaticMarkup(
+      <DiagramSvg
+        document={d}
+        layout={l}
+        focus={{ cards: ["shop", "upgrade"], edges: ["s"] }}
+      />,
+    );
+    expect(svg).not.toContain("<circle cx");
+    expect(svg.match(/marker-end=/g)).toHaveLength(3);
   });
 });

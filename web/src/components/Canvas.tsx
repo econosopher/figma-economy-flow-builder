@@ -40,7 +40,7 @@ import {
   type PlacedCard,
   type Route,
 } from "../core/layout";
-import { CardDrawing, PipeDrawing, PipeMarks } from "./DiagramSvg";
+import { CardDrawing, PipeDrawing, PipeMarks, withEnds } from "./DiagramSvg";
 export type Selection = {
   kind: "card" | "edge" | "group" | "stage";
   id: string;
@@ -743,28 +743,6 @@ export function Canvas({
       onFocusConsumed,
     ],
   );
-  const edges: Edge[] = useMemo(
-    () =>
-      layout.routes
-        .filter((r) => !r.unresolved)
-        .map((r) => ({
-          id: r.edge.id,
-          source: r.edge.from,
-          target: r.edge.to,
-          type: "pipe",
-          data: {
-            route: r,
-            settings: d.settings,
-            dimmed: !!focus && !focus.edges.has(r.edge.id),
-          },
-          className: investmentPath.edges.has(r.edge.id)
-            ? "investment-path"
-            : undefined,
-          selected: selection?.kind === "edge" && selection.id === r.edge.id,
-          ariaLabel: `${r.edge.feedback ? "Return" : "Pipe"} from ${d.cards.find((c) => c.id === r.edge.from)?.label} to ${d.cards.find((c) => c.id === r.edge.to)?.label}`,
-        })),
-    [layout, d.settings, d.cards, selection, investmentPath, focus],
-  );
   const dimmedPipes = useMemo(
     () =>
       focus
@@ -775,6 +753,32 @@ export function Canvas({
           )
         : undefined,
     [layout.routes, focus],
+  );
+  const drawnRoutes = useMemo(
+    () => (dimmedPipes ? withEnds(layout.routes, dimmedPipes) : layout.routes),
+    [layout.routes, dimmedPipes],
+  );
+  const edges: Edge[] = useMemo(
+    () =>
+      drawnRoutes
+        .filter((r) => !r.unresolved)
+        .map((r) => ({
+          id: r.edge.id,
+          source: r.edge.from,
+          target: r.edge.to,
+          type: "pipe",
+          data: {
+            route: r,
+            settings: d.settings,
+            dimmed: !!dimmedPipes?.has(r.edge.id),
+          },
+          className: investmentPath.edges.has(r.edge.id)
+            ? "investment-path"
+            : undefined,
+          selected: selection?.kind === "edge" && selection.id === r.edge.id,
+          ariaLabel: `${r.edge.feedback ? "Return" : "Pipe"} from ${d.cards.find((c) => c.id === r.edge.from)?.label} to ${d.cards.find((c) => c.id === r.edge.to)?.label}`,
+        })),
+    [drawnRoutes, d.settings, d.cards, selection, investmentPath, dimmedPipes],
   );
   const fitted = useRef("");
   useEffect(() => {
@@ -1102,7 +1106,7 @@ export function Canvas({
             }}
           >
             <PipeMarks
-              routes={layout.routes}
+              routes={drawnRoutes}
               settings={d.settings}
               dimmedIds={dimmedPipes}
               selectedId={selection?.kind === "edge" ? selection.id : undefined}

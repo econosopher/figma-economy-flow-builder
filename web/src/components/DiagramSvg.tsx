@@ -238,6 +238,23 @@ export function PipeDrawing({
     </g>
   );
 }
+/** Arrowheads and join dots for the pipes being drawn. In a focus the focused pipes get
+ * their own: a focused pipe whose card's first pipe is dimmed still ends in a full-strength
+ * arrowhead instead of a dot on a faded line. */
+export function withEnds(
+  routes: Route[],
+  dimmed?: ReadonlySet<string>,
+): Route[] {
+  const ends = pipeEnds(routes);
+  const focused = dimmed
+    ? routes.filter((r) => !dimmed.has(r.edge.id))
+    : routes;
+  const own = new Map(pipeEnds(focused).map((e, i) => [focused[i].edge.id, e]));
+  return routes.map((r, i) => {
+    const e = (dimmed && own.get(r.edge.id)) || ends[i];
+    return { ...r, arrowhead: e.arrowhead, join: e.join };
+  });
+}
 /** Join dots and resource tags, painted after every pipe so no later pipe covers them. */
 export function PipeMarks({
   routes,
@@ -375,13 +392,6 @@ export function DiagramDrawing({
         (r) => selected.has(r.edge.from) && selected.has(r.edge.to),
       )
     : layout.routes;
-  // A selection drops pipes, so the first arrowhead and the joins are found again.
-  const ends = pipeEnds(routes);
-  const drawnRoutes = routes.map((r, i) => ({
-    ...r,
-    arrowhead: ends[i].arrowhead,
-    join: ends[i].join,
-  }));
   const focusCards = focus && new Set(focus.cards),
     dimmedPipes =
       focus &&
@@ -390,6 +400,8 @@ export function DiagramDrawing({
           .filter((r) => !focus.edges.includes(r.edge.id))
           .map((r) => r.edge.id),
       );
+  // A selection drops pipes, so the first arrowhead and the joins are found again.
+  const drawnRoutes = withEnds(routes, dimmedPipes);
   const sp = spacingFor(d.settings);
   return (
     <g fontFamily="Inter, Arial, sans-serif">
