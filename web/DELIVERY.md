@@ -1,3 +1,28 @@
+# Pipe legibility and main brought level with production: 14 November 2026
+
+Production at https://flow.gameeconomistconsulting.com runs commit `93791c7` (branch `fix/popover-fits-viewport`, merged to main as PR #6). Production Worker version: `a836052e-0169-4c6c-9031-a515b5211cb6`. Staging: `6fa3660c-5161-48a1-84eb-f8c5affeeffb`. Both serve app `main-BqEG41jk.js`. The previous production version, for rollback, is `5383ad01-986d-445f-bace-e32bf8523750`.
+
+## What went live
+
+- **The unrecorded 22 September deploy is now in main (PR #4).** Production had been built from uncommitted work on a local checkout (bundle `main-B7Rw9ZeW.js`): investment path tracing, GEC embed support, guest research, the GEC logo and fonts. That work is committed, so main is a superset of what was live.
+- **October work that had not been deployed:** the slide spacing preset, the title toggle, optional pipe labels, and the GEC standard in the validator and MCP.
+- **Pipe legibility, first release (PR #5):** pipes coloured and tagged by resource, a resource key, dots at joins, gaps at crossings, 2 px forward pipes, focus dimming on hover, selection and key click, and a focused PNG export. Plan and deferred items: `tasks/plans/pipe-legibility.md`.
+- **Menu fix (PR #6):** canvas menus measure themselves and stay inside the viewport.
+
+## Verification
+
+- 137 automated tests, the type check and the production build passed on the deployed commit. `route.points` is byte-identical before and after the pipe work for every example and preset at all three spacings.
+- Staging, in a signed-in browser: a preset with inferable resources rendered five coloured resources, tags and the key with no console errors, and its PNG exported in Inter at 5296 x 3892. Rename and undo, the pipe resource control, pipe delete by pointer and undo, and saving all worked.
+- Production readback: the bundle matches staging, `/api/health` returns 200, `/mcp` returns 401 without a token, an existing saved diagram opened, showed "Saved to your account" and exported a PNG with no console errors.
+- Not run: the scripted browser suites in `web/tests/browser/` (`direct-canvas.js`, `researched-presets.js`, `public-catalog.js`, `visibility.js`). The checks above were done by hand.
+
+## Carried forward
+
+- Rollback is `wrangler rollback --env production` to the version above.
+- Any local checkout that still holds the pre-merge uncommitted work is stale. Deploy only from main.
+
+---
+
 # Account and MCP activation: 14 September 2026
 
 Production is active at https://flow.gameeconomistconsulting.com. Codex completed OAuth sign-in to the direct production MCP, and the staging MCP has its own verified connection. Separate Supabase projects run the three migrations, the asymmetric OAuth token hook and scoped consent. The production editor uses the same static build previously verified on staging.
