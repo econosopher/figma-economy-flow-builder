@@ -118,6 +118,37 @@ describe("pipe resource", () => {
       "Account level",
     ]);
   });
+  it("falls back to the one resource the pipe's label names", () => {
+    const from = card("a", 0, { sources: ["Cash balance", "Points"] }),
+      to = card("b", 1, { sinks: ["Draw entries"], values: ["Tier"] });
+    expect(inferResource(from, to)).toBe("");
+    expect(inferResource(from, to, "draw entries")).toBe("Draw entries");
+    expect(inferResource(from, to, "cash")).toBe("Cash balance");
+    // A label naming two different resources, or nothing on either card, infers nothing.
+    expect(
+      inferResource(
+        card("a", 0, { sources: ["Gold coins"] }),
+        card("b", 1, { sinks: ["Gold bars"] }),
+        "gold",
+      ),
+    ).toBe("");
+    expect(inferResource(from, to, "Next mission")).toBe("");
+    expect(inferResource(from, to, "")).toBe("");
+    // Rows matching at both ends still come first.
+    expect(
+      inferResource(
+        card("a", 0, { sources: ["Coins", "Gems"] }),
+        card("b", 1, { sinks: ["Coins"] }),
+        "gems",
+      ),
+    ).toBe("Coins");
+    const cards = new Map([from, to].map((c) => [c.id, c]));
+    const edge = { from: "a", to: "b", label: "cash", resource: "" };
+    expect(effectiveResource(edge, cards)).toBe("Cash balance");
+    expect(effectiveResource({ ...edge, resource: "Tickets" }, cards)).toBe(
+      "Tickets",
+    );
+  });
   it("prefers the explicit field over inference", () => {
     const d = goldDocument();
     const cards = new Map(d.cards.map((c) => [c.id, c]));
@@ -255,7 +286,7 @@ function drawn(path: string): [Point, Point][] {
 }
 
 describe("pipe drawing", () => {
-  it("tags each resource pipe on its own run, clear of cards, labels, tags and other pipes", () => {
+  it("tags each resource into each card once, clear of cards, labels, tags and other pipes", () => {
     let tagged = 0;
     for (const doc of library)
       for (const showLabels of [false, true]) {
@@ -267,7 +298,14 @@ describe("pipe drawing", () => {
         );
         const tags = l.routes.filter((r) => r.tag);
         tagged += tags.length;
+        const pairs = tags.map((r) => `${r.resource!.key}|${r.edge.to}`);
+        expect(new Set(pairs).size).toBe(pairs.length);
         for (const r of tags) {
+          // Only a card whose incoming pipes all carry this resource shares its terminal run.
+          const into = l.routes.filter(
+            (o) => !o.unresolved && o.edge.to === r.edge.to,
+          );
+          const shared = into.every((o) => o.resource?.key === r.resource!.key);
           expect(r.resource).toBeDefined();
           expect(r.tag!.height).toBe(TAG_HEIGHT);
           expect(onRoute(r.tag!, r)).toBe(true);
@@ -287,6 +325,8 @@ describe("pipe drawing", () => {
           for (const o of l.routes) {
             if (o === r) continue;
             for (let i = 1; i < o.points.length; i++) {
+              if (shared && into.includes(o) && i === o.points.length - 1)
+                continue;
               const p = o.points[i - 1],
                 q = o.points[i];
               expect(
@@ -300,6 +340,16 @@ describe("pipe drawing", () => {
         }
       }
     expect(tagged).toBeGreaterThan(20);
+  });
+  it("draws one tag for pipes of one resource into one card, on the arrowhead pipe", () => {
+    const l = layoutDocument(goldDocument());
+    const [q, s, g] = l.routes;
+    expect(q.arrowhead).toBe(true);
+    expect(q.tag).toBeDefined();
+    expect(q.tag!.vertical).toBe(false);
+    expect(s.tag).toBeUndefined();
+    // The same resource into a different card keeps its own tag.
+    expect(g.tag).toBeDefined();
   });
   it("turns colour, tags and key entries off with showResources", () => {
     const d = goldDocument();

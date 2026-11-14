@@ -1022,10 +1022,13 @@ function tagText(name: string, measure: Measure) {
     text = text.slice(0, -1);
   return `${text.trimEnd()}…`;
 }
-/** Each pipe with a resource gets a tag on a straight run that belongs to it alone, as near
- * its target as possible: horizontal runs first, then vertical tracks, then the source stub.
- * The pill never covers a card, a group heading, a pipe label, another tag or any other
- * pipe, so it stays off shared terminal stubs and crossings. No clear spot, no tag. */
+/** One tag for each resource arriving at a card, on the pipe that keeps the arrowhead when
+ * it carries that resource, as near the card as it fits. Horizontal runs come first (the
+ * source stub last among them); a rotated tag on a vertical track only when no horizontal
+ * spot exists. When every pipe into the card carries the same resource, the shared terminal
+ * run may hold the tag; otherwise each pipe's own runs are tried in turn. The pill never
+ * covers a card, a group heading, a pipe label, another tag or any other pipe, so it stays
+ * off crossings and join dots. No clear spot, no tag. */
 export function placeTags(
   routes: Route[],
   cards: Rect[],
@@ -1049,83 +1052,114 @@ export function placeTags(
     ...routes.flatMap((r) => (r.label ? [labelBox(r.label, sp, measure)] : [])),
   ];
   const tags: Box[] = [];
+  const pairs = new Map<string, Route[]>();
   for (const route of routes) {
     route.tag = undefined;
-    const n = route.points.length;
-    if (!route.resource || n < 2) continue;
-    const text = tagText(route.resource.name, measure);
+    if (!route.resource || route.points.length < 2) continue;
+    const key = `${route.resource.key}\u0000${route.edge.to}`;
+    pairs.set(key, [...(pairs.get(key) || []), route]);
+  }
+  for (const members of pairs.values()) {
+    members.sort((a, b) => Number(!!b.arrowhead) - Number(!!a.arrowhead));
+    const rep = members[0];
+    const into = routes.filter(
+      (r) => !r.unresolved && r.edge.to === rep.edge.to,
+    );
+    // Every pipe into the card carries this resource: their shared terminal run is fair game.
+    const shared = into.every((r) => members.includes(r));
+    const text = tagText(rep.resource!.name, measure);
     const length = measure(text, TAG_SIZE, 500) + 12;
     const reach = length / 2 + TAG_HEIGHT;
+    const all = members.flatMap((m) => m.points);
     const area = segmentBox(
       {
-        x: Math.min(...route.points.map((p) => p.x)) - reach,
-        y: Math.min(...route.points.map((p) => p.y)) - reach,
+        x: Math.min(...all.map((p) => p.x)) - reach,
+        y: Math.min(...all.map((p) => p.y)) - reach,
       },
       {
-        x: Math.max(...route.points.map((p) => p.x)) + reach,
-        y: Math.max(...route.points.map((p) => p.y)) + reach,
+        x: Math.max(...all.map((p) => p.x)) + reach,
+        y: Math.max(...all.map((p) => p.y)) + reach,
       },
     );
     const near = (b: Box) => overlaps(b, area);
     const boxes = [...fixed, ...tags].filter(near);
-    const pipes = routes
-      .filter((r) => r !== route)
-      .flatMap((r) =>
-        r.points.slice(1).map((b, i) => [r.points[i], b] as const),
-      )
-      .filter(([a, b]) => near(segmentBox(a, b)));
-    const clear = (box: Box) =>
-      !boxes.some((b) => overlaps(b, box)) &&
-      !pipes.some(([a, b]) => segmentEnters(a, b, box));
-    const segments = route.points
-      .slice(1)
-      .map((b, i) => ({ a: route.points[i], b, index: i }))
-      .reverse();
-    const passes = [
-      segments.filter((s) => s.a.y === s.b.y && (s.index > 0 || n === 2)),
-      segments.filter((s) => s.a.x === s.b.x),
-      segments.filter((s) => s.a.y === s.b.y && s.index === 0 && n > 2),
-    ];
-    let found: RouteTag | undefined;
-    for (const pass of passes) {
-      for (const { a, b, index } of pass) {
-        const vertical = a.x === b.x;
-        const from = vertical ? a.y : a.x,
-          to = vertical ? b.y : b.x;
-        const direction = to >= from ? 1 : -1;
-        const endMargin = index === n - 2 ? 14 : 4;
-        const first = to - direction * (length / 2 + endMargin),
-          last = from + direction * (length / 2 + 4);
-        for (let c = first; (c - last) * direction >= 0; c -= direction * 4) {
-          const box = vertical
-            ? {
-                x: a.x - TAG_HEIGHT / 2 - 1,
-                y: c - length / 2 - 1,
-                width: TAG_HEIGHT + 2,
-                height: length + 2,
-              }
-            : {
-                x: c - length / 2 - 1,
-                y: a.y - TAG_HEIGHT / 2 - 1,
-                width: length + 2,
-                height: TAG_HEIGHT + 2,
-              };
-          if (!clear(box)) continue;
-          found = {
-            text,
-            x: vertical ? a.x : c,
-            y: vertical ? c : a.y,
-            width: length,
-            height: TAG_HEIGHT,
-            vertical,
-          };
-          tags.push(box);
-          break;
+    const obstaclesFor = (route: Route) =>
+      routes
+        .filter((r) => r !== route)
+        .flatMap((r) =>
+          r.points
+            .slice(1)
+            .map((b, i) => [r.points[i], b] as const)
+            .filter(
+              (_, i) =>
+                !(shared && members.includes(r) && i === r.points.length - 2),
+            ),
+        )
+        .filter(([a, b]) => near(segmentBox(a, b)));
+    const runs = members.map((route) => {
+      const n = route.points.length;
+      const segments = route.points
+        .slice(1)
+        .map((b, i) => ({ a: route.points[i], b, index: i, n }))
+        .reverse();
+      return {
+        route,
+        pipes: obstaclesFor(route),
+        passes: [
+          segments.filter((s) => s.a.y === s.b.y && (s.index > 0 || n === 2)),
+          segments.filter((s) => s.a.y === s.b.y && s.index === 0 && n > 2),
+          segments.filter((s) => s.a.x === s.b.x),
+        ],
+      };
+    });
+    let found: { route: Route; tag: RouteTag; box: Box } | undefined;
+    search: for (let pass = 0; pass < 3; pass++)
+      for (const { route, pipes, passes } of runs)
+        for (const { a, b, index, n } of passes[pass]) {
+          const vertical = a.x === b.x;
+          const from = vertical ? a.y : a.x,
+            to = vertical ? b.y : b.x;
+          const direction = to >= from ? 1 : -1;
+          const endMargin = index === n - 2 ? 14 : 4;
+          const first = to - direction * (length / 2 + endMargin),
+            last = from + direction * (length / 2 + 4);
+          for (let c = first; (c - last) * direction >= 0; c -= direction * 4) {
+            const box = vertical
+              ? {
+                  x: a.x - TAG_HEIGHT / 2 - 1,
+                  y: c - length / 2 - 1,
+                  width: TAG_HEIGHT + 2,
+                  height: length + 2,
+                }
+              : {
+                  x: c - length / 2 - 1,
+                  y: a.y - TAG_HEIGHT / 2 - 1,
+                  width: length + 2,
+                  height: TAG_HEIGHT + 2,
+                };
+            if (
+              boxes.some((o) => overlaps(o, box)) ||
+              pipes.some(([p, q]) => segmentEnters(p, q, box))
+            )
+              continue;
+            found = {
+              route,
+              box,
+              tag: {
+                text,
+                x: vertical ? a.x : c,
+                y: vertical ? c : a.y,
+                width: length,
+                height: TAG_HEIGHT,
+                vertical,
+              },
+            };
+            break search;
+          }
         }
-        if (found) break;
-      }
-      if (found) break;
+    if (found) {
+      found.route.tag = found.tag;
+      tags.push(found.box);
     }
-    route.tag = found;
   }
 }

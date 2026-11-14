@@ -152,7 +152,7 @@ export function createServer(env: AppEnv, user: McpIdentity) {
     "validate_diagram",
     {
       description:
-        "Import v2/v3 JSON and check semantic validity, approximate routing and the GEC standard without saving. routingIssues must be fixed; standardIssues are warnings naming the card, pipe or resource (roots with resource rows, two-line titles, orange rows that are really currencies, resources produced but never spent or spent but never produced, unlabelled or bundled return pipes, uneven card rows). A pipe takes an optional resource (the resource it carries, up to 160 characters); when empty the renderer infers it from a row name shared by both cards, and colours and tags the pipe by it unless settings.showResources is false.",
+        "Import v2/v3 JSON and check semantic validity, approximate routing and the GEC standard without saving. routingIssues must be fixed; standardIssues are warnings naming the card, pipe or resource (roots with resource rows, two-line titles, orange rows that are really currencies, resources produced but never spent or spent but never produced, unlabelled or bundled return pipes, uneven card rows). A pipe takes an optional resource (the resource it carries, up to 160 characters); when empty the renderer infers it from a row name shared by both cards (or else the one row the pipe label names), and colours and tags the pipe by it unless settings.showResources is false.",
       inputSchema: z.object({ document: z.unknown() }),
       annotations: read,
     },

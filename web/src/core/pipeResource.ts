@@ -46,38 +46,58 @@ export function resourceCandidates(card: Card | undefined): string[] {
   return names;
 }
 
-/** The single resource named on both ends of a pipe, or "" when none or several match. */
-export function inferResource(
-  from: Card | undefined,
-  to: Card | undefined,
-): string {
-  if (!from || !to) return "";
-  const targets = [...to.sinks, ...to.values]
-    .map(resourceWords)
-    .filter((w) => w.length);
-  const matched: { name: string; words: string[] }[][] = [];
-  for (const row of [...from.sources, ...from.values]) {
+/** Group rows that name the same resource; one group means one resource. Returns the
+ * shortest name of the only group, or "" when there are none or several. */
+function single(rows: string[]): string {
+  const clusters: { name: string; words: string[] }[][] = [];
+  for (const row of rows) {
     const words = resourceWords(row);
-    if (!targets.some((t) => sameResource(words, t))) continue;
-    const cluster = matched.find((c) =>
+    if (!words.length) continue;
+    const entry = { name: resourceName(row), words };
+    const cluster = clusters.find((c) =>
       c.some((m) => sameResource(m.words, words)),
     );
-    const entry = { name: resourceName(row), words };
     if (cluster) cluster.push(entry);
-    else matched.push([entry]);
+    else clusters.push([entry]);
   }
-  if (matched.length !== 1) return "";
-  return [...matched[0]].sort((a, b) => a.words.length - b.words.length)[0]
+  if (clusters.length !== 1) return "";
+  return [...clusters[0]].sort((a, b) => a.words.length - b.words.length)[0]
     .name;
 }
 
+/** What a pipe carries when its field is empty. First, the single resource named on both
+ * ends (a source `+` or `=` row matching a target `-` or `=` row). Failing that, the single
+ * resource among those rows on either card that the pipe's label names ("cash" names
+ * "Cash balance"). Several matches, or none, infer nothing. */
+export function inferResource(
+  from: Card | undefined,
+  to: Card | undefined,
+  label = "",
+): string {
+  if (!from || !to) return "";
+  const out = [...from.sources, ...from.values],
+    into = [...to.sinks, ...to.values];
+  const targets = into.map(resourceWords).filter((w) => w.length);
+  const both = single(
+    out.filter((row) =>
+      targets.some((t) => sameResource(resourceWords(row), t)),
+    ),
+  );
+  if (both) return both;
+  const named = resourceWords(label);
+  if (!named.length) return "";
+  return single(
+    [...out, ...into].filter((row) => sameResource(resourceWords(row), named)),
+  );
+}
+
 export function effectiveResource(
-  edge: Pick<Pipe, "from" | "to"> & { resource?: string },
+  edge: Pick<Pipe, "from" | "to"> & { resource?: string; label?: string },
   cards: ReadonlyMap<string, Card>,
 ): string {
   return (
     edge.resource?.trim() ||
-    inferResource(cards.get(edge.from), cards.get(edge.to))
+    inferResource(cards.get(edge.from), cards.get(edge.to), edge.label)
   );
 }
 

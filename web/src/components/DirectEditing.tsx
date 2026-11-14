@@ -41,7 +41,7 @@ export function PipeResourceField({
 }) {
   const from = d.cards.find((c) => c.id === edge.from),
     to = d.cards.find((c) => c.id === edge.to);
-  const inferred = inferResource(from, to);
+  const inferred = inferResource(from, to, edge.label);
   const candidates = resourceCandidates(from);
   const [custom, setCustom] = useState(
     !!edge.resource && !candidates.includes(edge.resource),
