@@ -1,5 +1,6 @@
 import {
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type CSSProperties,
@@ -198,6 +199,17 @@ export function Popover({
     12,
     Math.min(rect.bottom + 8, window.innerHeight - heightEstimate),
   );
+  // The estimate places the box before it has a size. Once it is measured, lift it so its
+  // last control (Remove) is never below the viewport, however tall the menu has grown.
+  useLayoutEffect(() => {
+    const el = box.current;
+    if (!el) return;
+    const fitted = Math.max(
+      12,
+      Math.min(top, window.innerHeight - el.offsetHeight - 12),
+    );
+    el.style.top = `${fitted}px`;
+  });
   useEffect(() => {
     const down = (e: PointerEvent) => {
       if (
@@ -226,7 +238,13 @@ export function Popover({
       role="dialog"
       aria-label={label}
       className="canvas-popover nodrag nopan"
-      style={{ left, top, width }}
+      style={{
+        left,
+        top,
+        width,
+        maxHeight: "calc(100vh - 24px)",
+        overflowY: "auto",
+      }}
       onClick={(e) => e.stopPropagation()}
       onPointerDown={(e) => e.stopPropagation()}
     >
