@@ -22,6 +22,9 @@ export const settingsSchema = z.object({
   // Draw each pipe's label along its route. Off by default: researched presets carry
   // labels that were authored before labels were drawn, and dense corridors crowd them.
   showLabels: z.boolean().default(false),
+  // Colour and tag each pipe by the resource it carries, and list the colours in the key.
+  // Off restores grey pipes with no tags.
+  showResources: z.boolean().default(true),
   background: z.enum(["white", "transparent"]).default("white"),
   actionHeader: color.default("#000000"),
   finalGood: color.default("#F5C95C"),
@@ -48,6 +51,9 @@ export const edgeSchema = z.object({
   type: z.enum(["normal", "value", "final", "cross-lane"]).default("normal"),
   feedback: z.boolean().default(false),
   label: z.string().max(160).default(""),
+  // The resource this pipe carries. Empty infers it from the row names at both ends
+  // (see pipeResource.ts).
+  resource: z.string().max(160).default(""),
 });
 export const researchSchema = z.object({
   presetId: id,
@@ -173,6 +179,7 @@ const v2Schema = z.object({
       to: id,
       type: edgeSchema.shape.type.optional(),
       label: edgeSchema.shape.label.optional(),
+      resource: edgeSchema.shape.resource.optional(),
     }),
   ),
 });
@@ -220,7 +227,13 @@ export function importDocument(input: unknown): {
       );
       if (feedback)
         notices.push(`${a!.label} → ${b!.label} will use a return track.`);
-      return { ...e, label: e.label ?? "", id: `pipe-${i}`, feedback };
+      return {
+        ...e,
+        label: e.label ?? "",
+        resource: e.resource ?? "",
+        id: `pipe-${i}`,
+        feedback,
+      };
     }),
     settings: defaultSettings,
   });
@@ -323,6 +336,7 @@ export function addConnectedCard(
           type: "normal",
           feedback: false,
           label: "",
+          resource: "",
         },
       ],
     };

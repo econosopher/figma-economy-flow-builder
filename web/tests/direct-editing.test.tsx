@@ -87,6 +87,7 @@ describe("direct canvas editing", () => {
       type: "normal" as const,
       feedback: false,
       label: "",
+      resource: "",
     }));
     const l = layoutDocument(d);
     expect(l.issues).toEqual([]);
@@ -114,6 +115,7 @@ describe("direct canvas editing", () => {
       type: "normal" as const,
       feedback: false,
       label: "",
+      resource: "",
     };
     const a = {
       edge,
@@ -200,6 +202,7 @@ describe("direct canvas editing", () => {
         type: "normal",
         feedback: false,
         label: "",
+        resource: "",
       },
       {
         id: "two",
@@ -208,6 +211,7 @@ describe("direct canvas editing", () => {
         type: "normal",
         feedback: false,
         label: "",
+        resource: "",
       },
     ];
     const svg = renderToStaticMarkup(

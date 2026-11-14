@@ -32,6 +32,7 @@ const edge = (
   type: "normal",
   feedback,
   label: "",
+  resource: "",
 });
 const edges = [
   edge("t", "play"),

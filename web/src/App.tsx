@@ -79,6 +79,7 @@ import {
   type SavedDocument,
 } from "./lib/storage";
 import { download, filename, pngBlob } from "./lib/export";
+import type { Focus } from "./core/trace";
 const defaultConfig: AppConfig = {
   cloud: false,
   slack: false,
@@ -129,6 +130,8 @@ function Editor() {
     layoutRequest = useRef(0);
   const [selection, setSelection] = useState<Selection>(null),
     [selectedIds, setSelectedIds] = useState<string[]>([]),
+    [resourceFocus, setResourceFocus] = useState<string | null>(null),
+    [focus, setFocus] = useState<Focus | null>(null),
     [inspector, setInspector] = useState(false),
     [resourcesOpen, setResourcesOpen] = useState(false),
     [focusTarget, setFocusTarget] = useState<string | null>(null),
@@ -651,6 +654,7 @@ function Editor() {
       }
       if (e.key === "Escape") {
         setSelection(null);
+        setResourceFocus(null);
         setInspector(false);
       }
     };
@@ -735,6 +739,7 @@ function Editor() {
             type: "normal",
             feedback: false,
             label: "",
+            resource: "",
           },
         ],
       });
@@ -1166,6 +1171,9 @@ function Editor() {
               onRemoveSelection={(s) => remove(undefined, s)}
               focusTarget={focusTarget}
               onFocusConsumed={consumeFocus}
+              resourceFocus={resourceFocus}
+              onResourceFocus={setResourceFocus}
+              onFocus={setFocus}
             />
           )}
           {!doc.cards.length && (
@@ -1645,6 +1653,7 @@ function Editor() {
           document={doc}
           layout={layout}
           selection={selectedIds}
+          focus={focus}
           config={config}
           signedIn={!!session}
           onClose={() => setModal(null)}
@@ -1688,6 +1697,7 @@ function Editor() {
                     feedback: true,
                     type: "value",
                     label: "",
+                    resource: "",
                   },
                 ],
               });

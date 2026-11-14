@@ -133,6 +133,7 @@ export const starter: EconomyDocument = {
     type: type as "normal" | "value" | "final",
     feedback: i === 7,
     label: "",
+    resource: "",
   })),
   settings: {
     actionHeader: "#000000",
@@ -141,6 +142,7 @@ export const starter: EconomyDocument = {
     showLegend: true,
     showTitle: true,
     showLabels: false,
+    showResources: true,
     background: "white",
     source: "#21865b",
     sink: "#d15d44",

@@ -61,6 +61,8 @@ Every diagram is checked against the GEC economy-flow rules in [`docs/ECONOMY_FL
 | Prompt | `economy_flow_standard` | The working standard in the author's words: the resource ledger to research first (origin, holder, spend points, rules, effect for every resource), card semantics, chains, layout and the pre-save checks. Read it before `create_diagram` or `edit_diagram`. |
 | Resource | `economy-flow://rules` | The rule contract as Markdown, one section per rule ID. |
 
+Pipes take an optional `resource` (up to 160 characters) naming what they carry. When it is empty the renderer infers it from a row name shared by both cards, or else from the one row on either card that the pipe's label names; either way the pipe is coloured and tagged by it unless `settings.showResources` is `false`. Set it when no single row name matches at both ends.
+
 `validate_diagram`, `preview_changes`, `edit_diagram`, `create_diagram` and `render_diagram` return `standardIssues`: an array of `{ rule, severity, message, cardId?, edgeId?, resource? }`. Every entry is a warning that names the card, pipe or resource; warnings never block a save. `routingIssues` stay separate and must be resolved before export. Hard errors (a `final_good` outside the last stage, a non-feedback pipe to the same or an earlier stage, a pipe to a missing card) are thrown by the document validator and fail the call.
 
 | Rule | Warning |

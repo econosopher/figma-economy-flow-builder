@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="680" height="232" viewBox="0 0 680 232" role="img" font-family="Inter, Arial, sans-serif">
+  <title>Pipe drawing today and proposed</title>
+  <desc>Left: four grey pipes from To Open Chests and To Claim Rewards into To Buy Upgrades and To Enter Raffle share one port and one colour, so it is unclear which goes where. Right: the same four pipes coloured by resource (Coins and Tickets), leaving from separate ports, with a dot where pipes join and a gap where they cross.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <rect x="0" y="0" width="680" height="232" fill="#ffffff"/>
+  <text x="40" y="30" font-size="14" font-weight="600" fill="#171717">Today</text>
+  <g fill="#f3f6f4" stroke="#babfbc" stroke-width="1">
+    <rect x="40" y="50" width="120" height="36" rx="4"/>
+    <rect x="40" y="130" width="120" height="36" rx="4"/>
+    <rect x="230" y="50" width="90" height="36" rx="4"/>
+    <rect x="230" y="130" width="90" height="36" rx="4"/>
+  </g>
+  <g font-size="12" fill="#3d3d3a" text-anchor="middle" dominant-baseline="central">
+    <text x="100" y="68">To Open Chests</text>
+    <text x="100" y="148">To Claim Rewards</text>
+    <text x="275" y="68">To Buy Upgrades</text>
+    <text x="275" y="148">To Enter Raffle</text>
+  </g>
+  <g fill="none" stroke="#89978f" stroke-width="1.5">
+    <path d="M160 68 L228 68" marker-end="url(#arrow)"/>
+    <path d="M160 148 L228 148" marker-end="url(#arrow)"/>
+    <path d="M188 148 L188 68"/>
+    <path d="M202 68 L202 148"/>
+  </g>
+  <text x="40" y="204" font-size="12" fill="#68736d">One grey, one port: which goes where?</text>
+  <text x="370" y="30" font-size="14" font-weight="600" fill="#171717">Proposed</text>
+  <g fill="#f3f6f4" stroke="#babfbc" stroke-width="1">
+    <rect x="370" y="50" width="120" height="36" rx="4"/>
+    <rect x="370" y="130" width="120" height="36" rx="4"/>
+    <rect x="560" y="50" width="80" height="36" rx="4"/>
+    <rect x="560" y="130" width="80" height="36" rx="4"/>
+  </g>
+  <g font-size="12" fill="#3d3d3a" text-anchor="middle" dominant-baseline="central">
+    <text x="430" y="68">To Open Chests</text>
+    <text x="430" y="148">To Claim Rewards</text>
+    <text x="600" y="68">To Buy Upgrades</text>
+    <text x="600" y="148">To Enter Raffle</text>
+  </g>
+  <g fill="none" stroke="#1D9E75" stroke-width="2">
+    <path d="M490 62 L558 62" marker-end="url(#arrow)"/>
+    <path d="M490 142 L506 142"/>
+    <path d="M518 142 L534 142 L534 62"/>
+  </g>
+  <circle cx="534" cy="62" r="3.5" fill="#1D9E75"/>
+  <g fill="none" stroke="#7F77DD" stroke-width="2">
+    <path d="M490 74 L512 74 L512 154"/>
+    <path d="M490 154 L558 154" marker-end="url(#arrow)"/>
+  </g>
+  <circle cx="512" cy="154" r="3.5" fill="#7F77DD"/>
+  <path d="M370 200 L392 200" fill="none" stroke="#1D9E75" stroke-width="2"/>
+  <text x="398" y="204" font-size="12" fill="#68736d">Coins</text>
+  <path d="M440 200 L462 200" fill="none" stroke="#7F77DD" stroke-width="2"/>
+  <text x="468" y="204" font-size="12" fill="#68736d">Tickets</text>
+  <circle cx="560" cy="200" r="3.5" fill="#7F77DD"/>
+  <text x="570" y="204" font-size="12" fill="#68736d">Join</text>
+</svg>

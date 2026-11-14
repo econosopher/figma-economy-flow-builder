@@ -140,6 +140,7 @@ describe("economy layout", () => {
         type: "normal",
         feedback: false,
         label: "",
+        resource: "",
       },
       {
         id: "b",
@@ -148,6 +149,7 @@ describe("economy layout", () => {
         type: "normal",
         feedback: false,
         label: "",
+        resource: "",
       },
       {
         id: "c",
@@ -156,6 +158,7 @@ describe("economy layout", () => {
         type: "value",
         feedback: true,
         label: "",
+        resource: "",
       },
       {
         id: "d",
@@ -164,6 +167,7 @@ describe("economy layout", () => {
         type: "value",
         feedback: true,
         label: "",
+        resource: "",
       },
     ];
     assertReadable(validateDocument(d));
@@ -262,6 +266,7 @@ describe("economy layout", () => {
           type: "normal",
           feedback: false,
           label: "",
+          resource: "",
         });
       }
     }

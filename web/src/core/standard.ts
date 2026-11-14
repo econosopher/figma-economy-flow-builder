@@ -5,6 +5,7 @@ import {
   spacingFor,
   type Measure,
 } from "./layout";
+import { resourceWords, sameResource } from "./pipeResource";
 import { ECONOMY_FLOW_RULES_VERSION } from "./rules";
 
 /**
@@ -91,21 +92,7 @@ const PROGRESSION_WORDS = new Set([
   "xp",
 ]);
 
-/** The resource a row names: the words before any colon, dash or bracket, lower-cased. */
-export function resourceWords(row: string): string[] {
-  return row
-    .split(/[:(\[]|\s[-–—]\s/)[0]
-    .toLowerCase()
-    .replace(/[^\p{L}\p{N}\s]/gu, " ")
-    .split(/\s+/)
-    .filter(Boolean);
-}
-/** Two rows name the same resource when the shorter name is a word-prefix of the longer. */
-export function sameResource(a: string[], b: string[]): boolean {
-  if (!a.length || !b.length) return false;
-  const [short, long] = a.length <= b.length ? [a, b] : [b, a];
-  return short.every((word, i) => long[i] === word);
-}
+export { resourceWords, sameResource };
 
 interface Row {
   card: Card;

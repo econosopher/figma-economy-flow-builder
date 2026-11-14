@@ -1511,7 +1511,60 @@ a {
   cursor: grabbing;
 }
 .economy-card {
-  transition: box-shadow 160ms;
+  transition:
+    box-shadow 160ms,
+    opacity 120ms;
+}
+/* Focus: cards off the focused path dim modestly, pipes off it fade (DiagramSvg DIM_*). */
+.economy-card.is-dimmed {
+  opacity: 0.45;
+}
+.pipe-drawing {
+  transition: opacity 120ms;
+}
+/* Sit above the canvas footer, which overlays the bottom of the canvas. */
+.react-flow__panel.resource-key {
+  bottom: 44px;
+}
+.resource-key > div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px;
+  max-width: min(720px, calc(100vw - 120px));
+  padding: 4px;
+  background: #fffffff2;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  box-shadow: 0 2px 8px #153e2408;
+}
+.resource-key-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: none;
+  color: #4d5f53;
+  font:
+    500 11px/16px Inter,
+    Arial,
+    sans-serif;
+  cursor: pointer;
+}
+.resource-key-item span {
+  width: 14px;
+  height: 3px;
+  border-radius: 2px;
+}
+.resource-key-item:hover {
+  background: #f2f5f2;
+}
+.resource-key-item[aria-pressed="true"] {
+  border-color: #c9d1cb;
+  background: #f2f5f2;
+  color: #202020;
 }
 .react-flow__handle {
   width: 10px;

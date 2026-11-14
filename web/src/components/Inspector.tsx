@@ -16,6 +16,7 @@ import {
   type Settings,
 } from "../core/document";
 import type { Selection } from "./Canvas";
+import { PipeResourceField } from "./DirectEditing";
 export function Inspector({
   document: d,
   selection,
@@ -252,6 +253,7 @@ export function Inspector({
                     type: "normal",
                     feedback: returnPipe,
                     label: "",
+                    resource: "",
                   },
                 ],
               });
@@ -342,6 +344,12 @@ export function Inspector({
             <ArrowLeft size={14} />
             Return pipe
           </label>
+          <PipeResourceField
+            key={edge.id}
+            document={d}
+            edge={edge}
+            onChange={onChange}
+          />
           <p className="helper">
             Return pipes travel outside the main flow. Each connection keeps its
             own track.
@@ -510,6 +518,19 @@ export function Inspector({
               }
             />
             Show pipe labels
+          </label>
+          <label className="checkbox">
+            <input
+              type="checkbox"
+              checked={d.settings.showResources}
+              onChange={(e) =>
+                onChange({
+                  ...d,
+                  settings: { ...d.settings, showResources: e.target.checked },
+                })
+              }
+            />
+            Colour and tag pipes by resource
           </label>
           <label className="field">
             Export background
