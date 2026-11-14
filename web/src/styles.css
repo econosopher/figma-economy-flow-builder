@@ -1,7 +1,19 @@
+@font-face {
+  font-family: "League Spartan";
+  src: url("/fonts/league-spartan-regular.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "League Spartan";
+  src: url("/fonts/league-spartan-bold.woff2") format("woff2");
+  font-weight: 700 900;
+  font-display: swap;
+}
 :root {
   font-family: Inter, Arial, sans-serif;
   color: #23352b;
-  background: #fafbf9;
+  background: #dcdcdc;
   font-synthesis: none;
   font-weight: 400;
   font-size: 13px;
@@ -88,23 +100,25 @@ a {
   text-align: left;
 }
 .brand img {
-  width: 42px;
-  height: 42px;
-  border-radius: 11px;
+  width: 76px;
+  height: 69px;
+  object-fit: contain;
 }
 .brand strong {
-  font-size: 17px;
-  letter-spacing: -0.6px;
-  font-weight: 600;
+  font-family: "League Spartan", Inter, sans-serif;
+  font-size: 19px;
+  letter-spacing: -0.4px;
+  font-weight: 700;
   display: block;
 }
-.brand span {
+.brand div span {
   display: block;
-  font-size: 7px;
-  font-weight: 500;
-  letter-spacing: 1.4px;
-  color: #8a948e;
-  margin-top: 5px;
+  font-family: "League Spartan", Inter, sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  color: #363d46;
+  margin-top: 3px;
 }
 .header-separator {
   display: inline-block;
@@ -230,7 +244,7 @@ a {
   flex: 1;
   min-width: 0;
   position: relative;
-  background: #fafbf9;
+  background: #dcdcdc;
   overflow: hidden;
 }
 .canvas-toolbar {
@@ -403,7 +417,7 @@ a {
   padding: 12px 26px;
   font-size: 10px;
   color: #8b988f;
-  background: #fafbf9f5;
+  background: #dcdcdcf5;
   border-top: 1px solid #eaf0e9;
   gap: 12px;
 }
@@ -1176,9 +1190,9 @@ a {
     padding: 0 18px;
     gap: 18px;
   }
-  .brand span {
-    font-size: 6px;
-    letter-spacing: 1px;
+  .brand div span {
+    font-size: 8px;
+    letter-spacing: 0.3px;
   }
   .brand strong {
     font-size: 15px;
@@ -1213,9 +1227,8 @@ a {
     display: none;
   }
   .brand img {
-    width: 33px;
-    height: 33px;
-    border-radius: 8px;
+    width: 40px;
+    height: 37px;
   }
   .document-heading {
     min-width: 60px;
@@ -1889,4 +1902,18 @@ a {
 .library-note select:focus-visible {
   outline: 2px solid #f5c95c;
   outline-offset: 2px;
+}
+
+.gec-return-bar {
+  flex-shrink: 0;
+  padding: 5px 16px;
+  background: #dcdcdc;
+  font-size: 11px;
+}
+.gec-return-bar a {
+  color: #363d46;
+  text-decoration: none;
+}
+.gec-return-bar a:hover {
+  text-decoration: underline;
 }
