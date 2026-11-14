@@ -107,6 +107,14 @@ describe("pipe resource", () => {
       inferResource(from, card("b", 1, { sinks: ["Coins", "Gems"] })),
     ).toBe("");
     expect(inferResource(from, card("b", 1, { sinks: ["Energy"] }))).toBe("");
+    // A label longer than the row names more than one thing and infers nothing.
+    expect(
+      inferResource(
+        card("a", 0, { sources: ["Free bet", "Points boost"] }),
+        card("b", 1, { sinks: ["Free bet", "Points boost"] }),
+        "free bet or points boost",
+      ),
+    ).toBe("");
     // Held progression at both ends counts; a source row on the target does not.
     expect(
       inferResource(from, card("b", 1, { values: ["Account level cap"] })),

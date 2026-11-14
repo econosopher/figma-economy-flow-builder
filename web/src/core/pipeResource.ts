@@ -25,8 +25,8 @@ export const resourceName = (row: string) =>
 export const RESOURCE_PALETTE = [
   "#2563c9",
   "#c23787",
-  "#0b8aa0",
   "#7f4cc9",
+  "#0b8aa0",
   "#8a5a44",
   "#1f3b73",
   "#db6bb8",
@@ -87,7 +87,14 @@ export function inferResource(
   const named = resourceWords(label);
   if (!named.length) return "";
   return single(
-    [...out, ...into].filter((row) => sameResource(resourceWords(row), named)),
+    // The label must be the row's name or a shorter form of it. A longer label
+    // ("free bet or points boost") names more than one thing and infers nothing.
+    [...out, ...into].filter((row) => {
+      const words = resourceWords(row);
+      return (
+        named.length <= words.length && named.every((w, i) => words[i] === w)
+      );
+    }),
   );
 }
 
