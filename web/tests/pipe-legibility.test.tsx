@@ -372,7 +372,12 @@ describe("pipe drawing", () => {
     });
     const off = layoutDocument(offDoc);
     expect(off.resources).toEqual([]);
-    expect(off.legend).toEqual({ rows: 0, items: [] });
+    expect(off.legend).toEqual({
+      rows: 0,
+      items: [],
+      layers: [],
+      layerRows: 0,
+    });
     expect(off.routes.every((r) => !r.resource && !r.tag)).toBe(true);
     expect(off.routes.map((r) => r.points)).toEqual(
       on.routes.map((r) => r.points),

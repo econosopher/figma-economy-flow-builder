@@ -137,7 +137,7 @@ describe("stable-ID editing", () => {
   it("uses the shared semantic and routing validators for supplied JSON", () => {
     expect(validateDraft(starter).routingIssues).toEqual([]);
     const draft = validateDraft(starter);
-    expect(draft.standard.rulesVersion).toBe("2026.10.27");
+    expect(draft.standard.rulesVersion).toBe("2026.11.16");
     expect(draft.standardIssues.map((i) => i.rule)).toEqual(
       expect.arrayContaining(["GEC-011", "GEC-014"]),
     );
@@ -309,7 +309,7 @@ describe("MCP transport and OAuth", () => {
       "## GEC-011 - Keep roots free of resource rows",
     );
     expect(rules.result.contents[0].text).toContain(
-      "Contract version: 2026.10.27",
+      "Contract version: 2026.11.16",
     );
   });
   it("allows browser preflight only from approved origins, including error responses", async () => {

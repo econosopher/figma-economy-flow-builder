@@ -54,7 +54,7 @@ Use the client's OAuth flow. Do not paste a Supabase service key, GitHub token, 
 
 ## The GEC standard
 
-Every diagram is checked against the GEC economy-flow rules in [`docs/ECONOMY_FLOW_RULES.md`](../docs/ECONOMY_FLOW_RULES.md) (version `2026.10.27`, GEC-001 to GEC-015). The server exposes the standard two ways:
+Every diagram is checked against the GEC economy-flow rules in [`docs/ECONOMY_FLOW_RULES.md`](../docs/ECONOMY_FLOW_RULES.md) (version `2026.11.16`, GEC-001 to GEC-016). The server exposes the standard two ways:
 
 | Primitive | Name | Content |
 | --- | --- | --- |
@@ -62,6 +62,10 @@ Every diagram is checked against the GEC economy-flow rules in [`docs/ECONOMY_FL
 | Resource | `economy-flow://rules` | The rule contract as Markdown, one section per rule ID. |
 
 Pipes take an optional `resource` (up to 160 characters) naming what they carry. When it is empty the renderer infers it from a row name shared by both cards, or else from the one row on either card that the pipe's label names; either way the pipe is coloured and tagged by it unless `settings.showResources` is `false`. Set it when no single row name matches at both ends.
+
+Cards take an optional `layer`: `live` (the default; leave the field out), `design` for something designed but not built, or `proposal`. The renderer draws it as a pattern on the whole title bar (plain, hatched, hatched the other way) in the editor, the SVG and the PNG, and adds a three-swatch box key to the legend only when some card is not `live`. Set it with a card `put`, for example `{ "op": "put", "entity": "cards", "value": { "id": "season_pass", "layer": "proposal" } }`; put `"layer": "live"` to clear it. A layer is never a group, a tag or a colour (GEC-016).
+
+Layout is automatic. When two root cards (`Spend Money`, `Spend Time`) sit in the same stage and group, the second is placed level with a card it feeds in the next stage instead of directly under the first. Action cards side by side in a group row are drawn at the height of the tallest one, and a root card is its title bar alone.
 
 `validate_diagram`, `preview_changes`, `edit_diagram`, `create_diagram` and `render_diagram` return `standardIssues`: an array of `{ rule, severity, message, cardId?, edgeId?, resource? }`. Every entry is a warning that names the card, pipe or resource; warnings never block a save. `routingIssues` stay separate and must be resolved before export. Hard errors (a `final_good` outside the last stage, a non-feedback pipe to the same or an earlier stage, a pipe to a missing card) are thrown by the document validator and fail the call.
 

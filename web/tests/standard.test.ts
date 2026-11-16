@@ -64,14 +64,14 @@ describe("GEC rules contract", () => {
     ].map((m) => ({ id: m[1], title: m[2].trim(), statement: m[3].trim() }));
     expect(sections).toEqual(ECONOMY_FLOW_RULES);
   });
-  it("keeps stable IDs GEC-001 to GEC-015 and the pilot rules unchanged", () => {
+  it("keeps stable IDs GEC-001 to GEC-016 and the pilot rules unchanged", () => {
     expect(ECONOMY_FLOW_RULES.map((r) => r.id)).toEqual(
       Array.from(
-        { length: 15 },
+        { length: 16 },
         (_, i) => `GEC-${String(i + 1).padStart(3, "0")}`,
       ),
     );
-    expect(ECONOMY_FLOW_RULES_VERSION).toBe("2026.10.27");
+    expect(ECONOMY_FLOW_RULES_VERSION).toBe("2026.11.16");
     expect(rulesPrompt(["GEC-011"])).toMatch(/^\[GEC-011\] Keep roots free/);
     expect(rulesMarkdown()).toContain(
       "## GEC-015 - Size cards in a group row alike",

@@ -1,6 +1,6 @@
 # GEC Economy Flow Rules
 
-Contract version: `2026.10.27`
+Contract version: `2026.11.16`
 
 Machine-readable implementation: [`web/src/core/rules.ts`](../web/src/core/rules.ts). Validator: [`web/src/core/standard.ts`](../web/src/core/standard.ts), shared by the editor and the MCP server.
 
@@ -70,7 +70,11 @@ Every `feedback: true` pipe carries a label that says what returns (`Next missio
 
 ## GEC-015 - Size cards in a group row alike
 
-Cards in the same group row are top-aligned per stage, so their bottoms align only when their heights match. Give cards that sit in the same row the same number of resource rows and roughly the same note length. A tall note on one card and none on its neighbour reads as misalignment. One card per stage in a group row keeps the row flat; a second card in the same stage and group stacks below and pushes the group taller.
+Action cards side by side in a group row are drawn at the height of the tallest, so a card with a long note leaves empty space in its neighbours. Give cards that sit in the same row the same number of resource rows and roughly the same note length. A tall note on one card and none on its neighbour reads as misalignment. One card per stage in a group row keeps the row flat; a second card in the same stage and group stacks below and pushes the group taller.
+
+## GEC-016 - Show the layer on the box
+
+When a diagram mixes what is in the live build, what is designed but not built and what is proposed, each card carries its layer in the optional `layer` field: `live` (the default when the field is absent), `design` or `proposal`. The renderer draws the layer as a pattern on the whole title bar: plain for `live`, hatched for `design`, hatched the other way (lines leaning left) for `proposal`. It adds a three-swatch box key to the legend only when some card is not `live`. Pattern only: no new colour, side stripe, tag text or badge, because green, red and orange already mean source, sink and store of value. A layer is not a group: a designed or proposed card sits in the stage and group where it connects.
 
 ## Validator coverage
 

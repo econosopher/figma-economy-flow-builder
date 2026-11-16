@@ -1,4 +1,12 @@
-import type { Card, EconomyDocument, Pipe, Settings } from "./document";
+import {
+  CARD_LAYERS,
+  usesLayers,
+  type Card,
+  type CardLayer,
+  type EconomyDocument,
+  type Pipe,
+  type Settings,
+} from "./document";
 import {
   pipeResources,
   type PipeResource,
@@ -69,6 +77,9 @@ export interface Route {
 export interface ResourceLegend {
   rows: number;
   items: (ResourceKeyEntry & { x: number; row: number })[];
+  /** The box key: one swatch per layer, present only when a card is designed or proposed. */
+  layers: { layer: CardLayer; key: string; x: number; row: number }[];
+  layerRows: number;
 }
 export interface Layout {
   documentId: string;
@@ -363,13 +374,17 @@ export function measureCards(
         c.id,
         {
           width: sp.cardWidth,
-          height: Math.max(
-            header + 4,
-            (rows.length ? y + sp.bottomPad : y) +
-              (notes.length
-                ? notes.length * sp.notesLine + sp.notesLine + 10
-                : 0),
-          ),
+          // A root with nothing under its title is the title bar alone: no white strip.
+          height:
+            c.kind === "initial_sink_node" && !rows.length && !notes.length
+              ? header + 2
+              : Math.max(
+                  header + 4,
+                  (rows.length ? y + sp.bottomPad : y) +
+                    (notes.length
+                      ? notes.length * sp.notesLine + sp.notesLine + 10
+                      : 0),
+                ),
           header,
           anchorY: (header + finalBand) / 2,
           title,
@@ -636,6 +651,7 @@ export function layoutDocument(
   measure: Measure = approximateMeasure,
 ): Layout {
   const sp = spacingFor(d.settings);
+  measured = { ...measured };
   const edges = [...d.edges];
   const edgeOrder = new Map(edges.map((edge, index) => [edge.id, index]));
   const stageIndex = new Map(d.stages.map((s, i) => [s.id, i]));
@@ -689,14 +705,53 @@ export function layoutDocument(
         .filter((c) => c.stageId === s.id && c.groupId === g.id)
         .sort((a, b) => a.order - b.order || a.id.localeCompare(b.id)),
     );
-    const stackHeight = Math.max(
-      96,
-      ...stacks.map(
-        (cs) =>
-          cs.reduce((h, c) => h + measured[c.id].height, 0) +
-          Math.max(0, cs.length - 1) * stackGap,
-      ),
-    );
+    // Action cards side by side in a group row share the height of the tallest, so their
+    // bottoms line up as well as their tops.
+    const rowCount = Math.max(0, ...stacks.map((cs) => cs.length));
+    for (let row = 0; row < rowCount; row++) {
+      const actions = stacks
+        .map((cs) => cs[row])
+        .filter((c) => c?.kind === "action");
+      const tallest = Math.max(0, ...actions.map((c) => measured[c.id].height));
+      for (const c of actions)
+        if (measured[c.id].height !== tallest)
+          measured[c.id] = { ...measured[c.id], height: tallest };
+    }
+    // Card tops within the group, right to left so a column knows where the next one sits.
+    // A second root in a stack drops level with a card it feeds in the next column, so the
+    // two roots' pipes leave on separate rows instead of running side by side.
+    const tops = new Map<string, number>();
+    let stackHeight = 96;
+    for (let i = stacks.length - 1; i >= 0; i--) {
+      let yy = 0,
+        earlierRoots: string[] = [];
+      for (const c of stacks[i]) {
+        if (c.kind === "initial_sink_node") {
+          if (earlierRoots.length) {
+            const fed = (from: string, to: string) =>
+              edges.some((e) => !e.feedback && e.from === from && e.to === to);
+            const level = (stacks[i + 1] ?? [])
+              .filter((t) => fed(c.id, t.id))
+              .map((t) => ({
+                y:
+                  tops.get(t.id)! +
+                  measured[t.id].anchorY -
+                  measured[c.id].anchorY,
+                shared: earlierRoots.some((r) => fed(r, t.id)),
+              }))
+              .filter((t) => t.y >= yy)
+              .sort(
+                (a, b) => Number(a.shared) - Number(b.shared) || a.y - b.y,
+              )[0];
+            if (level) yy = level.y;
+          }
+          earlierRoots = [...earlierRoots, c.id];
+        }
+        tops.set(c.id, yy);
+        yy += measured[c.id].height + stackGap;
+      }
+      stackHeight = Math.max(stackHeight, yy - stackGap);
+    }
     const crossing = edges.filter(
       (e) =>
         cardData.get(e.from)?.groupId === g.id ||
@@ -717,18 +772,16 @@ export function layoutDocument(
       height: groupHeight,
     });
     stacks.forEach((cs, i) => {
-      let yy = y + header;
       for (const c of cs) {
         const metrics = measured[c.id];
         cards.push({
           card: c,
           metrics,
           x: stageXs[i],
-          y: yy,
+          y: y + header + tops.get(c.id)!,
           width: metrics.width,
           height: metrics.height,
         });
-        yy += metrics.height + stackGap;
       }
     });
     for (let n = 0; n < Math.ceil(trackSpace / TRACK); n++)
@@ -869,9 +922,12 @@ export function layoutDocument(
   placeTags(routes, cards, groups, sp, measure);
   const maxY =
     Math.max(y, ...routes.flatMap((r) => r.points.map((p) => p.y))) + 32;
-  const legend = d.settings.showLegend
-    ? resourceLegend(resources, width - 56, measure)
-    : { rows: 0, items: [] };
+  const legend: ResourceLegend = d.settings.showLegend
+    ? {
+        ...resourceLegend(resources, width - 56, measure),
+        ...(usesLayers(d) ? layerLegend(width - 56, measure) : {}),
+      }
+    : { rows: 0, items: [], layers: [], layerRows: 0 };
   return {
     documentId: d.id,
     cards,
@@ -892,7 +948,9 @@ export function layoutDocument(
       height:
         maxY +
         (d.settings.showLegend
-          ? 58 + LEGEND_ROW * Math.max(0, legend.rows - 1)
+          ? 58 +
+            LEGEND_ROW * Math.max(0, legend.rows - 1) +
+            BOX_KEY_ROW * legend.layerRows
           : 0),
     },
     issues,
@@ -966,7 +1024,29 @@ export function resourceLegend(
     items.push({ ...r, x, row });
     x += width + 24;
   }
-  return { rows: items.length ? row + 1 : 0, items };
+  return { rows: items.length ? row + 1 : 0, items, layers: [], layerRows: 0 };
+}
+/** Height of each row of the box key, and the size of its swatches. */
+export const BOX_KEY_ROW = 30,
+  BOX_KEY_SWATCH = { width: 44, height: 20 };
+/** The three layer swatches sit on their own line under the resource key and wrap like it. */
+export function layerLegend(
+  available: number,
+  measure: Measure = approximateMeasure,
+): Pick<ResourceLegend, "layers" | "layerRows"> {
+  const layers: ResourceLegend["layers"] = [];
+  let x = 120,
+    row = 0;
+  for (const entry of CARD_LAYERS) {
+    const width = BOX_KEY_SWATCH.width + 10 + measure(entry.key, 11, 400);
+    if (x + width > available && x > 120) {
+      row += 1;
+      x = 120;
+    }
+    layers.push({ ...entry, x, row });
+    x += width + 24;
+  }
+  return { layers, layerRows: row + 1 };
 }
 export const TAG_HEIGHT = 14,
   TAG_SIZE = 10;

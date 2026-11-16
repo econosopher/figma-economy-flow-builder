@@ -456,4 +456,105 @@ describe("slide spacing", () => {
       ).toBe(true);
     }
   });
+  describe("two roots in one stack", () => {
+    const demo = () =>
+      validateDocument(
+        JSON.parse(
+          readFileSync(
+            new URL("./fixtures/layers-demo.json", import.meta.url),
+            "utf8",
+          ),
+        ),
+      );
+    const port = (l: ReturnType<typeof layoutDocument>, id: string) => {
+      const c = l.cards.find((p) => p.card.id === id)!;
+      return c.y + c.metrics.anchorY;
+    };
+    it("places the second root level with a card it feeds in the next column", () => {
+      for (const spacing of ["compact", "comfortable", "slide"] as const) {
+        const d = demo();
+        d.settings.spacing = spacing;
+        const l = layoutDocument(d);
+        expect(l.issues).toEqual([]);
+        // Spend Money stays level with the first shop card; Spend Time drops to the
+        // login-bonus card, the one next-column card only it feeds.
+        expect(port(l, "spend_money")).toBe(port(l, "use_shop"));
+        expect(port(l, "spend_time")).toBe(port(l, "daily"));
+        const straight = l.routes.find((r) => r.edge.id === "t_daily")!;
+        expect(straight.points).toHaveLength(2);
+        expect(straight.gaps).toEqual([]);
+        // The roots' pipes no longer share a row out of the inputs column.
+        const rows = (root: string) =>
+          new Set(
+            l.routes
+              .filter((r) => r.edge.from === root)
+              .flatMap((r) => r.points.map((p) => p.y)),
+          );
+        expect(
+          [...rows("spend_money")].filter((y) => y === port(l, "spend_time")),
+        ).toEqual([]);
+        const group = l.groups[0];
+        for (const c of l.cards)
+          expect(c.y + c.height).toBeLessThanOrEqual(group.y + group.height);
+      }
+    });
+    it("keeps the second root under the first when it feeds nothing in the next column", () => {
+      const d = demo();
+      d.edges = d.edges.filter((e) => e.id !== "t_daily");
+      const l = layoutDocument(d);
+      const money = l.cards.find((c) => c.card.id === "spend_money")!,
+        time = l.cards.find((c) => c.card.id === "spend_time")!;
+      expect(time.y).toBe(money.y + money.height + l.spacing.stackGap);
+    });
+    it("draws a bare root as its title bar alone, with no strip under it", () => {
+      const d = demo();
+      const l = layoutDocument(d);
+      for (const id of ["spend_money", "spend_time"]) {
+        const c = l.cards.find((p) => p.card.id === id)!;
+        expect(c.height).toBe(c.metrics.header + 2);
+        expect(c.metrics.height).toBe(c.height);
+      }
+      d.cards.find((c) => c.id === "spend_time")!.notes = "Sessions per day";
+      const noted = layoutDocument(d).cards.find(
+        (p) => p.card.id === "spend_time",
+      )!;
+      expect(noted.height).toBeGreaterThan(noted.metrics.header + 2);
+    });
+    it("gives action cards side by side in a group row the tallest one's height", () => {
+      const d = demo();
+      d.cards.find((c) => c.id === "play_levels")!.notes =
+        "A long note that wraps over several lines and makes this card the tallest in its row by some distance.";
+      const l = layoutDocument(d);
+      expect(l.issues).toEqual([]);
+      const placed = (id: string) => l.cards.find((p) => p.card.id === id)!;
+      const natural = measureCards(d);
+      const top = ["use_shop", "play_levels", "upgrade"].map(placed);
+      expect(new Set(top.map((c) => c.y)).size).toBe(1);
+      expect(new Set(top.map((c) => c.height))).toEqual(
+        new Set([natural.play_levels.height]),
+      );
+      expect(natural.use_shop.height).toBeLessThan(natural.play_levels.height);
+      for (const c of top) expect(c.metrics.height).toBe(c.height);
+      // The next card in the stack sits under the stretched one, not inside it.
+      expect(placed("season_pass").y).toBe(
+        placed("use_shop").y + placed("use_shop").height + l.spacing.stackGap,
+      );
+      // Other rows, roots and final goods keep their own height.
+      for (const id of ["season_pass", "daily", "spend_money", "stronger"])
+        expect(placed(id).height).toBe(natural[id].height);
+      // The caller's measurements are not changed in place.
+      const mine = measureCards(d),
+        before = mine.use_shop.height;
+      layoutDocument(d, mine);
+      expect(mine.use_shop.height).toBe(before);
+    });
+    it("moves only root cards: an action stacked second stays put", () => {
+      const d = demo();
+      d.cards.find((c) => c.id === "spend_time")!.kind = "action";
+      const l = layoutDocument(d);
+      const money = l.cards.find((c) => c.card.id === "spend_money")!,
+        time = l.cards.find((c) => c.card.id === "spend_time")!;
+      expect(time.y).toBe(money.y + money.height + l.spacing.stackGap);
+    });
+  });
 });
