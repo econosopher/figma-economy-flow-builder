@@ -1,5 +1,14 @@
-import type { Card, Settings, EconomyDocument } from "../core/document";
+import { useId } from "react";
 import {
+  cardLayer,
+  type Card,
+  type CardLayer,
+  type Settings,
+  type EconomyDocument,
+} from "../core/document";
+import {
+  BOX_KEY_ROW,
+  BOX_KEY_SWATCH,
   LEGEND_ROW,
   TAG_SIZE,
   pipeEnds,
@@ -24,6 +33,35 @@ export function ink(fill: string) {
     ? "#000000"
     : "#ffffff";
 }
+/** An id that is unique per drawing and safe inside `url(#...)`. */
+const usePatternId = () => `layer-${useId().replace(/[^a-zA-Z0-9_-]/g, "")}`;
+/** The layer pattern, in the ink of the bar it covers: hatched for designed-not-built, dotted
+ * for a proposal. A live box has no pattern, so this is never drawn for one. */
+function LayerPattern({
+  id,
+  layer,
+  ink,
+}: {
+  id: string;
+  layer: Exclude<CardLayer, "live">;
+  ink: string;
+}) {
+  return layer === "design" ? (
+    <pattern
+      id={id}
+      width="7"
+      height="7"
+      patternUnits="userSpaceOnUse"
+      patternTransform="rotate(45)"
+    >
+      <rect width="1.1" height="7" fill={ink} />
+    </pattern>
+  ) : (
+    <pattern id={id} width="7" height="7" patternUnits="userSpaceOnUse">
+      <circle cx="3.5" cy="3.5" r="1.05" fill={ink} />
+    </pattern>
+  );
+}
 export function CardDrawing({
   card,
   metrics,
@@ -44,6 +82,18 @@ export function CardDrawing({
       : settings.actionHeader;
   const tint = ink(fill);
   const sp = spacingFor(settings);
+  const layer = cardLayer(card);
+  const patternId = usePatternId();
+  // Over a pattern the title keeps a halo in the bar colour so it stays readable.
+  const halo =
+    layer === "live"
+      ? {}
+      : {
+          stroke: fill,
+          strokeWidth: 5,
+          strokeLinejoin: "round" as const,
+          paintOrder: "stroke",
+        };
   return (
     <g fontFamily="Inter, Arial, sans-serif">
       <rect
@@ -64,6 +114,22 @@ export function CardDrawing({
         rx="7"
         fill={fill}
       />
+      {layer !== "live" && (
+        <>
+          <defs>
+            <LayerPattern id={patternId} layer={layer} ink={tint} />
+          </defs>
+          <rect
+            data-layer={layer}
+            x="1.5"
+            y="1.5"
+            width={metrics.width - 3}
+            height={metrics.header - 1}
+            rx="7"
+            fill={`url(#${patternId})`}
+          />
+        </>
+      )}
       {isFinal && (
         <>
           <path
@@ -95,6 +161,7 @@ export function CardDrawing({
           fontSize={sp.titleSize}
           fontWeight="600"
           fill={tint}
+          {...halo}
         >
           {t}
         </text>
@@ -331,6 +398,8 @@ export function LegendDrawing({
   settings: Settings;
   legend?: ResourceLegend;
 }) {
+  const patternId = usePatternId();
+  const boxKeyY = LEGEND_ROW * Math.max(0, (legend?.rows ?? 0) - 1) + 12;
   return (
     <g fontFamily="Inter, Arial, sans-serif">
       <text fontSize="10" fill="#8a968f">
@@ -368,6 +437,51 @@ export function LegendDrawing({
             </text>
           </g>
         ))}
+      {!!legend?.layers.length && (
+        <g transform={`translate(0 ${boxKeyY})`}>
+          <text y="14" fontSize="10" fill="#8a968f">
+            BOX KEY
+          </text>
+          {legend.layers.map((item) => (
+            <g
+              key={item.layer}
+              transform={`translate(${item.x} ${item.row * BOX_KEY_ROW})`}
+            >
+              <rect
+                width={BOX_KEY_SWATCH.width}
+                height={BOX_KEY_SWATCH.height}
+                rx="5"
+                fill={settings.actionHeader}
+              />
+              {item.layer !== "live" && (
+                <>
+                  <defs>
+                    <LayerPattern
+                      id={`${patternId}-${item.layer}`}
+                      layer={item.layer}
+                      ink={ink(settings.actionHeader)}
+                    />
+                  </defs>
+                  <rect
+                    width={BOX_KEY_SWATCH.width}
+                    height={BOX_KEY_SWATCH.height}
+                    rx="5"
+                    fill={`url(#${patternId}-${item.layer})`}
+                  />
+                </>
+              )}
+              <text
+                x={BOX_KEY_SWATCH.width + 10}
+                y="14"
+                fontSize="11"
+                fill="#637168"
+              >
+                {item.key}
+              </text>
+            </g>
+          ))}
+        </g>
+      )}
     </g>
   );
 }
@@ -514,7 +628,7 @@ export function DiagramDrawing({
       ))}
       {d.settings.showLegend && !selection?.length && (
         <g
-          transform={`translate(28 ${layout.bounds.height - 26 - LEGEND_ROW * Math.max(0, layout.legend.rows - 1)})`}
+          transform={`translate(28 ${layout.bounds.height - 26 - LEGEND_ROW * Math.max(0, layout.legend.rows - 1) - BOX_KEY_ROW * layout.legend.layerRows})`}
         >
           <LegendDrawing settings={d.settings} legend={layout.legend} />
         </g>

@@ -8,7 +8,12 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { Plus, X, Search, GripVertical } from "lucide-react";
-import type { Card, EconomyDocument, Pipe } from "../core/document";
+import {
+  cardLayer,
+  type Card,
+  type EconomyDocument,
+  type Pipe,
+} from "../core/document";
 import { inferResource, resourceCandidates } from "../core/pipeResource";
 import type { Selection } from "./Canvas";
 export type ResourceKind = "sources" | "sinks" | "values" | "notes";
@@ -592,6 +597,25 @@ export function ItemMenu({
               <option value="action">Action</option>
               <option value="initial_sink_node">Player investment</option>
               <option value="final_good">Final good</option>
+            </select>
+          </label>
+          <label className="field">
+            Layer
+            <select
+              aria-label="Card layer"
+              value={cardLayer(card)}
+              onChange={(e) =>
+                change({
+                  layer:
+                    e.target.value === "live"
+                      ? undefined
+                      : (e.target.value as Card["layer"]),
+                })
+              }
+            >
+              <option value="live">In the live build</option>
+              <option value="design">Designed, not built</option>
+              <option value="proposal">Proposal</option>
             </select>
           </label>
           <label className="field">

@@ -1,0 +1,104 @@
+{
+  "schemaVersion": 3,
+  "id": "layers-demo",
+  "name": "Layer demo",
+  "stages": [
+    { "id": "inputs", "label": "Inputs" },
+    { "id": "shop", "label": "Shop" },
+    { "id": "play", "label": "Play" },
+    { "id": "build", "label": "Build" },
+    { "id": "outcome", "label": "Outcome" }
+  ],
+  "groups": [{ "id": "main", "label": "Core economy", "color": "#f7f8fa" }],
+  "cards": [
+    {
+      "id": "spend_money",
+      "label": "Spend Money",
+      "stageId": "inputs",
+      "groupId": "main",
+      "order": 0,
+      "kind": "initial_sink_node"
+    },
+    {
+      "id": "spend_time",
+      "label": "Spend Time",
+      "stageId": "inputs",
+      "groupId": "main",
+      "order": 1,
+      "kind": "initial_sink_node"
+    },
+    {
+      "id": "use_shop",
+      "label": "To Buy Gem Packs",
+      "stageId": "shop",
+      "groupId": "main",
+      "order": 0,
+      "sources": ["Gems"],
+      "layer": "design"
+    },
+    {
+      "id": "season_pass",
+      "label": "To Buy a Battle Pass",
+      "stageId": "shop",
+      "groupId": "main",
+      "order": 1,
+      "sources": ["Pass rewards"],
+      "layer": "proposal"
+    },
+    {
+      "id": "daily",
+      "label": "To Claim a Login Bonus",
+      "stageId": "shop",
+      "groupId": "main",
+      "order": 2,
+      "sources": ["Coins"]
+    },
+    {
+      "id": "play_levels",
+      "label": "To Play Levels",
+      "stageId": "play",
+      "groupId": "main",
+      "order": 0,
+      "sources": ["Coins"],
+      "values": ["Stars"]
+    },
+    {
+      "id": "upgrade",
+      "label": "To Upgrade the Base",
+      "stageId": "build",
+      "groupId": "main",
+      "order": 0,
+      "sinks": ["Coins", "Gems"],
+      "layer": "design"
+    },
+    {
+      "id": "stronger",
+      "label": "For a Stronger Base",
+      "stageId": "outcome",
+      "groupId": "main",
+      "order": 0,
+      "kind": "final_good"
+    }
+  ],
+  "edges": [
+    { "id": "m_shop", "from": "spend_money", "to": "use_shop" },
+    { "id": "m_pass", "from": "spend_money", "to": "season_pass" },
+    { "id": "t_daily", "from": "spend_time", "to": "daily" },
+    { "id": "t_play", "from": "spend_time", "to": "play_levels" },
+    {
+      "id": "shop_up",
+      "from": "use_shop",
+      "to": "upgrade",
+      "resource": "Gems"
+    },
+    { "id": "daily_up", "from": "daily", "to": "upgrade", "resource": "Coins" },
+    {
+      "id": "play_up",
+      "from": "play_levels",
+      "to": "upgrade",
+      "resource": "Coins"
+    },
+    { "id": "up_out", "from": "upgrade", "to": "stronger", "type": "final" }
+  ],
+  "settings": {}
+}

@@ -43,6 +43,10 @@ export const cardSchema = z.object({
   sinks: z.array(label).max(40).default([]),
   values: z.array(label).max(40).default([]),
   notes: z.string().max(3000).default(""),
+  // Whether the card is in the live build, designed but not built, or a proposal. Drawn as
+  // a pattern on the title bar. Absent means `live`, the plain bar, so documents saved
+  // before the field existed parse and serialise unchanged.
+  layer: z.enum(["live", "design", "proposal"]).optional(),
 });
 export const edgeSchema = z.object({
   id,
@@ -117,6 +121,17 @@ export const documentSchema = z.object({
 });
 export type EconomyDocument = z.infer<typeof documentSchema>;
 export type Card = z.infer<typeof cardSchema>;
+export type CardLayer = NonNullable<Card["layer"]>;
+export const CARD_LAYERS: readonly { layer: CardLayer; key: string }[] = [
+  { layer: "live", key: "No pattern: in the live build" },
+  { layer: "design", key: "Hatched: designed, not built" },
+  { layer: "proposal", key: "Dotted: proposal, not a game fact" },
+];
+export const cardLayer = (card: Pick<Card, "layer">): CardLayer =>
+  card.layer ?? "live";
+/** True when any card is designed or proposed: the picture then carries the box key. */
+export const usesLayers = (d: Pick<EconomyDocument, "cards">) =>
+  d.cards.some((c) => cardLayer(c) !== "live");
 export const isFundamentalRoot = (card: Card) =>
   card.kind === "initial_sink_node" &&
   (card.label === "Time" || card.label === "Money");
@@ -171,6 +186,7 @@ const v2Schema = z.object({
       sinks: z.array(label).optional(),
       values: z.array(label).optional(),
       notes: cardSchema.shape.notes.optional(),
+      layer: cardSchema.shape.layer,
     }),
   ),
   edges: z.array(

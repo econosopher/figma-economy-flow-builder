@@ -456,4 +456,63 @@ describe("slide spacing", () => {
       ).toBe(true);
     }
   });
+  describe("two roots in one stack", () => {
+    const demo = () =>
+      validateDocument(
+        JSON.parse(
+          readFileSync(
+            new URL("./fixtures/layers-demo.json", import.meta.url),
+            "utf8",
+          ),
+        ),
+      );
+    const port = (l: ReturnType<typeof layoutDocument>, id: string) => {
+      const c = l.cards.find((p) => p.card.id === id)!;
+      return c.y + c.metrics.anchorY;
+    };
+    it("places the second root level with a card it feeds in the next column", () => {
+      for (const spacing of ["compact", "comfortable", "slide"] as const) {
+        const d = demo();
+        d.settings.spacing = spacing;
+        const l = layoutDocument(d);
+        expect(l.issues).toEqual([]);
+        // Spend Money stays level with the first shop card; Spend Time drops to the
+        // login-bonus card, the one next-column card only it feeds.
+        expect(port(l, "spend_money")).toBe(port(l, "use_shop"));
+        expect(port(l, "spend_time")).toBe(port(l, "daily"));
+        const straight = l.routes.find((r) => r.edge.id === "t_daily")!;
+        expect(straight.points).toHaveLength(2);
+        expect(straight.gaps).toEqual([]);
+        // The roots' pipes no longer share a row out of the inputs column.
+        const rows = (root: string) =>
+          new Set(
+            l.routes
+              .filter((r) => r.edge.from === root)
+              .flatMap((r) => r.points.map((p) => p.y)),
+          );
+        expect(
+          [...rows("spend_money")].filter((y) => y === port(l, "spend_time")),
+        ).toEqual([]);
+        const group = l.groups[0];
+        for (const c of l.cards)
+          expect(c.y + c.height).toBeLessThanOrEqual(group.y + group.height);
+      }
+    });
+    it("keeps the second root under the first when it feeds nothing in the next column", () => {
+      const d = demo();
+      d.edges = d.edges.filter((e) => e.id !== "t_daily");
+      const l = layoutDocument(d);
+      const money = l.cards.find((c) => c.card.id === "spend_money")!,
+        time = l.cards.find((c) => c.card.id === "spend_time")!;
+      expect(time.y).toBe(money.y + money.height + l.spacing.stackGap);
+    });
+    it("moves only root cards: an action stacked second stays put", () => {
+      const d = demo();
+      d.cards.find((c) => c.id === "spend_time")!.kind = "action";
+      const l = layoutDocument(d);
+      const money = l.cards.find((c) => c.card.id === "spend_money")!,
+        time = l.cards.find((c) => c.card.id === "spend_time")!;
+      expect(time.y).toBe(money.y + money.height + l.spacing.stackGap);
+    });
+  });
 });

@@ -14,6 +14,7 @@ import {
   type EconomyDocument,
   type Card,
   type Settings,
+  cardLayer,
 } from "../core/document";
 import type { Selection } from "./Canvas";
 import { PipeResourceField } from "./DirectEditing";
@@ -115,6 +116,25 @@ export function Inspector({
               <option value="action">Action</option>
               <option value="initial_sink_node">Player investment</option>
               <option value="final_good">Final good</option>
+            </select>
+          </label>
+          <label className="field">
+            Layer
+            <select
+              aria-label="Card layer"
+              value={cardLayer(card)}
+              onChange={(e) =>
+                changeCard({
+                  layer:
+                    e.target.value === "live"
+                      ? undefined
+                      : (e.target.value as Card["layer"]),
+                })
+              }
+            >
+              <option value="live">In the live build</option>
+              <option value="design">Designed, not built</option>
+              <option value="proposal">Proposal</option>
             </select>
           </label>
           <div className="field-pair">

@@ -75,7 +75,7 @@ export function createServer(env: AppEnv, user: McpIdentity) {
     "economy-flow://rules",
     {
       title: "GEC economy-flow rules contract",
-      description: `The rule contract (GEC-001 to GEC-015, version ${ECONOMY_FLOW_RULES_VERSION}) that validate_diagram reports against.`,
+      description: `The rule contract (GEC-001 to GEC-016, version ${ECONOMY_FLOW_RULES_VERSION}) that validate_diagram reports against.`,
       mimeType: "text/markdown",
     },
     (uri) => ({
