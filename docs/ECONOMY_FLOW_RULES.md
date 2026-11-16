@@ -74,7 +74,7 @@ Cards in the same group row are top-aligned per stage, so their bottoms align on
 
 ## GEC-016 - Show the layer on the box
 
-When a diagram mixes what is in the live build, what is designed but not built and what is proposed, each card carries its layer in the optional `layer` field: `live` (the default when the field is absent), `design` or `proposal`. The renderer draws the layer as a pattern on the whole title bar: plain for `live`, hatched for `design`, dotted for `proposal`. It adds a three-swatch box key to the legend only when some card is not `live`. Pattern only: no new colour, side stripe, tag text or badge, because green, red and orange already mean source, sink and store of value. A layer is not a group: a designed or proposed card sits in the stage and group where it connects.
+When a diagram mixes what is in the live build, what is designed but not built and what is proposed, each card carries its layer in the optional `layer` field: `live` (the default when the field is absent), `design` or `proposal`. The renderer draws the layer as a pattern on the whole title bar: plain for `live`, hatched for `design`, hatched the other way (lines leaning left) for `proposal`. It adds a three-swatch box key to the legend only when some card is not `live`. Pattern only: no new colour, side stripe, tag text or badge, because green, red and orange already mean source, sink and store of value. A layer is not a group: a designed or proposed card sits in the stage and group where it connects.
 
 ## Validator coverage
 

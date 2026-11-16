@@ -35,8 +35,8 @@ export function ink(fill: string) {
 }
 /** An id that is unique per drawing and safe inside `url(#...)`. */
 const usePatternId = () => `layer-${useId().replace(/[^a-zA-Z0-9_-]/g, "")}`;
-/** The layer pattern, in the ink of the bar it covers: hatched for designed-not-built, dotted
- * for a proposal. A live box has no pattern, so this is never drawn for one. */
+/** The layer pattern, in the ink of the bar it covers: thin diagonal lines, leaning right for
+ * designed-not-built and left for a proposal. A live box has no pattern, so this is never drawn for one. */
 function LayerPattern({
   id,
   layer,
@@ -46,19 +46,15 @@ function LayerPattern({
   layer: Exclude<CardLayer, "live">;
   ink: string;
 }) {
-  return layer === "design" ? (
+  return (
     <pattern
       id={id}
       width="7"
       height="7"
       patternUnits="userSpaceOnUse"
-      patternTransform="rotate(45)"
+      patternTransform={`rotate(${layer === "design" ? 45 : -45})`}
     >
       <rect width="1.1" height="7" fill={ink} />
-    </pattern>
-  ) : (
-    <pattern id={id} width="7" height="7" patternUnits="userSpaceOnUse">
-      <circle cx="3.5" cy="3.5" r="1.05" fill={ink} />
     </pattern>
   );
 }

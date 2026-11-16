@@ -84,7 +84,7 @@ describe("layer drawing", () => {
     const plain = { ...d, cards: d.cards.map(({ layer: _, ...c }) => c) };
     expect(drawn(plain, "use_shop")).not.toMatch(/pattern|data-layer/);
   });
-  it("hatches a designed card and dots a proposal across the whole title bar", () => {
+  it("hatches a designed card and back-hatches a proposal across the whole title bar", () => {
     const d = demo();
     const design = drawn(d, "use_shop"),
       proposal = drawn(d, "season_pass");
@@ -92,7 +92,9 @@ describe("layer drawing", () => {
     expect(design).toMatch(
       /<rect data-layer="design" x="1\.5" y="1\.5" width="193" height="59" rx="7" fill="url\(#layer-[\w-]+\)"/,
     );
-    expect(proposal).toMatch(/<pattern[^>]*><circle cx="3\.5" cy="3\.5"/);
+    expect(proposal).toContain('patternTransform="rotate(-45)"');
+    expect(design).not.toContain("rotate(-45)");
+    expect(design + proposal).not.toContain("<circle");
     expect(proposal).toMatch(/<rect data-layer="proposal"[^>]*fill="url\(#/);
     // Pattern in the title ink, title haloed in the bar colour: no new colour.
     for (const svg of [design, proposal]) {
@@ -139,6 +141,9 @@ describe("layer drawing", () => {
       );
     expect(svg(d)).toContain("BOX KEY");
     expect(svg(d)).toContain("Hatched: designed, not built");
+    expect(svg(d)).toContain(
+      "Hatched the other way: proposal, not a game fact",
+    );
     expect(svg(live)).not.toMatch(/BOX KEY|<pattern/);
     const hidden = {
       ...d,

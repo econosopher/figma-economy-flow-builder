@@ -111,7 +111,7 @@ export const ECONOMY_FLOW_RULES: readonly EconomyFlowRule[] = [
     id: "GEC-016",
     title: "Show the layer on the box",
     statement:
-      "When a diagram mixes what is in the live build, what is designed but not built and what is proposed, each card carries its layer in the optional `layer` field: `live` (the default when the field is absent), `design` or `proposal`. The renderer draws the layer as a pattern on the whole title bar: plain for `live`, hatched for `design`, dotted for `proposal`. It adds a three-swatch box key to the legend only when some card is not `live`. Pattern only: no new colour, side stripe, tag text or badge, because green, red and orange already mean source, sink and store of value. A layer is not a group: a designed or proposed card sits in the stage and group where it connects.",
+      "When a diagram mixes what is in the live build, what is designed but not built and what is proposed, each card carries its layer in the optional `layer` field: `live` (the default when the field is absent), `design` or `proposal`. The renderer draws the layer as a pattern on the whole title bar: plain for `live`, hatched for `design`, hatched the other way (lines leaning left) for `proposal`. It adds a three-swatch box key to the legend only when some card is not `live`. Pattern only: no new colour, side stripe, tag text or badge, because green, red and orange already mean source, sink and store of value. A layer is not a group: a designed or proposed card sits in the stage and group where it connects.",
   },
 ];
 
@@ -179,7 +179,7 @@ If a fact is unknown, say so in the card notes and in research.limitations. Neve
 - Orange = rows (values): progression the player cannot spend: class XP, account XP, a level, a rating. Nothing else is orange. Ammo granted at mission start, a held currency, a kept item or a buff is a note on the card that uses it, not an orange row.
 - A card that both earns and spends the same resource shows both rows so the balance reads in one place.
 - final_good cards are terminal player benefits (mastery, status, expression, a stronger build), never a currency or an inventory count. They sit in the last stage.
-- Layers (GEC-016): when a diagram mixes the live build with designed or proposed work, set the card's layer field to "design" (designed, not built) or "proposal"; leave it out for the live build. The title bar is drawn hatched or dotted and the legend gains a box key. Do not add a group, a tag or a colour for a layer.
+- Layers (GEC-016): when a diagram mixes the live build with designed or proposed work, set the card's layer field to "design" (designed, not built) or "proposal"; leave it out for the live build. The title bar is drawn hatched, or hatched the other way for a proposal, and the legend gains a box key. Do not add a group, a tag or a colour for a layer.
 - Buffs, perks and modifiers are effects: show them in the notes of the card they change, or as an = row only if they persist as progression.
 
 ## 3. Chains, not islands (GEC-006, GEC-007, GEC-010, GEC-014)

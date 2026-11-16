@@ -125,7 +125,10 @@ export type CardLayer = NonNullable<Card["layer"]>;
 export const CARD_LAYERS: readonly { layer: CardLayer; key: string }[] = [
   { layer: "live", key: "No pattern: in the live build" },
   { layer: "design", key: "Hatched: designed, not built" },
-  { layer: "proposal", key: "Dotted: proposal, not a game fact" },
+  {
+    layer: "proposal",
+    key: "Hatched the other way: proposal, not a game fact",
+  },
 ];
 export const cardLayer = (card: Pick<Card, "layer">): CardLayer =>
   card.layer ?? "live";
