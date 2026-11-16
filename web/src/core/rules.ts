@@ -105,7 +105,7 @@ export const ECONOMY_FLOW_RULES: readonly EconomyFlowRule[] = [
     id: "GEC-015",
     title: "Size cards in a group row alike",
     statement:
-      "Cards in the same group row are top-aligned per stage, so their bottoms align only when their heights match. Give cards that sit in the same row the same number of resource rows and roughly the same note length. A tall note on one card and none on its neighbour reads as misalignment. One card per stage in a group row keeps the row flat; a second card in the same stage and group stacks below and pushes the group taller.",
+      "Action cards side by side in a group row are drawn at the height of the tallest, so a card with a long note leaves empty space in its neighbours. Give cards that sit in the same row the same number of resource rows and roughly the same note length. A tall note on one card and none on its neighbour reads as misalignment. One card per stage in a group row keeps the row flat; a second card in the same stage and group stacks below and pushes the group taller.",
   },
   {
     id: "GEC-016",

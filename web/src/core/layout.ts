@@ -374,13 +374,17 @@ export function measureCards(
         c.id,
         {
           width: sp.cardWidth,
-          height: Math.max(
-            header + 4,
-            (rows.length ? y + sp.bottomPad : y) +
-              (notes.length
-                ? notes.length * sp.notesLine + sp.notesLine + 10
-                : 0),
-          ),
+          // A root with nothing under its title is the title bar alone: no white strip.
+          height:
+            c.kind === "initial_sink_node" && !rows.length && !notes.length
+              ? header + 2
+              : Math.max(
+                  header + 4,
+                  (rows.length ? y + sp.bottomPad : y) +
+                    (notes.length
+                      ? notes.length * sp.notesLine + sp.notesLine + 10
+                      : 0),
+                ),
           header,
           anchorY: (header + finalBand) / 2,
           title,
@@ -647,6 +651,7 @@ export function layoutDocument(
   measure: Measure = approximateMeasure,
 ): Layout {
   const sp = spacingFor(d.settings);
+  measured = { ...measured };
   const edges = [...d.edges];
   const edgeOrder = new Map(edges.map((edge, index) => [edge.id, index]));
   const stageIndex = new Map(d.stages.map((s, i) => [s.id, i]));
@@ -700,6 +705,18 @@ export function layoutDocument(
         .filter((c) => c.stageId === s.id && c.groupId === g.id)
         .sort((a, b) => a.order - b.order || a.id.localeCompare(b.id)),
     );
+    // Action cards side by side in a group row share the height of the tallest, so their
+    // bottoms line up as well as their tops.
+    const rowCount = Math.max(0, ...stacks.map((cs) => cs.length));
+    for (let row = 0; row < rowCount; row++) {
+      const actions = stacks
+        .map((cs) => cs[row])
+        .filter((c) => c?.kind === "action");
+      const tallest = Math.max(0, ...actions.map((c) => measured[c.id].height));
+      for (const c of actions)
+        if (measured[c.id].height !== tallest)
+          measured[c.id] = { ...measured[c.id], height: tallest };
+    }
     // Card tops within the group, right to left so a column knows where the next one sits.
     // A second root in a stack drops level with a card it feeds in the next column, so the
     // two roots' pipes leave on separate rows instead of running side by side.

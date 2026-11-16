@@ -65,7 +65,7 @@ Pipes take an optional `resource` (up to 160 characters) naming what they carry.
 
 Cards take an optional `layer`: `live` (the default; leave the field out), `design` for something designed but not built, or `proposal`. The renderer draws it as a pattern on the whole title bar (plain, hatched, hatched the other way) in the editor, the SVG and the PNG, and adds a three-swatch box key to the legend only when some card is not `live`. Set it with a card `put`, for example `{ "op": "put", "entity": "cards", "value": { "id": "season_pass", "layer": "proposal" } }`; put `"layer": "live"` to clear it. A layer is never a group, a tag or a colour (GEC-016).
 
-Layout is automatic. When two root cards (`Spend Money`, `Spend Time`) sit in the same stage and group, the second is placed level with a card it feeds in the next stage instead of directly under the first.
+Layout is automatic. When two root cards (`Spend Money`, `Spend Time`) sit in the same stage and group, the second is placed level with a card it feeds in the next stage instead of directly under the first. Action cards side by side in a group row are drawn at the height of the tallest one, and a root card is its title bar alone.
 
 `validate_diagram`, `preview_changes`, `edit_diagram`, `create_diagram` and `render_diagram` return `standardIssues`: an array of `{ rule, severity, message, cardId?, edgeId?, resource? }`. Every entry is a warning that names the card, pipe or resource; warnings never block a save. `routingIssues` stay separate and must be resolved before export. Hard errors (a `final_good` outside the last stage, a non-feedback pipe to the same or an earlier stage, a pipe to a missing card) are thrown by the document validator and fail the call.
 
