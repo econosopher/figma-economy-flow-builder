@@ -1,3 +1,28 @@
+# Card layers, input spacing and box sizes: 16 November 2026
+
+Production at https://flow.gameeconomistconsulting.com runs commit `b6c420c` (branch `feat/card-layers`, merged to main as PR #7). Production Worker version: `73c03f07-bb94-4c7f-ae36-486610ae1da8`. Staging: `e9373af9-72ac-4063-99ab-9b95014187db`. Both serve app `main-06XAimc0.js`. The previous production version, for rollback, is `a836052e-0169-4c6c-9031-a515b5211cb6`.
+
+## What went live
+
+- **Card layers.** Cards take an optional `layer`: `live`, `design` or `proposal`. The title bar is plain, hatched, or hatched the other way, in the canvas, the SVG and the PNG. The legend gains a three-swatch box key only when a card is not `live`. The layer is set from the card menu, the inspector or a card `put` over MCP. Absent means `live`, so saved documents are not rewritten.
+- **Input spacing.** A second root in the same stage and group is placed level with a card it feeds in the next stage.
+- **Box sizes.** Action cards side by side in a group row take the height of the tallest one. A root with no rows or notes is its title bar alone.
+- **Rule contract.** GEC-016 added and GEC-015 reworded; the contract is version `2026.11.16`.
+
+## Verification
+
+- 149 automated tests, the type check, the production build and the staging dry run passed on the deployed commit. Card heights changed, so `tests/fixtures/layout-geometry.json` was regenerated; every example and preset routes with no issues. Presets with long notes are taller: the Apex PNG went from 2066 to 2424 px high.
+- Staging and production, in a signed-out headless browser: the bundle matches, `/api/health` returns 200, the app opened with no console errors and the card menu shows the Layer control. `render.html` rendered the Apex preset and `tests/fixtures/layers-demo.json` with no routing issues; the demo showed both hatches and the box key, and its production PNG is byte-identical to the local render that was inspected by eye.
+- Production readback: `/mcp` returns 401 without a token.
+- Not run: a signed-in save, the MCP tools against production, and the scripted browser suites in `web/tests/browser/`.
+
+## Carried forward
+
+- Rollback is `wrangler rollback --env production` to the version above.
+- The on-canvas view has no legend, so the box key appears in the SVG and PNG only.
+
+---
+
 # Pipe legibility and main brought level with production: 14 November 2026
 
 Production at https://flow.gameeconomistconsulting.com runs commit `93791c7` (branch `fix/popover-fits-viewport`, merged to main as PR #6). Production Worker version: `a836052e-0169-4c6c-9031-a515b5211cb6`. Staging: `6fa3660c-5161-48a1-84eb-f8c5affeeffb`. Both serve app `main-BqEG41jk.js`. The previous production version, for rollback, is `5383ad01-986d-445f-bace-e32bf8523750`.
